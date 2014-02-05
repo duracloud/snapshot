@@ -1,0 +1,40 @@
+/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ *     http://duracloud.org/license/
+ */
+package org.duracloud.snapshot.rest;
+
+import javax.ws.rs.ext.ContextResolver;
+import javax.ws.rs.ext.Provider;
+
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig.Feature;
+/**
+ * @author Daniel Bernstein
+ *         Date: Feb 5, 2014
+ */
+@Provider
+public class SnapshotObjectMapperProvider implements ContextResolver<ObjectMapper> {
+
+    private final ObjectMapper defaultObjectMapper;
+
+    public SnapshotObjectMapperProvider() {
+        defaultObjectMapper = createDefaultMapper();
+    }
+
+    @Override
+    public ObjectMapper getContext(Class<?> type) {
+            return defaultObjectMapper;
+    }
+
+    private static ObjectMapper createDefaultMapper() {
+
+        ObjectMapper result = new ObjectMapper();
+        result.configure(Feature.INDENT_OUTPUT, true);
+
+        return result;
+    }
+}

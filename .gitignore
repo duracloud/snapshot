@@ -3,3 +3,5 @@ target
 .project
 .classpath
 duracloud.home_IS_UNDEFINED
+*.iml
+.idea

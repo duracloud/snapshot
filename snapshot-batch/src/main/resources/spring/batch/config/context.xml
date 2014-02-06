@@ -1,0 +1,54 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+  <bean id="blockingQueue" class="java.util.concurrent.LinkedBlockingQueue" />
+  <bean id="executor" class="java.util.concurrent.ThreadPoolExecutor">
+    <constructor-arg index="0" type="int" value="20"/>
+    <constructor-arg index="1" type="int" value="20"/>
+    <constructor-arg index="2" type="long" value="10"/>
+    <constructor-arg index="3" value="SECONDS"/>
+    <constructor-arg index="4" ref="blockingQueue"/>
+  </bean>
+
+  <!--<bean id="blockingQueue" class="java.util.concurrent.SynchronousQueue" />-->
+  <!--<bean id="executor" class="java.util.concurrent.ThreadPoolExecutor">-->
+    <!--<constructor-arg index="0" type="int" value="5"/>-->
+    <!--<constructor-arg index="1" type="int" value="1000"/>-->
+    <!--<constructor-arg index="2" type="long" value="10"/>-->
+    <!--<constructor-arg index="3" value="SECONDS"/>-->
+    <!--<constructor-arg index="4" ref="blockingQueue"/>-->
+  <!--</bean>-->
+
+  <bean id="taskExecutor"
+        class="org.springframework.scheduling.concurrent.ConcurrentTaskExecutor">
+    <constructor-arg ref="executor"/>
+  </bean>
+
+  <!--<bean id="taskExecutor"-->
+        <!--class="org.springframework.core.task.SimpleAsyncTaskExecutor" />-->
+
+  <!-- stored job-metadata in database -->
+  <bean id="jobRepository"
+        class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
+    <property name="dataSource" ref="dataSource" />
+    <property name="transactionManager" ref="transactionManager" />
+    <property name="databaseType" value="mysql" />
+  </bean>
+
+  <!-- stored job-metadata in memory -->
+  <!--
+  <bean id="jobRepository"
+	class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+	<property name="transactionManager" ref="transactionManager" />
+  </bean>
+   -->
+
+  <bean id="jobLauncher"
+        class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+    <property name="jobRepository" ref="jobRepository" />
+  </bean>
+
+</beans>

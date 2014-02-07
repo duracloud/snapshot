@@ -7,13 +7,7 @@
  */
 package org.duracloud.snapshot.rest;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -28,8 +22,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -38,7 +37,7 @@ import org.springframework.stereotype.Component;
  * @author Daniel Bernstein Date: Feb 4, 2014
  */
 @Component
-@Path("snapshot")
+@Path("/")
 public class SnapshotResource {
 
     @Context

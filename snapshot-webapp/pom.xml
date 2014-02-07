@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <version>1.0.0-SNAPSHOT</version>
   <groupId>org.duracloud.snapshot</groupId>
-  <artifactId>snapshot-webapp</artifactId>
+  <artifactId>snapshot</artifactId>
   <packaging>war</packaging>
   <name>Snapshot Rest Interface</name>
 

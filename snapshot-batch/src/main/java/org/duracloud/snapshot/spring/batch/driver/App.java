@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.spring.batch;
+package org.duracloud.snapshot.spring.batch.driver;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
@@ -14,6 +14,13 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.spring.batch.SpaceItemProcessor;
+import org.duracloud.snapshot.spring.batch.SpaceItemReader;
+import org.duracloud.snapshot.spring.batch.SpaceItemWriter;
+import org.duracloud.snapshot.spring.batch.driver.ConfigParser;
+import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameter;
@@ -44,10 +51,17 @@ import java.util.Map;
  *         Date: 2/3/14
  */
 public class App {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) throws Exception {
+        ConfigParser configParser =
+            new ConfigParser();
+        SnapshotConfig config = configParser.processCommandLine(args);
+
         String[] springConfig = {
-            "spring\\batch\\config\\context.xml",
-            "spring\\batch\\config\\database.xml"
+            "spring/batch/config/context.xml",
+            "spring/batch/config/database.xml"
         };
 
         ApplicationContext context =
@@ -63,22 +77,22 @@ public class App {
 
         StoreClientUtil clientUtil = new StoreClientUtil();
         ContentStore contentStore =
-            clientUtil.createContentStore("<duracloud-host>",
-                                          80,
-                                          "durastore",
-                                          "<duracloud-user>",
-                                          "<secret-pass>",
-                                          "0");
+            clientUtil.createContentStore(config.getHost(),
+                                          config.getPort(),
+                                          config.getContext(),
+                                          config.getUsername(),
+                                          config.getPassword(),
+                                          config.getStoreId());
         List spaces = new ArrayList<String>();
-        spaces.add("<duracloud-space>");
+        spaces.add(config.getSpace());
         RetrievalSource retrievalSource = new DuraStoreStitchingRetrievalSource(
             contentStore, spaces, false);
 
         ItemReader itemReader = new SpaceItemReader(retrievalSource);
         ItemWriter itemWriter = new SpaceItemWriter();
 
-        File contentDir = new File("<content-dir>");
-        File workDir = new File("<work-dir>");
+        File contentDir = config.getContentDir();
+        File workDir = config.getWorkDir();
         OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
         ItemProcessor itemProcessor = new SpaceItemProcessor(retrievalSource,
                                                              contentDir,
@@ -102,17 +116,16 @@ public class App {
         Job job = simpleJobBuilder.build();
 
         Map<String, JobParameter> params = new HashMap();
-        params.put("id", new JobParameter("<snapshot-id>", true));
+        String snapshotId = config.getSnapshotId();
+        params.put("id", new JobParameter(snapshotId, true));
 
         try {
 
             JobExecution execution = jobLauncher.run(job, new JobParameters(params));
-            System.out.println("Exit Status : " + execution.getStatus());
+            LOGGER.info("Exit Status : {}", execution.getStatus());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Error running job: " + snapshotId, e);
         }
-
-        System.out.println("Done");
     }
 }

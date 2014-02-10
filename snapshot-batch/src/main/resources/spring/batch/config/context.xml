@@ -4,6 +4,10 @@
 	http://www.springframework.org/schema/beans
 	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
+
+  <bean id="jobListener"
+        class="org.duracloud.snapshot.spring.batch.SnapshotExecutionListener" />
+
   <bean id="blockingQueue" class="java.util.concurrent.LinkedBlockingQueue" />
   <bean id="executor" class="java.util.concurrent.ThreadPoolExecutor">
     <constructor-arg index="0" type="int" value="20"/>

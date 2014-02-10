@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
@@ -67,7 +68,8 @@ public class App {
 
         ApplicationContext context =
             new ClassPathXmlApplicationContext(springConfig);
-
+        JobExecutionListener jobListener =
+            (JobExecutionListener) context.getBean("jobListener");
         JobLauncher jobLauncher = (JobLauncher) context.getBean("jobLauncher");
         JobRepository jobRepository =
             (JobRepository) context.getBean("jobRepository");
@@ -128,6 +130,7 @@ public class App {
         JobBuilderFactory jobBuilderFactory = new JobBuilderFactory(jobRepository);
         JobBuilder jobBuilder = jobBuilderFactory.get("snapshot");
         SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
+        simpleJobBuilder.listener(jobListener);
         Job job = simpleJobBuilder.build();
 
         Map<String, JobParameter> params = new HashMap();
@@ -141,9 +144,6 @@ public class App {
 
         } catch (Exception e) {
             LOGGER.error("Error running job: " + snapshotId, e);
-        } finally {
-            md5Writer.close();
-            sha256Writer.close();
         }
     }
 }

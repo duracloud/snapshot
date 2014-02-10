@@ -15,6 +15,9 @@ import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
 import java.io.BufferedWriter;
@@ -27,7 +30,7 @@ import java.util.Map;
  * @author Erik Paulsson
  *         Date: 2/7/14
  */
-public class SpaceItemWriter implements ItemWriter<ContentItem> {
+public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionListener {
 
     private static final Logger LOGGER =
         LoggerFactory.getLogger(SpaceItemWriter.class);
@@ -83,5 +86,20 @@ public class SpaceItemWriter implements ItemWriter<ContentItem> {
             }
 
         }
+    }
+
+    public ExitStatus afterStep(StepExecution stepExecution) {
+        LOGGER.debug("Step complete with status: {}", stepExecution.getExitStatus());
+        try {
+            md5Witer.close();
+            sha256Writer.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing manifest BufferedWriter: ", ioe);
+        }
+        return stepExecution.getExitStatus();
+    }
+
+    public void beforeStep(StepExecution stepExecution) {
+
     }
 }

@@ -10,8 +10,14 @@
 
   <description>A java web application that exposes a rest interface to Snapshot</description>
   <properties>
-    <jetty.port>8888</jetty.port>
+    <!-- Specify alternate tomcat port when running mvn tomcat:run or run-war 
+      by adding -Dmaven.tomcat.port property The tomcat plugin configuration -> 
+      port settings does not appear to work. http://stackoverflow.com/questions/646649/alternate-port-for-tomcat-not-8080-when-starting-with-maven -->
+
+    <!-- this tomcat port is for deploying on a already running tomcat server -->
+    <tomcat.port>8080</tomcat.port>
     <slf4j.version>1.7.5</slf4j.version>
+    <jersey.version>2.5.1</jersey.version>
     <springframework.version>3.2.3.RELEASE</springframework.version>
     <unitTests>**/*Test.class</unitTests>
     <integrationTests>**/Test*.class</integrationTests>
@@ -77,65 +83,9 @@
         <enabled>false</enabled>
       </snapshots>
     </repository>
-
-    <repository>
-      <id>maven-repository.dev.java.net</id>
-      <name>Java.net Maven 1 Repository (legacy)</name>
-      <url>http://download.java.net/maven/1</url>
-      <layout>legacy</layout>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>com.springsource.repository.release</id>
-      <name>SpringSource Enterprise Repository - SpringSource Releases</name>
-      <url>http://repo.springsource.org/release</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>com.springsource.repository.bundles.release</id>
-      <name>SpringSource Enterprise Bundle Repository - SpringSource Bundle Releases</name>
-      <url>http://repository.springsource.com/maven/bundles/release</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>com.springsource.repository.bundles.external</id>
-      <name>SpringSource Enterprise Bundle Repository - External Bundle Releases</name>
-      <url>http://repository.springsource.com/maven/bundles/external</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>http://repository.codehaus.org/</id>
-      <name>mortbay</name>
-      <url>http://repository.codehaus.org/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>Hibernate Repository</id>
-      <url>https://repository.jboss.org/nexus/content/repositories/public</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
   </repositories>
   <build>
-  
-      <resources>
+    <resources>
       <resource>
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
@@ -146,10 +96,17 @@
         <directory>src/test/resources</directory>
         <filtering>true</filtering>
       </testResource>
+      <!-- This test resource configutation is necessary for the jersey test 
+        framework to work properly. -->
+      <testResource>
+        <directory>src/main/webapp/WEB-INF</directory>
+        <includes>
+          <include>applicationContext.xml</include>
+        </includes>
+      </testResource>
     </testResources>
-    
-    <plugins>
 
+    <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -160,82 +117,12 @@
         </configuration>
       </plugin>
 
-      <plugin>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>jetty-maven-plugin</artifactId>
-        <configuration>
-          <scanIntervalSeconds>10</scanIntervalSeconds>
-          <systemProperties>
-            <systemProperty>
-              <name>jetty.port</name>
-              <value>${jetty.port}</value>
-            </systemProperty>
-            <systemProperty>
-              <name>log.level</name>
-              <value>${log.level}</value>
-            </systemProperty>
-          </systemProperties>
-          <webApp>
-            <contextPath>/${project.artifactId}</contextPath>
-          </webApp>
-          <webAppConfig>
-            <unpackOverlays>true</unpackOverlays>
-          </webAppConfig>
-          <stopKey>foo</stopKey>
-          <stopPort>9999</stopPort>
-        </configuration>
-        <executions>
-          <execution>
-            <id>start-jetty</id>
-            <phase>pre-integration-test</phase>
-            <goals>
-              <goal>start</goal>
-            </goals>
-            <configuration>
-              <skip>${skipITs}</skip>
-              <scanIntervalSeconds>0</scanIntervalSeconds>
-              <daemon>true</daemon>
-              <systemProperties>
-                <systemProperty>
-                  <name>jetty.port</name>
-                  <value>${jetty.port}</value>
-                </systemProperty>
-              </systemProperties>
-            </configuration>
-          </execution>
-          <execution>
-            <id>stop-jetty</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>stop</goal>
-            </goals>
-            <configuration>
-              <skip>${skipITs}</skip>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <!-- 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>buildnumber-maven-plugin</artifactId>
-        <version>1.1</version>
-        <executions>
-          <execution>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>create</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <doCheck>false</doCheck>
-          <doUpdate>false</doUpdate>
-          <shortRevisionLength>5</shortRevisionLength>
-        </configuration>
-      </plugin>
-       -->
-      
+      <!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>buildnumber-maven-plugin</artifactId> 
+        <version>1.1</version> <executions> <execution> <phase>generate-resources</phase> 
+        <goals> <goal>create</goal> </goals> </execution> </executions> <configuration> 
+        <doCheck>false</doCheck> <doUpdate>false</doUpdate> <shortRevisionLength>5</shortRevisionLength> 
+        </configuration> </plugin> -->
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
@@ -252,24 +139,77 @@
       </plugin>
       <plugin>
         <groupId>org.apache.tomcat.maven</groupId>
-        <artifactId>tomcat6-maven-plugin</artifactId>
-        <version>2.0</version>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <executions>
+          <execution>
+            <id>tomcat-deploy</id>
+            <phase>install</phase>
+            <goals>
+              <goal>deploy-only</goal>
+            </goals>
+            <configuration>
+              <server>tomcat-server</server>
+              <url>
+                http://localhost:${tomcat.port}/manager</url>
+              <update>true</update>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <systemProperties />
-          <excludes>
-            <!-- <exclude>${integrationTests}</exclude> -->
-            <exclude>${instrumentedTests}</exclude>
-            <exclude>${innerClasses}</exclude>
-          </excludes>
-          <includes>
-            <include>${unitTests}</include>
-            <include>${integrationTests}</include>
-          </includes>
         </configuration>
+        <executions>
+          <execution>
+            <id>test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <systemProperties />
+              <excludes>
+                <exclude>${integrationTests}</exclude>
+                <exclude>${instrumentedTests}</exclude>
+                <exclude>${innerClasses}</exclude>
+              </excludes>
+              <includes>
+                <include>${unitTests}</include>
+              </includes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>integrationtest</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <excludes>
+                <exclude>${unitTests}</exclude>
+                <exclude>${instrumentedTests}</exclude>
+                <exclude>${innerClasses}</exclude>
+              </excludes>
+              <includes>
+                <include>${integrationTests}</include>
+              </includes>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- This execution 'default-test' overrides the built-in default 
+              execution for the test phase. Thus unit tests aren't run when you running 
+              integration tests. It comes in handy when trying to debug a single integration 
+              test as you only need to attach your debugger once. -->
+            <id>default-test</id>
+            <configuration>
+              <skipTests>true</skipTests>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -279,7 +219,7 @@
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>3.1.0</version>
-        <scope>compile</scope>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -320,13 +260,13 @@
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
         <artifactId>jersey-spring3</artifactId>
-        <version>2.5.1</version>
+        <version>${jersey.version}</version>
       </dependency>
 
       <dependency>
         <groupId>org.glassfish.jersey.media</groupId>
         <artifactId>jersey-media-json-jackson</artifactId>
-        <version>2.5.1</version>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -434,7 +374,7 @@
       <artifactId>jersey-test-framework-provider-bundle</artifactId>
       <type>pom</type>
       <scope>test</scope>
-      <version>2.5.1</version>
+      <version>${jersey.version}</version>
     </dependency>
   </dependencies>
 </project>

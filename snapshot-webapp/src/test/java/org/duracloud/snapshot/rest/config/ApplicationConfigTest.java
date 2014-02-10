@@ -7,6 +7,10 @@
  */
 package org.duracloud.snapshot.rest.config;
 
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * @author Daniel Bernstein
@@ -14,5 +18,11 @@ package org.duracloud.snapshot.rest.config;
  */
 public class ApplicationConfigTest {
 
+    private static Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
+    
+    @Test
+    public void test(){
+        log.debug("placeholder");
+    }
 
 }

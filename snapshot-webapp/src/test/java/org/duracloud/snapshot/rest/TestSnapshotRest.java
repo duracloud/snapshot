@@ -47,14 +47,14 @@ public class TestSnapshotRest extends JerseyTest {
     @Test
     public void testVersion() {
         WebTarget target = target();
-        String responseMsg = target.path("snapshot/version").request(MediaType.APPLICATION_JSON).get(String.class);
+        String responseMsg = target.path("version").request(MediaType.APPLICATION_JSON).get(String.class);
         assertNotNull(responseMsg);
     }
     
     @Test
     public void testList() {
         WebTarget target = target();
-        List responseMsg = (List)target.path("snapshot/list").request(MediaType.APPLICATION_JSON).get(List.class);
+        List responseMsg = (List)target.path("list").request(MediaType.APPLICATION_JSON).get(List.class);
         assertNotNull(responseMsg);
         assertTrue(responseMsg.size() > 0);
     }
@@ -64,7 +64,7 @@ public class TestSnapshotRest extends JerseyTest {
         WebTarget target = target();
         String id = "1";
         SnapshotStatus responseMsg =
-            target.path("snapshot/" + id)
+            target.path(id)
                   .request(MediaType.APPLICATION_JSON)
                   .get(SnapshotStatus.class);
         assertNotNull(responseMsg);
@@ -81,7 +81,7 @@ public class TestSnapshotRest extends JerseyTest {
         String spaceId = "space";
         String snapshotId = "1234";
         String path =
-            MessageFormat.format("snapshot/{0}/{1}/{2}/{3}/{4}",
+            MessageFormat.format("{0}/{1}/{2}/{3}/{4}",
                                  host,
                                  port,
                                  storeId,

@@ -22,6 +22,6 @@ public class ApplicationConfig {
      * 
      */
     public ApplicationConfig() {
-        log.debug("creating ApplicationConfig instance...");
+        log.info("creating ApplicationConfig instance...");
     }
 }

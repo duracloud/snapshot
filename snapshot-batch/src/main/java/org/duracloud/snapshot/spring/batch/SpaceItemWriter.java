@@ -89,12 +89,17 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionLi
     }
 
     public ExitStatus afterStep(StepExecution stepExecution) {
-        LOGGER.debug("Step complete with status: {}", stepExecution.getExitStatus());
+        LOGGER.debug("Step complete with status: {}",
+                     stepExecution.getExitStatus());
         try {
             md5Witer.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing MD5 manifest BufferedWriter: ", ioe);
+        }
+        try {
             sha256Writer.close();
         } catch (IOException ioe) {
-            LOGGER.error("Error closing manifest BufferedWriter: ", ioe);
+            LOGGER.error("Error closing SHA-256 manifest BufferedWriter: ", ioe);
         }
         return stepExecution.getExitStatus();
     }

@@ -9,6 +9,14 @@
   <name>Snapshot Rest Interface</name>
 
   <description>A java web application that exposes a rest interface to Snapshot</description>
+
+  <parent>
+    <groupId>org.duracloud.snapshot</groupId>
+    <artifactId>snapshot-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
   <properties>
     <!-- Specify alternate tomcat port when running mvn tomcat:run or run-war 
       by adding -Dmaven.tomcat.port property The tomcat plugin configuration -> 
@@ -16,74 +24,9 @@
 
     <!-- this tomcat port is for deploying on a already running tomcat server -->
     <tomcat.port>8080</tomcat.port>
-    <slf4j.version>1.7.5</slf4j.version>
     <jersey.version>2.5.1</jersey.version>
-    <springframework.version>3.2.3.RELEASE</springframework.version>
-    <unitTests>**/*Test.class</unitTests>
-    <integrationTests>**/Test*.class</integrationTests>
-    <instrumentedTests>**/*Test*__*.class</instrumentedTests>
-    <innerClasses>**/*$*</innerClasses>
-    <log.level.default>INFO</log.level.default>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
-  <repositories>
-
-    <repository>
-      <id>duraspace-thirdparty</id>
-      <name>DuraSpace Thirdparty</name>
-      <url>https://m2.duraspace.org/content/repositories/thirdparty</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>duraspace-releases</id>
-      <name>DuraSpace Releases Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>duraspace-snapshots</id>
-      <name>DuraSpace Snapshots Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>central</id>
-      <name>Maven Repository Switchboard</name>
-      <url>http://repo1.maven.org/maven2</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <layout>default</layout>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
   <build>
     <resources>
       <resource>
@@ -105,237 +48,54 @@
         </includes>
       </testResource>
     </testResources>
-
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
-          <encoding>UTF-8</encoding>
-        </configuration>
-      </plugin>
-
-      <!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>buildnumber-maven-plugin</artifactId> 
-        <version>1.1</version> <executions> <execution> <phase>generate-resources</phase> 
-        <goals> <goal>create</goal> </goals> </execution> </executions> <configuration> 
-        <doCheck>false</doCheck> <doUpdate>false</doUpdate> <shortRevisionLength>5</shortRevisionLength> 
-        </configuration> </plugin> -->
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <configuration>
-          <webResources>
-            <resource>
-              <directory>src/main/webapp</directory>
-              <includes>
-              </includes>
-              <filtering>true</filtering>
-            </resource>
-          </webResources>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.tomcat.maven</groupId>
-        <artifactId>tomcat7-maven-plugin</artifactId>
-        <version>2.2</version>
-        <executions>
-          <execution>
-            <id>tomcat-deploy</id>
-            <phase>install</phase>
-            <goals>
-              <goal>deploy-only</goal>
-            </goals>
-            <configuration>
-              <server>tomcat-server</server>
-              <url>
-                http://localhost:${tomcat.port}/manager</url>
-              <update>true</update>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <systemProperties />
-        </configuration>
-        <executions>
-          <execution>
-            <id>test</id>
-            <phase>test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <systemProperties />
-              <excludes>
-                <exclude>${integrationTests}</exclude>
-                <exclude>${instrumentedTests}</exclude>
-                <exclude>${innerClasses}</exclude>
-              </excludes>
-              <includes>
-                <include>${unitTests}</include>
-              </includes>
-            </configuration>
-          </execution>
-          <execution>
-            <id>integrationtest</id>
-            <phase>integration-test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <excludes>
-                <exclude>${unitTests}</exclude>
-                <exclude>${instrumentedTests}</exclude>
-                <exclude>${innerClasses}</exclude>
-              </excludes>
-              <includes>
-                <include>${integrationTests}</include>
-              </includes>
-            </configuration>
-          </execution>
-          <execution>
-            <!-- This execution 'default-test' overrides the built-in default 
-              execution for the test phase. Thus unit tests aren't run when you running 
-              integration tests. It comes in handy when trying to debug a single integration 
-              test as you only need to attach your debugger once. -->
-            <id>default-test</id>
-            <configuration>
-              <skipTests>true</skipTests>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-war-plugin</artifactId>
+      <configuration>
+        <webResources>
+          <resource>
+            <directory>src/main/webapp</directory>
+            <includes>
+            </includes>
+            <filtering>true</filtering>
+          </resource>
+        </webResources>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.tomcat.maven</groupId>
+      <artifactId>tomcat7-maven-plugin</artifactId>
+      <version>2.2</version>
+      <executions>
+        <execution>
+          <id>tomcat-deploy</id>
+          <phase>install</phase>
+          <goals>
+            <goal>deploy-only</goal>
+          </goals>
+          <configuration>
+            <server>tomcat-server</server>
+            <url>
+              http://localhost:${tomcat.port}/manager</url>
+            <update>true</update>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
   </build>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>3.1.0</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-web</artifactId>
-        <version>${springframework.version}</version>
-        <scope>compile</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-core</artifactId>
-        <version>${springframework.version}</version>
-        <scope>compile</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-beans</artifactId>
-        <version>${springframework.version}</version>
-        <scope>compile</scope>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-test</artifactId>
-        <version>${springframework.version}</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.ext</groupId>
-        <artifactId>jersey-spring3</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.glassfish.jersey.media</groupId>
-        <artifactId>jersey-media-json-jackson</artifactId>
-        <version>${jersey.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>1.0.1</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>jcl-over-slf4j</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-
-      <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>log4j-over-slf4j</artifactId>
-        <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <scope>test</scope>
-        <version>4.11</version>
-        <exclusions>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>org.easymock</groupId>
-        <artifactId>easymockclassextension</artifactId>
-        <version>3.0</version>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <dependencies>
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-beans</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
       <artifactId>jersey-spring3</artifactId>
+      <version>${jersey.version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-json-jackson</artifactId>
+      <version>${jersey.version}</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -345,6 +105,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <version>1.0.1</version>
     </dependency>
 
     <dependency>
@@ -362,9 +123,34 @@
     </dependency>
 
     <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+      <version>3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <version>3.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
+      <version>${springframework.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.easymock</groupId>
       <artifactId>easymockclassextension</artifactId>

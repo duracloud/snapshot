@@ -6,21 +6,16 @@
   <artifactId>snapshot</artifactId>
   <packaging>jar</packaging>
   <version>3.0.0-SNAPSHOT</version>
-  <name>Duracloud Snapshot</name>
+  <name>Duracloud Snapshot Batch</name>
 
-  <organization>
-    <name>DuraSpace</name>
-    <url>http://www.duraspace.org</url>
-  </organization>
-
-  <inceptionYear>2014</inceptionYear>
-
-  <prerequisites>
-    <maven>3.0.0</maven>
-  </prerequisites>
+  <parent>
+    <groupId>org.duracloud.snapshot</groupId>
+    <artifactId>snapshot-parent</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
 
   <properties>
-    <spring.version>4.0.0.RELEASE</spring.version>
     <spring.batch.version>2.2.2.RELEASE</spring.batch.version>
     <mysql.driver.version>5.1.28</mysql.driver.version>
   </properties>
@@ -29,21 +24,20 @@
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>retrievaltool</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
+      <version>${duracloud.version}</version>
     </dependency>
 
     <!-- Spring Core -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
-      <version>${spring.version}</version>
     </dependency>
  
     <!-- Spring jdbc, for database -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-jdbc</artifactId>
-      <version>${spring.version}</version>
+      <version>${springframework.version}</version>
     </dependency>
  
     <!-- Spring Batch dependencies -->
@@ -52,11 +46,6 @@
       <artifactId>spring-batch-core</artifactId>
       <version>${spring.batch.version}</version>
     </dependency>
-    <!-- <dependency>
-      <groupId>org.springframework.batch</groupId>
-      <artifactId>spring-batch-infrastructure</artifactId>
-      <version>${spring.batch.version}</version>
-    </dependency> -->
  
     <!-- MySQL database driver -->
     <dependency>
@@ -68,8 +57,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.6.0</version>
     </dependency>
   </dependencies>
-  
 </project>

@@ -14,11 +14,8 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.spring.batch.SpaceItemProcessor;
 import org.duracloud.snapshot.spring.batch.SpaceItemReader;
 import org.duracloud.snapshot.spring.batch.SpaceItemWriter;
-import org.duracloud.snapshot.spring.batch.driver.ConfigParser;
-import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -32,7 +29,6 @@ import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.ApplicationContext;
@@ -40,7 +36,12 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -89,21 +90,35 @@ public class App {
             contentStore, spaces, false);
 
         ItemReader itemReader = new SpaceItemReader(retrievalSource);
-        ItemWriter itemWriter = new SpaceItemWriter();
 
         File contentDir = config.getContentDir();
         File workDir = config.getWorkDir();
         OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
-        ItemProcessor itemProcessor = new SpaceItemProcessor(retrievalSource,
-                                                             contentDir,
-                                                             outputWriter);
 
-        SimpleStepFactoryBean stepFactory = new SimpleStepFactoryBean<ContentItem, File>();
+        Path md5Path =
+            FileSystems.getDefault().getPath(
+                config.getContentDir().getAbsolutePath(), "manifest-md5.txt");
+        BufferedWriter md5Writer =
+            Files.newBufferedWriter(md5Path,
+                                    StandardCharsets.UTF_8);
+        Path sha256Path =
+            FileSystems.getDefault().getPath(
+                config.getContentDir().getAbsolutePath(), "manifest-sha256.txt");
+        BufferedWriter sha256Writer =
+            Files.newBufferedWriter(sha256Path,
+                                    StandardCharsets.UTF_8);
+        ItemWriter itemWriter = new SpaceItemWriter(retrievalSource,
+                                                     contentDir,
+                                                     outputWriter,
+                                                     md5Writer,
+                                                     sha256Writer);
+
+        SimpleStepFactoryBean stepFactory =
+            new SimpleStepFactoryBean<ContentItem, File>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("step1");
         stepFactory.setItemReader(itemReader);
-        stepFactory.setItemProcessor(itemProcessor);
         stepFactory.setItemWriter(itemWriter);
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
@@ -126,6 +141,9 @@ public class App {
 
         } catch (Exception e) {
             LOGGER.error("Error running job: " + snapshotId, e);
+        } finally {
+            md5Writer.close();
+            sha256Writer.close();
         }
     }
 }

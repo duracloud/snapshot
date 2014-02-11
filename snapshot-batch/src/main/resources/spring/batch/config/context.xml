@@ -4,9 +4,18 @@
 	http://www.springframework.org/schema/beans
 	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
 
+  <bean id="notificationManager"
+        class="org.duracloud.common.notification.NotificationManager">
+    <constructor-arg ref="emailNotifier"/>
+  </bean>
+
+  <bean id="emailNotifier"
+        class="org.duracloud.common.notification.EmailNotifier"/>
 
   <bean id="jobListener"
-        class="org.duracloud.snapshot.spring.batch.SnapshotExecutionListener" />
+        class="org.duracloud.snapshot.spring.batch.SnapshotExecutionListener">
+    <constructor-arg ref="notificationManager"/>
+  </bean>
 
   <bean id="blockingQueue" class="java.util.concurrent.LinkedBlockingQueue" />
   <bean id="executor" class="java.util.concurrent.ThreadPoolExecutor">

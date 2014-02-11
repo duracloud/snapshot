@@ -5,7 +5,7 @@
   <groupId>org.duracloud</groupId>
   <artifactId>snapshot</artifactId>
   <packaging>jar</packaging>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>1.0.0-SNAPSHOT</version>
   <name>Duracloud Snapshot Batch</name>
 
   <parent>
@@ -24,6 +24,18 @@
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>retrievaltool</artifactId>
+      <version>${duracloud.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.duracloud</groupId>
+      <artifactId>common-notification</artifactId>
       <version>${duracloud.version}</version>
     </dependency>
 
@@ -52,11 +64,6 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>${mysql.driver.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
     </dependency>
   </dependencies>
 </project>

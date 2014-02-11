@@ -7,6 +7,8 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
+import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.common.notification.NotificationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -22,12 +24,20 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     private static final Logger LOGGER =
         LoggerFactory.getLogger(SnapshotExecutionListener.class);
 
+    private NotificationManager notificationManager;
+
+    public SnapshotExecutionListener(NotificationManager notificationManager) {
+        this.notificationManager = notificationManager;
+    }
+
     public void beforeJob(JobExecution jobExecution) {
 
     }
 
     public void afterJob(JobExecution jobExecution) {
-        LOGGER.debug("Job complete with status: {}", jobExecution.getStatus());
+        String snapshotId = jobExecution.getJobParameters().getString("id");
+        LOGGER.debug("Completed snapshot: {} with status: {}",
+                     snapshotId, jobExecution.getStatus());
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
             // Email Chronopolis/DPN AND DuraSpace team about successful snapshot
 
@@ -35,5 +45,12 @@ public class SnapshotExecutionListener implements JobExecutionListener {
             // Email DuraSpace team about failed snapshot
 
         }
+    }
+
+    private void sendEmail(String subject, String msg, String... destinations) {
+        notificationManager.sendNotification(NotificationType.EMAIL,
+                                             subject,
+                                             msg.toString(),
+                                             destinations);
     }
 }

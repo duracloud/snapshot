@@ -10,4 +10,10 @@
   <context:component-scan base-package="org.duracloud.snapshot">
 
   </context:component-scan>
+  
+ <!-- 
+  <import resource="classpath:spring/batch/config/context.xml"/>
+  <import resource="classpath:spring/batch/config/database.xml"/>
+ --> 
+ 
 </beans>

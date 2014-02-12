@@ -9,11 +9,11 @@ package org.duracloud.snapshot.rest;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.text.MessageFormat;
-import java.util.List;
 
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
@@ -30,6 +30,18 @@ import org.junit.Test;
  */
 public class TestSnapshotRest extends JerseyTest {
 
+    private WebTarget target;
+    /* (non-Javadoc)
+     * @see org.glassfish.jersey.test.JerseyTest#setUp()
+     */
+    @Override
+    public void setUp() throws Exception {
+        //TODO initialization needs to go here.
+        super.setUp();
+        target = target();
+
+    }
+    
     @Override
     protected ResourceConfig configure() {
         enable(TestProperties.LOG_TRAFFIC);
@@ -46,22 +58,33 @@ public class TestSnapshotRest extends JerseyTest {
 
     @Test
     public void testVersion() {
-        WebTarget target = target();
-        String responseMsg = target.path("version").request(MediaType.APPLICATION_JSON).get(String.class);
-        assertNotNull(responseMsg);
-    }
-    
-    @Test
-    public void testList() {
-        WebTarget target = target();
-        List responseMsg = (List)target.path("list").request(MediaType.APPLICATION_JSON).get(List.class);
-        assertNotNull(responseMsg);
-        assertTrue(responseMsg.size() > 0);
+        Builder b =  target.path("version").request(MediaType.APPLICATION_JSON);
+        String response = b.get(String.class);
+        assertNotNull(response);
+        
     }
 
     @Test
+    public void testInit() {
+        Entity<InitParams> entity = Entity.entity(new InitParams(), MediaType.APPLICATION_JSON);
+        ResponseDetails details = target.path("init").request(MediaType.APPLICATION_JSON).post(entity, ResponseDetails.class);
+        assertNotNull(details);
+    }
+
+    /*
+    @Test
+    public void testList() {
+        List responseMsg =
+            (List) target.path("list")
+                         .request(MediaType.APPLICATION_JSON)
+                         .get(List.class);
+        assertNotNull(responseMsg);
+        assertTrue(responseMsg.size() > 0);
+    }
+    */
+
+    @Test
     public void testGet() {
-        WebTarget target = target();
         String id = "1";
         SnapshotStatus responseMsg =
             target.path(id)
@@ -74,7 +97,6 @@ public class TestSnapshotRest extends JerseyTest {
 
     @Test
     public void testCreate() {
-        WebTarget target = target();
         String host = "host";
         String port = "443";
         String storeId = "1";

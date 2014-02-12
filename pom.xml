@@ -35,6 +35,7 @@
     <innerClasses>**/*$*</innerClasses>
     <log.level.default>INFO</log.level.default>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <skipITs>true</skipITs>
   </properties>
    
   <repositories>
@@ -138,6 +139,7 @@
               <goal>test</goal>
             </goals>
             <configuration>
+              <skip>${skipTests}</skip>
               <systemProperties />
               <excludes>
                 <exclude>${integrationTests}</exclude>
@@ -156,6 +158,7 @@
               <goal>test</goal>
             </goals>
             <configuration>
+              <skip>${skipITs}</skip>
               <excludes>
                 <exclude>${unitTests}</exclude>
                 <exclude>${instrumentedTests}</exclude>

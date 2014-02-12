@@ -7,11 +7,13 @@
  */
 package org.duracloud.snapshot.rest;
 
-import org.springframework.stereotype.Component;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -22,13 +24,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+
+import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -39,6 +41,8 @@ import java.util.Properties;
 @Component
 @Path("/")
 public class SnapshotResource {
+    
+    private static Logger log = LoggerFactory.getLogger(SnapshotResource.class);
 
     @Context
     HttpServletRequest request;
@@ -49,7 +53,27 @@ public class SnapshotResource {
     @Context
     UriInfo uriInfo;
 
-
+    private SnapshotJobManager jobManager;
+    
+    @Autowired
+    public SnapshotResource(SnapshotJobManager jobManager){
+        this.jobManager = jobManager;
+    }
+    
+    
+    @Path("init")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response init(InitParams initParams) {
+        try {
+            return Response.accepted().entity(new ResponseDetails("success!")).build();
+        } catch (Exception e) {
+            return Response.serverError()
+                           .entity(new ResponseDetails("failure!"+e.getMessage()))
+                           .build();
+        }
+    }
     /**
      * Returns a list of snapshots.
      * 
@@ -66,6 +90,7 @@ public class SnapshotResource {
             String version = props.get("version").toString();
             return Response.ok().entity("{version:'"+version+"'}").build();
         } catch (IOException e) {
+            //should never happen
             throw new RuntimeException(e);
         }
     }
@@ -75,26 +100,24 @@ public class SnapshotResource {
      * 
      * @return
      */
+    /*
     @Path("list")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
         return Response.ok().entity(getSnapshotList()).build();
     }
+    */
 
+    
     /**
      * @return
      */
-    private List<Map<String, String>> getSnapshotList() {
-        List<Map<String, String>> list = new LinkedList<>();
-
-        for (int i = 0; i < 10; i++) {
-            Map<String, String> map = new HashMap<>();
-            map.put("id", i + "");
-            list.add(map);
-        }
-        return list;
+    /*
+    private List<SnapshotSummary> getSnapshotList() {
+        return this.jobManager.getSnapshotList();
     }
+    */
 
     @Path("{snapshotId}")
     @GET
@@ -107,22 +130,17 @@ public class SnapshotResource {
      */
     public Response getStatus(@PathParam("snapshotId") String snapshotId) {
         try {
-            SnapshotStatus status = getSnapshotStatus(snapshotId);
-            return Response.ok(status).build();
-
-        } catch (NotFoundException ex) {
-            return Response.status(Status.NOT_FOUND).build();
+            SnapshotStatus status = this.jobManager.getStatus(snapshotId);
+            return Response.ok().entity(status).build();
+        } catch (SnapshotNotFoundException ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.status(HttpStatus.SC_NOT_FOUND)
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
         }
     }
 
-    /**
-     * @param snapshotId
-     * @return
-     */
-    private SnapshotStatus getSnapshotStatus(String snapshotId)
-        throws NotFoundException {
-        return new SnapshotStatus(snapshotId, "running");
-    }
+
 
     @Path("{id}/cancel")
     @POST
@@ -139,35 +157,24 @@ public class SnapshotResource {
                            @PathParam("storeId") String storeId,
                            @PathParam("spaceId") String spaceId,
                            @PathParam("snapshotId") String snapshotId) {
-        if (alreadyExists(snapshotId)) {
-            return Response.serverError()
-                           .entity("Snapshot "
-                               + snapshotId + " already exists.")
-                           .build();
-        }
+
+        SnapshotConfig config = new SnapshotConfig();
+        config.setHost(host);
+        config.setPort(Integer.parseInt(port));
+        config.setStoreId(storeId);
+        config.setSpace(spaceId);
+        config.setSnapshotId(snapshotId);
 
         try {
+            SnapshotStatus status = this.jobManager.executeSnapshot(config);
             return Response.created(null)
-                           .entity(new SnapshotStatus(snapshotId, "new"))
-                           .build();
-        }catch (Exception e) {
-            e.printStackTrace();
-            return Response.serverError().entity(e).build();
+                .entity(status)
+                .build();
+        }catch(SnapshotException ex){
+            log.error(ex.getMessage(),ex);
+            return Response.serverError()
+                .entity(new ResponseDetails(ex.getMessage()))
+                .build();
         }
-    }
-
-    /**
-     * @param snapshotId
-     * @return
-     */
-    private boolean alreadyExists(String snapshotId) {
-        try {
-            //getSnapshotStatus(snapshotId);
-            //return true;
-        } catch (NotFoundException e) {
-        }
-
-        return false;
-
     }
 }

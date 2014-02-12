@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * All java-based config definitions live in this class. 
  * @author Daniel Bernstein
  *         Date: Feb 4, 2014
  */
@@ -24,4 +25,7 @@ public class ApplicationConfig {
     public ApplicationConfig() {
         log.info("creating ApplicationConfig instance...");
     }
+    
+    
+    
 }

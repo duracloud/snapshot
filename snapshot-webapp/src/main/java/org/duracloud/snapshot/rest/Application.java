@@ -12,6 +12,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
 
 /**
+ * The entry point for the jax-rs application.
+ * This class is referenced in the web.xml.
  * @author Daniel Bernstein
  *         Date: Feb 4, 2014
  */

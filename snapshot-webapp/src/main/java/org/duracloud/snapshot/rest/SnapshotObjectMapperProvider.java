@@ -12,9 +12,11 @@ import javax.ws.rs.ext.Provider;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
+
 /**
- * @author Daniel Bernstein
- *         Date: Feb 5, 2014
+ * A simple object mapper provider to support jackson json serialization.
+ * 
+ * @author Daniel Bernstein Date: Feb 5, 2014
  */
 @Provider
 public class SnapshotObjectMapperProvider implements ContextResolver<ObjectMapper> {

@@ -7,7 +7,8 @@
  */
 package org.duracloud.snapshot.rest;
 
-import org.junit.After;
+import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
+import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,31 +16,37 @@ import org.junit.Test;
  * @author Daniel Bernstein
  *         Date: Feb 4, 2014
  */
-public class SnapshotResourceTest  {
-
+public class SnapshotResourceTest extends EasyMockTestBase {
+    
+    private SnapshotJobManager manager;
+    private SnapshotResource resource;
+    
     @Before
     public void setup() {
-
-    }
-
-    @After
-    public void teardown() {
-
-    }
-    
-    
-    @Test
-    public void testGet() {
-        //TODO write unit test
+        manager = createMock(SnapshotJobManager.class);
+        resource = new SnapshotResource(manager);
     }
 
     @Test
-    public void testList() {
-        //TODO write unit test
+    public void testGetStatusSuccess() throws SnapshotNotFoundException {
+        EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
+                .andReturn(new SnapshotStatus("snapshotId", "testStatus"));
+        replay();
+        resource.getStatus("snapshotId");
     }
 
     @Test
-    public void testCreate() {
-        //TODO write unit test
+    public void testGetStatusNotFound() throws SnapshotNotFoundException {
+        EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
+                .andThrow(new SnapshotNotFoundException("test"));
+        replay();
+        resource.getStatus("snapshotId");
+    }
+
+    @Test
+    public void testCreate() throws SnapshotException {
+        replay();
+        EasyMock.expect(manager.executeSnapshot(EasyMock.isA(SnapshotConfig.class))).andReturn(new SnapshotStatus("test","test"));
+        resource.create("host", "444", "storeId", "spaceId", "snapshotId");
     }
 }

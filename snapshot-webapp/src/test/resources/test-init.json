@@ -1,0 +1,9 @@
+{
+     originatorEmailAddress: "user@chronopolis.org",
+     adminEmailAddresses: ["erik"],
+     awsAccessKey: "key",
+     awsSecretKey: "password",
+     databaseUser: "dbuser",
+     databasePassword: "dbpassword",
+     databaseURL: "dburl"
+}

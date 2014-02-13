@@ -28,7 +28,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     }
 
     @Test
-    public void testGetStatusSuccess() throws SnapshotNotFoundException {
+    public void testGetStatusSuccess() throws SnapshotException {
         EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
                 .andReturn(new SnapshotStatus("snapshotId", "testStatus"));
         replay();
@@ -36,7 +36,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     }
 
     @Test
-    public void testGetStatusNotFound() throws SnapshotNotFoundException {
+    public void testGetStatusNotFound() throws SnapshotException {
         EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
                 .andThrow(new SnapshotNotFoundException("test"));
         replay();

@@ -10,6 +10,7 @@ package org.duracloud.snapshot.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.InputStream;
 import java.text.MessageFormat;
 
 import javax.ws.rs.client.Entity;
@@ -17,6 +18,7 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -36,10 +38,22 @@ public class TestSnapshotRest extends JerseyTest {
      */
     @Override
     public void setUp() throws Exception {
-        //TODO initialization needs to go here.
         super.setUp();
+
+        InputStream is = getClass().getResourceAsStream("test-init.json");
+        ObjectMapper mapper = new ObjectMapper();
+        InitParams params = mapper.readValue(is, InitParams.class);
+        Entity<InitParams> entity = Entity.entity(params, MediaType.APPLICATION_JSON);
+        ResponseDetails details =
+            target.path("init")
+                  .request(MediaType.APPLICATION_JSON)
+                  .post(entity, ResponseDetails.class);
+        assertNotNull(details);
+
         target = target();
 
+        
+        
     }
     
     @Override
@@ -64,12 +78,6 @@ public class TestSnapshotRest extends JerseyTest {
         
     }
 
-    @Test
-    public void testInit() {
-        Entity<InitParams> entity = Entity.entity(new InitParams(), MediaType.APPLICATION_JSON);
-        ResponseDetails details = target.path("init").request(MediaType.APPLICATION_JSON).post(entity, ResponseDetails.class);
-        assertNotNull(details);
-    }
 
     /*
     @Test

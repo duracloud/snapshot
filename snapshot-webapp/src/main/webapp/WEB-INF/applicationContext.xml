@@ -11,9 +11,7 @@
 
   </context:component-scan>
   
- <!-- 
   <import resource="classpath:spring/batch/config/context.xml"/>
   <import resource="classpath:spring/batch/config/database.xml"/>
- --> 
  
 </beans>

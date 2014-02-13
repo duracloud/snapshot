@@ -1,9 +1,9 @@
 {
-     originatorEmailAddress: "user@chronopolis.org",
-     adminEmailAddresses: ["erik"],
-     awsAccessKey: "key",
-     awsSecretKey: "password",
-     databaseUser: "dbuser",
-     databasePassword: "dbpassword",
-     databaseURL: "dburl"
+     originatorEmailAddress: "${snapshot.originatorEmailAddress}",
+     adminEmailAddresses: ["${snapshot.adminEmailAddress}"],
+     awsAccessKey: "${aws.accessKey}",
+     awsSecretKey: "${aws.secretKey}",
+     databaseUser: "${snapshot.database.username}",
+     databasePassword: "${snapshot.database.password}",
+     databaseURL: "${snapshot.database.url}"
 }

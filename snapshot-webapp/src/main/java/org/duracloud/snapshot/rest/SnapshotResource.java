@@ -137,6 +137,11 @@ public class SnapshotResource {
             return Response.status(HttpStatus.SC_NOT_FOUND)
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();
+        } catch (SnapshotException ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
         }
     }
 

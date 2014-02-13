@@ -18,6 +18,7 @@ import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
  */
 public interface SnapshotJobManager {
 
+    void initialize(InitParams params);
     /**
      * @param config
      * @return
@@ -26,10 +27,15 @@ public interface SnapshotJobManager {
         throws SnapshotException;
 
     /**
+     * 
      * @param snapshotId
      * @return
+     * @throws SnapshotNotFoundException
+     * @throws SnapshotException
      */
-    SnapshotStatus getStatus(String snapshotId) throws SnapshotNotFoundException;
+    SnapshotStatus getStatus(String snapshotId)
+        throws SnapshotNotFoundException,
+            SnapshotException;
 
     /**
      * @return

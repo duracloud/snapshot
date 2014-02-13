@@ -17,6 +17,7 @@ import org.duracloud.retrieval.source.RetrievalSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
@@ -32,7 +33,9 @@ import java.util.Set;
  * @author Erik Paulsson
  *         Date: 2/7/14
  */
-public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionListener {
+public class SpaceItemWriter implements ItemWriter<ContentItem>,
+                                        StepExecutionListener,
+                                        ItemWriteListener<ContentItem> {
 
     private static final Logger LOGGER =
         LoggerFactory.getLogger(SpaceItemWriter.class);
@@ -62,6 +65,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionLi
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
     }
 
+    @Override
     public void write(List<? extends ContentItem> items) throws IOException {
         for(ContentItem contentItem: items) {
             LOGGER.debug("writing: {}", contentItem.getContentId());
@@ -159,6 +163,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionLi
         }
     }
 
+    @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         LOGGER.debug("Step complete with status: {}",
                      stepExecution.getExitStatus());
@@ -192,6 +197,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionLi
         return stepExecution.getExitStatus();
     }
 
+    @Override
     public void beforeStep(StepExecution stepExecution) {
         try {
             synchronized (propsWriter) {
@@ -201,5 +207,28 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>, StepExecutionLi
             LOGGER.error("Error writing start of content property " +
                              "manifest: ", ioe);
         }
+    }
+
+    // Method defined in ItemWriteListener interface
+    @Override
+    public void onWriteError(Exception e, List<? extends ContentItem> items) {
+        StringBuffer sb = new StringBuffer(50);
+        for(ContentItem item: items) {
+            sb.append(item.getContentId() + ", ");
+        }
+        LOGGER.error("Error writing item(s): " + sb.toString(), e);
+        // TODO: write error entry to database?
+    }
+
+    // Method defined in ItemWriteListener interface
+    @Override
+    public void beforeWrite(List<? extends ContentItem> items) {
+        // no-op impl
+    }
+
+    // Method defined in ItemWriteListener interface
+    @Override
+    public void afterWrite(List<? extends ContentItem> items) {
+        // no-op impl
     }
 }

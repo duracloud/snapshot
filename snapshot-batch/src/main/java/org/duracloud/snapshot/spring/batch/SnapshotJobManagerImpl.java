@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.rest;
+package org.duracloud.snapshot.spring.batch;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
@@ -25,10 +27,6 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
-import org.duracloud.snapshot.spring.batch.SpaceItemReader;
-import org.duracloud.snapshot.spring.batch.SpaceItemWriter;
-import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,19 +49,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
  * Uses spring-batch componentry.
+ * 
  * @author Daniel Bernstein Date: Feb 11, 2014
  */
 
-@Component
-public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationContextAware {
-    private static Logger log =
+public class SnapshotJobManagerImpl
+    implements SnapshotJobManager, ApplicationContextAware {
+    /**
+     * 
+     */
+    private static final String SNAPSHOT_JOB_NAME = "snapshot";
+    private static final Logger log =
         LoggerFactory.getLogger(SnapshotJobManagerImpl.class);
     private JobExecutionListener jobListener;
     private JobLauncher jobLauncher;
@@ -71,68 +72,64 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
     private ApplicationContext context;
-    
+    private ExecutorService executor;
+
     @Autowired
-    public SnapshotJobManagerImpl(JobExecutionListener jobListener,
-                                  PlatformTransactionManager transactionManager, 
-                                  TaskExecutor taskExecutor) {
+    public SnapshotJobManagerImpl(
+        JobExecutionListener jobListener,
+        PlatformTransactionManager transactionManager, TaskExecutor taskExecutor) {
 
         super();
         this.jobListener = jobListener;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
+        this.executor = Executors.newFixedThreadPool(10);
     }
-    
+
     /**
-     * @param jobLauncher the jobLauncher to set
+     * @param jobLauncher
+     *            the jobLauncher to set
      */
     public void setJobLauncher(JobLauncher jobLauncher) {
         this.jobLauncher = jobLauncher;
     }
-    
+
     /**
-     * @param jobRepository the jobRepository to set
+     * @param jobRepository
+     *            the jobRepository to set
      */
     protected void setJobRepository(JobRepository jobRepository) {
         this.jobRepository = jobRepository;
     }
-    
-    /* (non-Javadoc)
-     * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.springframework.context.ApplicationContextAware#setApplicationContext
+     * (org.springframework.context.ApplicationContext)
      */
     @Override
     public void setApplicationContext(ApplicationContext context)
         throws BeansException {
         this.context = context;
     }
-    
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.rest.SnapshotJobManager#initialize(org.duracloud.snapshot.rest.InitParams)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.duracloud.snapshot.rest.SnapshotJobManager#initialize(org.duracloud
+     * .snapshot.rest.InitParams)
      */
     @Override
-    public void initialize(InitParams params) {
-        if(isInitialized()){
+    public void init() {
+        if (isInitialized()) {
             log.warn("Already initialized. Ignorning");
             return;
         }
 
-        DatabaseConfig dbConfig = new DatabaseConfig();
-        dbConfig.setUrl(params.getDatabaseURL());
-        dbConfig.setUsername(params.getDatabaseUser());
-        dbConfig.setPassword(params.getDatabasePassword());
-        
-        DriverManagerDataSource dataSource = (DriverManagerDataSource)context.getBean("dataSource");
-        dataSource.setUsername(dbConfig.getUsername());
-        dataSource.setPassword(dbConfig.getPassword());
-        dataSource.setUrl(dbConfig.getUrl());
-        
-        //initialize database
-        DatabaseInitializer databaseInitializer =
-            (DatabaseInitializer) context.getBean("databaseInitializer");
-        databaseInitializer.init();
-
-        this.jobRepository =
-            (JobRepository) context.getBean("jobRepository");
+        this.jobRepository = (JobRepository) context.getBean("jobRepository");
 
         this.jobLauncher = (JobLauncher) context.getBean("jobLauncher");
     }
@@ -143,6 +140,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
     private boolean isInitialized() {
         return this.jobLauncher != null;
     }
+
     /*
      * (non-Javadoc)
      * 
@@ -162,13 +160,63 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
      * (non-Javadoc)
      * 
      * @see
-     * org.duracloud.snapshot.rest.SnapshotJobManager#createJobExecution(org
+     * org.duracloud.snapshot.rest.SnapshotJobManager#executeSnapshotAsync(org
      * .duracloud.snapshot.spring.batch.driver.SnapshotConfig)
      */
     @Override
-    public SnapshotStatus executeSnapshot(SnapshotConfig config)
+    public SnapshotStatus executeSnapshotAsync(final SnapshotConfig config)
         throws SnapshotException {
         checkInitialized();
+        
+        final Job job = buildJob(config);
+
+        this.executor.execute(new Runnable(){
+            /* (non-Javadoc)
+             * @see java.lang.Runnable#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    executeJob(job,config);
+                } catch (SnapshotException e) {
+                    log.error(e.getMessage(),e);
+                }
+            }
+        });
+
+        return new SnapshotStatus(config.getSnapshotId(), "queued");
+    }
+
+    /**
+     * @param config
+     * @return
+     * @throws SnapshotException
+     */
+    private SnapshotStatus executeJob(Job job, SnapshotConfig config)
+        throws SnapshotException {
+
+        String snapshotId = config.getSnapshotId();
+        
+        JobParameters params =
+            createJobParameters(snapshotId, config.getContentDir()
+                                                  .getAbsolutePath());
+        try {
+            JobExecution execution = jobLauncher.run(job, params);
+            return createSnapshotStatus(snapshotId, execution);
+        } catch (Exception e) {
+            String message =
+                "Error running job: " + snapshotId + ": " + e.getMessage();
+            log.error(message, e);
+            throw new SnapshotException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * @param config
+     * @return
+     * @throws SnapshotException
+     */
+    private Job buildJob(SnapshotConfig config) throws SnapshotException {
         Job job;
         try {
 
@@ -188,7 +236,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
                                                       spaces,
                                                       false);
 
-            ItemReader<ContentItem> itemReader = new SpaceItemReader(retrievalSource);
+            ItemReader<ContentItem> itemReader =
+                new SpaceItemReader(retrievalSource);
 
             File contentDir = config.getContentDir();
             File workDir = config.getWorkDir();
@@ -215,7 +264,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
                 Files.newBufferedWriter(sha256Path, StandardCharsets.UTF_8);
 
             ItemWriter itemWriter =
-                new SpaceItemWriter( retrievalSource,
+                new SpaceItemWriter(retrievalSource,
                                     contentDir,
                                     outputWriter,
                                     propsWriter,
@@ -236,64 +285,61 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
 
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get("snapshot");
+            JobBuilder jobBuilder = jobBuilderFactory.get(SNAPSHOT_JOB_NAME);
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
 
             job = simpleJobBuilder.build();
 
         } catch (Exception e) {
-            log.error("Error creating job: {}",
-                      e.getMessage(),
-                      e);
+            log.error("Error creating job: {}", e.getMessage(), e);
             throw new SnapshotException(e.getMessage(), e);
         }
-
-        Map<String, JobParameter> params = new HashMap<>();
-        String snapshotId = config.getSnapshotId();
-        params.put("id", new JobParameter(snapshotId, true));
-
-        try {
-            JobExecution execution =
-                jobLauncher.run(job, new JobParameters(params));
-            log.info("Exit Status : {}", execution.getStatus());
-
-            return createSnapshotStatus(snapshotId, execution);
-        } catch (Exception e) {
-            String message = "Error running job: "
-                + snapshotId + ": " + e.getMessage();
-            log.error(message,
-                      e);
-            throw new SnapshotException(e.getMessage(), e);
-        }
-
+        return job;
     }
-    
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.duracloud.snapshot.spring.batch.SnapshotJobManager#executeSnapshotSync
+     * (org.duracloud.snapshot.spring.batch.driver.SnapshotConfig)
+     */
+    @Override
+    public SnapshotStatus executeSnapshot(SnapshotConfig config)
+        throws SnapshotException {
+        checkInitialized();
+        Job job = buildJob(config);
+        return executeJob(job,config);
+    }
+
     /**
      * 
      */
     private void checkInitialized() throws SnapshotException {
-        if(!isInitialized()){
-            throw new SnapshotException("The application must be initialized before it can be invoked!",
-                                        null);
+        if (!isInitialized()) {
+            throw new SnapshotException("The application must be initialized "
+                + "before it can be invoked!", null);
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.rest.SnapshotJobManager#getJobExecution(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.duracloud.snapshot.rest.SnapshotJobManager#getJobExecution(java.lang
+     * .String)
      */
     @Override
     public SnapshotStatus getStatus(String snapshotId)
         throws SnapshotNotFoundException,
             SnapshotException {
-        
+
         checkInitialized();
-        
-        Map<String, JobParameter> map = new HashMap<>();
-        map.put("snapshotId", new JobParameter(snapshotId));
-        JobParameters params = new JobParameters(map);
+
+        JobParameters params = createJobParameters(snapshotId, null);
         JobExecution ex =
-            this.jobRepository.getLastJobExecution(snapshotId, params);
+            this.jobRepository.getLastJobExecution(SNAPSHOT_JOB_NAME, params);
         if (ex != null) {
             return createSnapshotStatus(snapshotId, ex);
         }
@@ -301,6 +347,21 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager, ApplicationCo
         throw new SnapshotNotFoundException("Snapshot ["
             + snapshotId + "] not found.");
 
+    }
+
+    /**
+     * @param snapshotId
+     * @param contentDir 
+     * @return
+     */
+    private JobParameters createJobParameters(String snapshotId, String contentDir) {
+        Map<String, JobParameter> map = new HashMap<>();
+        map.put("snapshotId", new JobParameter(snapshotId, true));
+        if(contentDir != null){
+            map.put("contentDir", new JobParameter(contentDir));
+        }
+        JobParameters params = new JobParameters(map);
+        return params;
     }
 
     /**

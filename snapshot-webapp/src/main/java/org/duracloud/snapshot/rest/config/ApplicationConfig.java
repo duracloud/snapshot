@@ -25,7 +25,4 @@ public class ApplicationConfig {
     public ApplicationConfig() {
         log.info("creating ApplicationConfig instance...");
     }
-    
-    
-    
 }

@@ -30,6 +30,8 @@
     <snapshot.database.url>jdbc:mysql://localhost/snapshot</snapshot.database.url>
     <snapshot.originatorEmailAddress>test@duracloud.org</snapshot.originatorEmailAddress>
     <snapshot.adminEmailAddress>admin-test@duracloud.org</snapshot.adminEmailAddress>
+    <snapshot.clean>true</snapshot.clean>
+
   </properties>
 
   <build>

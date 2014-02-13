@@ -15,6 +15,7 @@ public class DatabaseConfig {
     private String url;
     private String username;
     private String password;
+    private boolean clean = false;
     /**
      * @return the url
      */
@@ -50,5 +51,20 @@ public class DatabaseConfig {
      */
     public void setPassword(String password) {
         this.password = password;
+    }
+    /**
+     * @return the clean
+     */
+    public boolean isClean() {
+        return clean;
+    }
+    
+    /**
+     * Flag indicating that the database should be wiped clean on
+     * initialization.
+     * @param clean the clean to set
+     */
+    public void setClean(boolean clean) {
+        this.clean = clean;
     }
 }

@@ -7,6 +7,11 @@
  */
 package org.duracloud.snapshot.rest;
 
+import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
+import org.duracloud.snapshot.spring.batch.SnapshotException;
+import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
+import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
+import org.duracloud.snapshot.spring.batch.SnapshotStatus;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.easymock.EasyMock;
 import org.junit.Before;
@@ -20,11 +25,13 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     
     private SnapshotJobManager manager;
     private SnapshotResource resource;
+    private DatabaseInitializer initializer;
     
     @Before
     public void setup() {
         manager = createMock(SnapshotJobManager.class);
-        resource = new SnapshotResource(manager);
+        initializer = createMock(DatabaseInitializer.class);
+        resource = new SnapshotResource(manager,initializer);
     }
 
     @Test

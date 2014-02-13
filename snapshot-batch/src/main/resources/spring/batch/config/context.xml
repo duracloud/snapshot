@@ -45,11 +45,17 @@
 
   <!-- stored job-metadata in database -->
   <bean id="jobRepository" 
-  
         class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
     <property name="transactionManager" ref="transactionManager" />
     <property name="databaseType" value="mysql" />
     <property name="dataSource" ref="dataSource"/>
+  </bean>
+  
+  <bean id="snapshotJobManager" 
+        class="org.duracloud.snapshot.spring.batch.SnapshotJobManagerImpl">
+        <constructor-arg ref="jobListener"/>
+        <constructor-arg ref="transactionManager"/>
+        <constructor-arg ref="taskExecutor"/>
   </bean>
 
   <!-- stored job-metadata in memory -->
@@ -64,5 +70,6 @@
         class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
     <property name="jobRepository" ref="jobRepository" />
   </bean>
+
 
 </beans>

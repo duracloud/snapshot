@@ -5,15 +5,15 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.rest;
+package org.duracloud.snapshot.spring.batch;
 
 /**
+ * 
  * @author Daniel Bernstein
  *         Date: Feb 12, 2014
  */
-public class SnapshotException extends Exception {
-    
-    public SnapshotException(String message, Throwable t) {
-        super(message, t);
+public class SnapshotNotFoundException extends SnapshotException {
+    public SnapshotNotFoundException(String message){
+        super(message,null);
     }
 }

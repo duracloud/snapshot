@@ -25,6 +25,24 @@ public class InitParams {
     private String databaseUser;
     private String databasePassword;
     private String databaseURL;
+    private boolean clean = false;
+    
+    /**
+     * @return the clean
+     */
+    public boolean isClean() {
+        return clean;
+    }
+    
+    /**
+     * Flag indicating that the database should be wiped clean on
+     * initialization.
+     * @param clean the clean to set
+     */
+    public void setClean(boolean clean) {
+        this.clean = clean;
+    }
+    
     /**
      * @return the originatorEmailAddress
      */

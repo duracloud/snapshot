@@ -26,6 +26,12 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
+import org.duracloud.snapshot.spring.batch.SnapshotException;
+import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
+import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
+import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,13 +59,17 @@ public class SnapshotResource {
     @Context
     UriInfo uriInfo;
 
+    
+    
     private SnapshotJobManager jobManager;
+    private DatabaseInitializer databaseInitializer;
     
     @Autowired
-    public SnapshotResource(SnapshotJobManager jobManager){
+    public SnapshotResource(SnapshotJobManager jobManager, 
+                            DatabaseInitializer databaseInitializer) {
         this.jobManager = jobManager;
-    }
-    
+        this.databaseInitializer = databaseInitializer;
+    }    
     
     @Path("init")
     @POST
@@ -67,7 +77,16 @@ public class SnapshotResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
-            this.jobManager.initialize(initParams);
+            
+            DatabaseConfig dbConfig  = new DatabaseConfig();
+            dbConfig.setUrl(initParams.getDatabaseURL());
+            dbConfig.setUsername(initParams.getDatabaseUser());
+            dbConfig.setPassword(initParams.getDatabasePassword());
+            dbConfig.setClean(initParams.isClean());
+            //initialize database
+            databaseInitializer.init(dbConfig);
+            
+            this.jobManager.init();
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()
@@ -172,11 +191,11 @@ public class SnapshotResource {
         config.setSnapshotId(snapshotId);
 
         try {
-            SnapshotStatus status = this.jobManager.executeSnapshot(config);
+            SnapshotStatus status = this.jobManager.executeSnapshotAsync(config);
             return Response.created(null)
                 .entity(status)
                 .build();
-        }catch(SnapshotException ex){
+        }catch(Exception ex){
             log.error(ex.getMessage(),ex);
             return Response.serverError()
                 .entity(new ResponseDetails(ex.getMessage()))

@@ -7,9 +7,9 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
-import javax.sql.DataSource;
-
+import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
 import org.springframework.jdbc.datasource.init.DatabasePopulator;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -27,24 +27,29 @@ public class DatabaseInitializer {
 
     private Resource schema;
     
-    private DataSource dataSource;
+    private DriverManagerDataSource dataSource;
     
-    public DatabaseInitializer(DataSource dataSource, Resource dropSchema, Resource schema){
+    public DatabaseInitializer(DriverManagerDataSource dataSource, Resource dropSchema, Resource schema){
         this.dataSource = dataSource;
         this.dropSchema = dropSchema;
         this.schema = schema;
     }
 
-    public void init() {
+    public void init(DatabaseConfig databaseConfig) {
         final DataSourceInitializer initializer = new DataSourceInitializer();
+        dataSource.setUrl(databaseConfig.getUrl());
+        dataSource.setUsername(databaseConfig.getUsername());
+        dataSource.setPassword(databaseConfig.getPassword());
         initializer.setDataSource(dataSource);
-        initializer.setDatabasePopulator(databasePopulator());
+        initializer.setDatabasePopulator(databasePopulator(databaseConfig));
         initializer.afterPropertiesSet();
     }
 
-    private DatabasePopulator databasePopulator() {
+    private DatabasePopulator databasePopulator(DatabaseConfig databaseConfig) {
         final ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(dropSchema);
+        if(databaseConfig.isClean()){
+            populator.addScript(dropSchema);
+        }
         populator.addScript(schema);
         return populator;
     }

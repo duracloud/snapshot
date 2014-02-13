@@ -32,32 +32,6 @@ public class ConfigParser {
         // Command Line Options
         cmdOptions = new Options();
         
-        //database options
-        Option databaseURL =
-            new Option("dj", "database-jdbc-url", true,
-                       "jdbc connection for the database");
-        databaseURL.setRequired(true);
-        cmdOptions.addOption(databaseURL);
-
-        Option databaseUsername =
-            new Option("du", "database-username", true,
-                       "database username");
-        databaseUsername.setRequired(true);
-        cmdOptions.addOption(databaseUsername);
-
-        Option databasePassword =
-            new Option("dp", "database-password", true,
-                       "database password");
-        databasePassword.setRequired(true);
-        cmdOptions.addOption(databasePassword);
-        
-        
-        //aws options
-        
-        
-        
-        
-        
         Option hostOption =
             new Option("h", "host", true,
                        "the host address of the DuraCloud " +
@@ -113,6 +87,40 @@ public class ConfigParser {
                            "directory");
         workDirOption.setRequired(true);
         cmdOptions.addOption(workDirOption);
+        
+        //database options
+        Option databaseURL =
+            new Option("dj", "database-jdbc-url", true,
+                       "jdbc connection for the database");
+        databaseURL.setRequired(true);
+        cmdOptions.addOption(databaseURL);
+
+        Option databaseUsername =
+            new Option("du", "database-username", true,
+                       "database username");
+        databaseUsername.setRequired(true);
+        cmdOptions.addOption(databaseUsername);
+
+        Option databasePassword =
+            new Option("dp", "database-password", true,
+                       "database password");
+        databasePassword.setRequired(true);
+        cmdOptions.addOption(databasePassword);
+        
+
+        Option clean =
+            new Option("C",
+                       "clean",
+                       false,
+                       "Wipe clean database, content, and" +
+                       " work directories on startup.");
+        
+        cmdOptions.addOption(clean);
+
+        //aws options
+        
+        
+
     }
 
     protected SnapshotConfig processSnapshotConfigOptions(String[] args)
@@ -184,6 +192,8 @@ public class ConfigParser {
             config.setUrl(cmd.getOptionValue("dj"));
             config.setUsername(cmd.getOptionValue("du"));
             config.setPassword(cmd.getOptionValue("dp"));
+            if(cmd.hasOption("C"))
+            config.setClean(true);
             return config;
         } catch (ParseException e) {
             printHelp(e.getMessage());

@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.rest;
+package org.duracloud.snapshot.spring.batch;
 
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 
@@ -18,13 +18,31 @@ import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
  */
 public interface SnapshotJobManager {
 
-    void initialize(InitParams params);
     /**
+     * Lazily initializes the component.  The data source must be fully configured
+     * when this method is called; otherwise it will fail.
+     */
+    void init();
+
+    /**
+     * This method of executing a snapshot is guaranteed to be an asynchronous version of executeSnapshot().
+     * That is, the method will return after creating the job and queuing it up, rather than waiting until
+     * it has been executed.
      * @param config
      * @return
      */
-    SnapshotStatus executeSnapshot(SnapshotConfig config)
+    SnapshotStatus executeSnapshotAsync(SnapshotConfig config)
         throws SnapshotException;
+
+    /**
+     * This method creates an underlying job and executes it.  Due to the fact that the underlying
+     * framework does not guarantee that this will be a synchronous call, one cannot assume that 
+     * the returned status will reflect a completed state of the operation. Ack!
+     * @param config
+     * @return
+     * @throws SnapshotException
+     */
+    SnapshotStatus executeSnapshot(SnapshotConfig config) throws SnapshotException;
 
     /**
      * 

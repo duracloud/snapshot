@@ -7,26 +7,26 @@
 	http://www.springframework.org/schema/jdbc
 	http://www.springframework.org/schema/jdbc/spring-jdbc-4.0.xsd
 	http://www.springframework.org/schema/context
-	http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd" default-lazy-init="true">
 
   <context:property-placeholder location="classpath:spring/batch/config/config.properties" />
 
   <!-- connect to database -->
-  <bean id="dataSource"
-        class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-    <property name="driverClassName" value="com.mysql.jdbc.Driver" />
-    <property name="url" value="${database.url}" />
-    <property name="username" value="${database.user}" />
-    <property name="password" value="${database.pass}" />
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource" >
+    <property name="url" value="jdbc:mysql://localhost/test"/>
+    <property name="username" value="username"/>
+    <property name="password" value="password"/>
+    <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+
+  </bean>
+  
+  <bean id="databaseInitializer" class="org.duracloud.snapshot.spring.batch.DatabaseInitializer">
+    <constructor-arg name="dataSource" ref="dataSource"/>
+    <constructor-arg name="dropSchema" value="classpath:org/springframework/batch/core/schema-drop-mysql.sql"/>
+    <constructor-arg name="schema" value="classpath:org/springframework/batch/core/schema-mysql.sql"/>
   </bean>
 
-  <bean id="transactionManager"
+  <bean id="transactionManager" 
         class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
-
-  <!-- create job-meta tables automatically -->
-  <jdbc:initialize-database data-source="dataSource">
-    <jdbc:script location="org/springframework/batch/core/schema-drop-mysql.sql" />
-    <jdbc:script location="org/springframework/batch/core/schema-mysql.sql" />
-  </jdbc:initialize-database>
 
 </beans>

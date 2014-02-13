@@ -31,7 +31,33 @@ public class ConfigParser {
     public ConfigParser() {
         // Command Line Options
         cmdOptions = new Options();
+        
+        //database options
+        Option databaseURL =
+            new Option("dj", "database-jdbc-url", true,
+                       "jdbc connection for the database");
+        databaseURL.setRequired(true);
+        cmdOptions.addOption(databaseURL);
 
+        Option databaseUsername =
+            new Option("du", "database-username", true,
+                       "database username");
+        databaseUsername.setRequired(true);
+        cmdOptions.addOption(databaseUsername);
+
+        Option databasePassword =
+            new Option("dp", "database-password", true,
+                       "database password");
+        databasePassword.setRequired(true);
+        cmdOptions.addOption(databasePassword);
+        
+        
+        //aws options
+        
+        
+        
+        
+        
         Option hostOption =
             new Option("h", "host", true,
                        "the host address of the DuraCloud " +
@@ -89,7 +115,7 @@ public class ConfigParser {
         cmdOptions.addOption(workDirOption);
     }
 
-    protected SnapshotConfig processOptions(String[] args)
+    protected SnapshotConfig processSnapshotConfigOptions(String[] args)
         throws ParseException {
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = parser.parse(cmdOptions, args);
@@ -119,26 +145,52 @@ public class ConfigParser {
 
         return config;
     }
+    
 
     /**
-     * Parses command line configuration into an object structure, validates
+     * Parses command line configuration into an SnapshotConfig structure, validates
      * correct values along the way.
      *
      * Prints a help message and exits the JVM on parse failure.
      *
      * @param args command line configuration values
-     * @return populated RetrievalToolConfig
+     * @return populated SnapshotConfig
      */
-    public SnapshotConfig processCommandLine(String[] args) {
+    public SnapshotConfig processSnapshotConfigCommandLine(String[] args) {
         SnapshotConfig config = null;
         try {
-            config = processOptions(args);
+            config = processSnapshotConfigOptions(args);
         } catch (ParseException e) {
             printHelp(e.getMessage());
         }
         return config;
     }
 
+    /**
+     * Parses command line configuration into an DatabaseConfig structure, validates
+     * correct values along the way.
+     *
+     * Prints a help message and exits the JVM on parse failure.
+     *
+     * @param args command line configuration values
+     * @return populated DatabaseConfig
+     */
+    public DatabaseConfig processDBCommandLine(String[] args) {
+        DatabaseConfig config = null;
+        try {
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmd = parser.parse(cmdOptions, args);
+            config = new DatabaseConfig();
+            config.setUrl(cmd.getOptionValue("dj"));
+            config.setUsername(cmd.getOptionValue("du"));
+            config.setPassword(cmd.getOptionValue("dp"));
+            return config;
+        } catch (ParseException e) {
+            printHelp(e.getMessage());
+        }
+        return config;
+    }
+    
     private void printHelp(String message) {
         System.out.println("\n-----------------------\n" +
                                message +

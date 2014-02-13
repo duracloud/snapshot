@@ -136,6 +136,13 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
             File workDir = config.getWorkDir();
             OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
 
+            Path propsPath =
+                FileSystems.getDefault().getPath(config.getContentDir()
+                                                       .getAbsolutePath(),
+                                                 "content-properties.json");
+            BufferedWriter propsWriter =
+                Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
+
             Path md5Path =
                 FileSystems.getDefault().getPath(config.getContentDir()
                                                        .getAbsolutePath(),
@@ -151,9 +158,10 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
             @SuppressWarnings("rawtypes")
             ItemWriter itemWriter =
-                new SpaceItemWriter(retrievalSource,
+                new SpaceItemWriter( retrievalSource,
                                     contentDir,
                                     outputWriter,
+                                    propsWriter,
                                     md5Writer,
                                     sha256Writer);
 

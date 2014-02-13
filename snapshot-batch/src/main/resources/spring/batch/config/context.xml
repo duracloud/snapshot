@@ -2,14 +2,14 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="
 	http://www.springframework.org/schema/beans
-	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd" default-lazy-init="true">
 
   <bean id="notificationManager"
         class="org.duracloud.common.notification.NotificationManager">
     <constructor-arg ref="emailNotifier"/>
   </bean>
 
-  <bean id="emailNotifier"
+  <bean id="emailNotifier" 
         class="org.duracloud.common.notification.EmailNotifier"/>
 
   <bean id="jobListener"
@@ -44,11 +44,12 @@
         <!--class="org.springframework.core.task.SimpleAsyncTaskExecutor" />-->
 
   <!-- stored job-metadata in database -->
-  <bean id="jobRepository"
+  <bean id="jobRepository" 
+  
         class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean">
-    <property name="dataSource" ref="dataSource" />
     <property name="transactionManager" ref="transactionManager" />
     <property name="databaseType" value="mysql" />
+    <property name="dataSource" ref="dataSource"/>
   </bean>
 
   <!-- stored job-metadata in memory -->
@@ -59,7 +60,7 @@
   </bean>
    -->
 
-  <bean id="jobLauncher"
+  <bean id="jobLauncher" 
         class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
     <property name="jobRepository" ref="jobRepository" />
   </bean>

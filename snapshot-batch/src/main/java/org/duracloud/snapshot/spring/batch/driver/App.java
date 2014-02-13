@@ -7,6 +7,17 @@
  */
 package org.duracloud.snapshot.spring.batch.driver;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
@@ -14,6 +25,7 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SpaceItemReader;
 import org.duracloud.snapshot.spring.batch.SpaceItemWriter;
 import org.slf4j.Logger;
@@ -29,24 +41,19 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
 import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.core.io.Resource;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.mysql.jdbc.Driver;
 
 /**
  * @author Erik Paulsson
@@ -59,20 +66,36 @@ public class App {
     public static void main(String[] args) throws Exception {
         ConfigParser configParser =
             new ConfigParser();
-        SnapshotConfig config = configParser.processCommandLine(args);
+        SnapshotConfig config = configParser.processSnapshotConfigCommandLine(args);
+
+        DatabaseConfig dbConfig = configParser.processDBCommandLine(args);
 
         String[] springConfig = {
             "spring/batch/config/context.xml",
             "spring/batch/config/database.xml"
         };
-
+        
         ApplicationContext context =
             new ClassPathXmlApplicationContext(springConfig);
+
+        //set the datasource properties before doing anything
+        DriverManagerDataSource dataSource = (DriverManagerDataSource)context.getBean("dataSource");
+        dataSource.setUsername(dbConfig.getUsername());
+        dataSource.setPassword(dbConfig.getPassword());
+        dataSource.setUrl(dbConfig.getUrl());
+        
+        //initialize database
+        DatabaseInitializer databaseInitializer =
+            (DatabaseInitializer) context.getBean("databaseInitializer");
+        databaseInitializer.init();
+        
         JobExecutionListener jobListener =
             (JobExecutionListener) context.getBean("jobListener");
         JobLauncher jobLauncher = (JobLauncher) context.getBean("jobLauncher");
+
         JobRepository jobRepository =
             (JobRepository) context.getBean("jobRepository");
+        
         PlatformTransactionManager transactionManager =
             (PlatformTransactionManager) context.getBean("transactionManager");
         TaskExecutor taskExecutor =
@@ -86,12 +109,12 @@ public class App {
                                           config.getUsername(),
                                           config.getPassword(),
                                           config.getStoreId());
-        List spaces = new ArrayList<String>();
+        List<String> spaces = new ArrayList<>();
         spaces.add(config.getSpace());
         RetrievalSource retrievalSource = new DuraStoreStitchingRetrievalSource(
             contentStore, spaces, false);
 
-        ItemReader itemReader = new SpaceItemReader(retrievalSource);
+        ItemReader<ContentItem> itemReader = new SpaceItemReader(retrievalSource);
 
         File contentDir = config.getContentDir();
         File workDir = config.getWorkDir();
@@ -121,8 +144,8 @@ public class App {
                                                      md5Writer,
                                                      sha256Writer);
 
-        SimpleStepFactoryBean stepFactory =
-            new SimpleStepFactoryBean<ContentItem, File>();
+        SimpleStepFactoryBean<ContentItem, File> stepFactory =
+            new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("step1");
@@ -139,7 +162,7 @@ public class App {
         simpleJobBuilder.listener(jobListener);
         Job job = simpleJobBuilder.build();
 
-        Map<String, JobParameter> params = new HashMap();
+        Map<String, JobParameter> params = new HashMap<>();
         String snapshotId = config.getSnapshotId();
         params.put("id", new JobParameter(snapshotId, true));
 

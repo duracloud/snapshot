@@ -67,6 +67,7 @@ public class SnapshotResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
+            this.jobManager.initialize(initParams);
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()

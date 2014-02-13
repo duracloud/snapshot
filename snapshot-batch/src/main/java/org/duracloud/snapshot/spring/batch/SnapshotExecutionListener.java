@@ -10,7 +10,7 @@ package org.duracloud.snapshot.spring.batch;
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
-import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -30,27 +30,21 @@ public class SnapshotExecutionListener implements JobExecutionListener {
         LoggerFactory.getLogger(SnapshotExecutionListener.class);
 
     private NotificationManager notificationManager;
-    private SnapshotConfig snapshotConfig;
+    private SnapshotNotifyConfig snapshotNotifyConfig;
 
     public SnapshotExecutionListener(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
 
-    public void initialize(SnapshotConfig snapshotConfig) {
-        this.snapshotConfig = snapshotConfig;
+    public void initialize(SnapshotNotifyConfig snapshotNotifyConfig) {
+        this.snapshotNotifyConfig = snapshotNotifyConfig;
 
-        // Information needed
-//           sesUsername
-//           sesPassword
-//           originatorEmail
-//           duracloudEmails
-//           dpnEmails
-        // Maybe take in a config set for notification (rather than SnapshotConfig
         NotificationConfig notifyConfig = new NotificationConfig();
         notifyConfig.setType(NotificationType.EMAIL.name());
-        notifyConfig.setUsername(snapshotConfig.get);
-        notifyConfig.setPassword(snapshotConfig.get);
-        notifyConfig.setOriginator(snapshotConfig.get);
+        notifyConfig.setUsername(snapshotNotifyConfig.getSesUsername());
+        notifyConfig.setPassword(snapshotNotifyConfig.getSesPassword());
+        notifyConfig.setOriginator(
+            snapshotNotifyConfig.getOriginatorEmailAddress());
 
         List<NotificationConfig> notifyConfigs = new ArrayList<>();
         notifyConfigs.add(notifyConfig);
@@ -62,9 +56,10 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     }
 
     public void afterJob(JobExecution jobExecution) {
+        // TODO: Use constants to get ID and content dir path values
         String snapshotId = jobExecution.getJobParameters().getString("id");
-        // TODO: Is the path value available from job params?
-        String snapshotPath = jobExecution.getJobParameters().getString("path");
+        String snapshotPath =
+            jobExecution.getJobParameters().getString("content-dir");
         LOGGER.debug("Completed snapshot: {} with status: {}",
                      snapshotId, jobExecution.getStatus());
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
@@ -78,8 +73,8 @@ public class SnapshotExecutionListener implements JobExecutionListener {
                 "preservation storage.\n" +
                 "\nsnapshot-id=" + snapshotId +
                 "\nsnapshot-path=" + snapshotPath;
-            String[] toAddresses = {""}; // TODO
-            sendEmail(subject, message, toAddresses);
+            sendEmail(subject, message,
+                      snapshotNotifyConfig.getAllEmailAddresses());
         } else {
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =
@@ -87,10 +82,10 @@ public class SnapshotExecutionListener implements JobExecutionListener {
             String message =
                 "A DuraCloud content snapshot has failed to complete.\n" +
                 "\nsnapshot-id=" + snapshotId +
-                "\nsnapshot-path=" + snapshotPath +
-                "\nerror=" + failureMessage; // TODO
-            String[] toAddresses = {""}; // TODO
-            sendEmail(subject, message, toAddresses);
+                "\nsnapshot-path=" + snapshotPath;
+                // TODO: Add details of failure in message
+            sendEmail(subject, message,
+                      snapshotNotifyConfig.getDuracloudEmailAddresses());
         }
     }
 

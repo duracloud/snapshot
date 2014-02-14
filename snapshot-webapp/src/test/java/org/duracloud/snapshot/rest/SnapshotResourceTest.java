@@ -15,6 +15,7 @@ import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
@@ -74,7 +75,8 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         executionListener.initialize(EasyMock.capture(notifyConfigCapture));
         EasyMock.expectLastCall();
 
-        manager.init();
+        Capture<DuracloudConfig> duracloudConfigCapture = new Capture<>();
+        manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
 
         replay();
@@ -98,6 +100,12 @@ public class SnapshotResourceTest extends EasyMockTestBase {
                      notifyConfig.getDuracloudEmailAddresses()[0]);
         assertEquals(dpnEmailAddresses[0],
                      notifyConfig.getDpnEmailAddresses()[0]);
+
+        DuracloudConfig duracloudConfig = duracloudConfigCapture.getValue();
+
+        assertEquals(duracloudUsername, duracloudConfig.getUsername());
+        assertEquals(duracloudPassword, duracloudConfig.getPassword());
+
     }
 
     /**
@@ -168,8 +176,6 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         assertEquals(storeId, snapshotConfig.getStoreId());
         assertEquals(spaceId, snapshotConfig.getSpace());
         assertEquals(snapshotId, snapshotConfig.getSnapshotId());
-        assertEquals(duracloudUsername, snapshotConfig.getUsername());
-        assertEquals(duracloudPassword, snapshotConfig.getPassword());
     }
 
     /**
@@ -182,7 +188,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         executionListener.initialize(EasyMock.isA(SnapshotNotifyConfig.class));
         EasyMock.expectLastCall();
 
-        manager.init();
+        manager.init(EasyMock.isA(DuracloudConfig.class));
         EasyMock.expectLastCall();
 
     }

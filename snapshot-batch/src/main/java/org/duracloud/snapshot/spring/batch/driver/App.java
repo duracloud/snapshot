@@ -10,6 +10,7 @@ package org.duracloud.snapshot.spring.batch.driver;
 import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -30,6 +31,8 @@ public class App {
 
         DatabaseConfig dbConfig = configParser.processDBCommandLine(args);
 
+        DuracloudConfig duracloudConfig = configParser.processDuracloudCommandLine(args);
+
         String[] springConfig = {
             "spring/batch/config/context.xml",
             "spring/batch/config/database.xml"
@@ -46,7 +49,7 @@ public class App {
         //initialize the snapshot job manager
         SnapshotJobManager manager =
             (SnapshotJobManager) context.getBean("snapshotJobManager");
-        manager.init();
+        manager.init(duracloudConfig);
         
        
         try {

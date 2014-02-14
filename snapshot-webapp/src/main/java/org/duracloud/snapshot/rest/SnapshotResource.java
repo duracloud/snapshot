@@ -15,6 +15,7 @@ import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
@@ -111,7 +112,10 @@ public class SnapshotResource {
                 initParams.getOriginatorEmailAddress());
             this.executionListener.initialize(notifyConfig);
 
-            this.jobManager.init();
+            DuracloudConfig duracloudConfig = new DuracloudConfig();
+            duracloudConfig.setUsername(initParams.getDuracloudUsername());
+            duracloudConfig.setPassword(initParams.getDuracloudPassword());
+            this.jobManager.init(duracloudConfig);
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()
@@ -252,8 +256,6 @@ public class SnapshotResource {
             config.setSpace(spaceId);
             config.setSnapshotId(snapshotId);
             config.setWorkDir(this.workDir);
-            config.setUsername(this.duracloudUsername);
-            config.setPassword(this.duracloudPassword);
             
             File contentDir = new File(this.contentDirRoot,snapshotId);
             contentDir.mkdir();

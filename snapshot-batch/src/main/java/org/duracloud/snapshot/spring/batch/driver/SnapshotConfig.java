@@ -19,8 +19,6 @@ public class SnapshotConfig {
     private String host;
     private int port;
     private String context = DEFAULT_CONTEXT;
-    private String username;
-    private String password;
     private String storeId;
     private String snapshotId;
     private String space;
@@ -49,22 +47,6 @@ public class SnapshotConfig {
 
     public void setContext(String context) {
         this.context = context;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getStoreId() {

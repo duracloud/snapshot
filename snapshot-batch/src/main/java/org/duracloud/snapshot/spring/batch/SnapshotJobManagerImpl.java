@@ -27,6 +27,7 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +74,8 @@ public class SnapshotJobManagerImpl
     private TaskExecutor taskExecutor;
     private ApplicationContext context;
     private ExecutorService executor;
-
+    private DuracloudConfig duracloudConfig;
+    
     @Autowired
     public SnapshotJobManagerImpl(
         JobExecutionListener jobListener,
@@ -123,12 +125,15 @@ public class SnapshotJobManagerImpl
      * .snapshot.rest.InitParams)
      */
     @Override
-    public void init() {
+    public void init(DuracloudConfig duracloudConfig) {
+        
         if (isInitialized()) {
             log.warn("Already initialized. Ignorning");
             return;
         }
 
+        this.duracloudConfig = duracloudConfig;
+        
         this.jobRepository = (JobRepository) context.getBean("jobRepository");
 
         this.jobLauncher = (JobLauncher) context.getBean("jobLauncher");
@@ -225,8 +230,8 @@ public class SnapshotJobManagerImpl
                 clientUtil.createContentStore(config.getHost(),
                                               config.getPort(),
                                               config.getContext(),
-                                              config.getUsername(),
-                                              config.getPassword(),
+                                              duracloudConfig.getUsername(),
+                                              duracloudConfig.getPassword(),
                                               config.getStoreId());
 
             List<String> spaces = new ArrayList<>();

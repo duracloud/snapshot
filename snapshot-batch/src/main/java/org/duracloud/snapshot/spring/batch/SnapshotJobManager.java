@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
+import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 
 /**
@@ -21,8 +22,9 @@ public interface SnapshotJobManager {
     /**
      * Lazily initializes the component.  The data source must be fully configured
      * when this method is called; otherwise it will fail.
+     * @param duracloudCredential
      */
-    void init();
+    void init(DuracloudConfig duracloudCredential);
 
     /**
      * This method of executing a snapshot is guaranteed to be an asynchronous version of executeSnapshot().

@@ -1,15 +1,15 @@
 {
-     originatorEmailAddress: "${snapshot.originatorEmailAddress}",
-     duracloudEmailAddresses: ["${snapshot.duracloudEmailAddress}"],
-     dpnEmailAddresses: ["${snapshot.dpnEmailAddress}"],
-     duracloudUsername: "${snapshot.duracloudUsername}",
-     duracloudPassword: "${snapshot.duracloudPassword}",
-     awsAccessKey: "${aws.accessKey}",
-     awsSecretKey: "${aws.secretKey}",
-     databaseUser: "${snapshot.database.username}",
-     databasePassword: "${snapshot.database.password}",
-     databaseURL: "${snapshot.database.url}",
-     contentDirRoot:"${snapshot.contentDirRoot"},
-     workDir:"${snapshot.workDir}",
-     clean: "${snapshot.clean}"
+     "originatorEmailAddress" : "${snapshot.originatorEmailAddress}",
+     "duracloudEmailAddresses" : ["${snapshot.duracloudEmailAddress}"],
+     "dpnEmailAddresses" : ["${snapshot.dpnEmailAddress}"],
+     "duracloudUsername" : "${snapshot.duracloudUsername}",
+     "duracloudPassword" : "${snapshot.duracloudPassword}",
+     "awsAccessKey" : "${aws.accessKey}",
+     "awsSecretKey" : "${aws.secretKey}",
+     "databaseUser" : "${snapshot.database.username}",
+     "databasePassword" : "${snapshot.database.password}",
+     "databaseURL" : "${snapshot.database.url}",
+     "contentDirRoot" : "${snapshot.contentDirRoot}",
+     "workDir" : "${snapshot.workDir}",
+     "clean" : "${snapshot.clean}"
 }

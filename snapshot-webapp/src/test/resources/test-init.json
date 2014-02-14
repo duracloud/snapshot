@@ -2,6 +2,8 @@
      originatorEmailAddress: "${snapshot.originatorEmailAddress}",
      duracloudEmailAddresses: ["${snapshot.duracloudEmailAddress}"],
      dpnEmailAddresses: ["${snapshot.dpnEmailAddress}"],
+     duracloudUsername: "${snapshot.duracloudUsername}",
+     duracloudPassword: "${snapshot.duracloudPassword}",
      awsAccessKey: "${aws.accessKey}",
      awsSecretKey: "${aws.secretKey}",
      databaseUser: "${snapshot.database.username}",

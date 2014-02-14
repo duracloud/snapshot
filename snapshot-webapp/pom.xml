@@ -34,6 +34,8 @@
     <snapshot.clean>true</snapshot.clean>
     <snapshot.workDir>${project.build.directory/test-snapshot-work</snapshot.workDir>
     <snapshot.contentDirRoot>${project.build.directory/test-snapshot-content</snapshot.contentDirRoot>
+    <snapshot.duracloudUsername>root</snapshot.duracloudUsername>
+    <snapshot.duracloudPassword>rpw</snapshot.duracloudPassword>
 
   </properties>
 

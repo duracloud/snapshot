@@ -64,6 +64,9 @@ public class SnapshotResource {
    
     private File workDir;
     private File contentDirRoot;
+    private String duracloudUsername;
+    private String duracloudPassword;
+    
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
     private SnapshotExecutionListener executionListener;
@@ -84,7 +87,11 @@ public class SnapshotResource {
     public Response init(InitParams initParams) {
         try {
             
-            initializeLocalDirectories(initParams);            
+            initializeLocalDirectories(initParams); 
+            
+            this.duracloudUsername = initParams.getDuracloudUsername();
+            this.duracloudPassword = initParams.getDuracloudPassword();
+           
             DatabaseConfig dbConfig  = new DatabaseConfig();
             dbConfig.setUrl(initParams.getDatabaseURL());
             dbConfig.setUsername(initParams.getDatabaseUser());
@@ -245,6 +252,8 @@ public class SnapshotResource {
             config.setSpace(spaceId);
             config.setSnapshotId(snapshotId);
             config.setWorkDir(this.workDir);
+            config.setUsername(this.duracloudUsername);
+            config.setPassword(this.duracloudPassword);
             
             File contentDir = new File(this.contentDirRoot,snapshotId);
             contentDir.mkdir();

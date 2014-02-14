@@ -29,6 +29,8 @@ public class InitParams {
     private boolean clean = false;
     private String workDir;
     private String contentDirRoot;
+    private String duracloudUsername;
+    private String duracloudPassword;
     
     /**
      * @return the workDir
@@ -176,4 +178,31 @@ public class InitParams {
         this.databaseURL = databaseURL;
     }
 
+    /**
+     * @return the duracloudUsername
+     */
+    public String getDuracloudUsername() {
+        return duracloudUsername;
+    }
+
+    /**
+     * @param duracloudUsername the duracloudUsername to set
+     */
+    public void setDuracloudUsername(String duracloudUsername) {
+        this.duracloudUsername = duracloudUsername;
+    }
+
+    /**
+     * @return the duracloudPassword
+     */
+    public String getDuracloudPassword() {
+        return duracloudPassword;
+    }
+
+    /**
+     * @param duracloudPassword the duracloudPassword to set
+     */
+    public void setDuracloudPassword(String duracloudPassword) {
+        this.duracloudPassword = duracloudPassword;
+    }
 }

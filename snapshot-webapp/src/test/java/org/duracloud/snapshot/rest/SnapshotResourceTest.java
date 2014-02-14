@@ -7,6 +7,8 @@
  */
 package org.duracloud.snapshot.rest;
 
+import java.io.File;
+
 import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SnapshotException;
 import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
@@ -29,6 +31,25 @@ import static org.junit.Assert.assertEquals;
  */
 public class SnapshotResourceTest extends EasyMockTestBase {
     
+    private String databaseUser = "db-user";
+    private String databasePassword = "db-pass";
+    private String databaseURL = "db-url";
+    private String awsAccessKey = "aws-access-key";
+    private String awsSecretKey = "aws-secret-key";
+    private String originatorEmailAddress = "orig-email";
+    private String[] duracloudEmailAddresses = {"duracloud-email"};
+    private String[] dpnEmailAddresses = {"dpn-email"};
+    private String duracloudUsername = "duracloud-username";
+    private String duracloudPassword = "duracloud-password";
+    private String workDir =
+        System.getProperty("java.io.tmpdir")
+            + File.separator + "snapshot-work";
+    private String contentDirRoot =
+        System.getProperty("java.io.tmpdir")
+            + File.separator + "snapshot-content";
+    
+    private boolean clean = true;
+
     private SnapshotJobManager manager;
     private SnapshotResource resource;
     private DatabaseInitializer initializer;
@@ -58,29 +79,8 @@ public class SnapshotResourceTest extends EasyMockTestBase {
 
         replay();
 
-        String databaseUser = "db-user";
-        String databasePassword = "db-pass";
-        String databaseURL = "db-url";
-        boolean clean = true;
-
-        InitParams initParams = new InitParams();
-        initParams.setDatabaseUser(databaseUser);
-        initParams.setDatabasePassword(databasePassword);
-        initParams.setDatabaseURL(databaseURL);
-        initParams.setClean(clean);
-
-        String awsAccessKey = "aws-access-key";
-        String awsSecretKey = "aws-secret-key";
-        String originatorEmailAddress = "orig-email";
-        String[] duracloudEmailAddresses = {"duracloud-email"};
-        String[] dpnEmailAddresses = {"dpn-email"};
-
-        initParams.setAwsAccessKey(awsAccessKey);
-        initParams.setAwsSecretKey(awsSecretKey);
-        initParams.setOriginatorEmailAddress(originatorEmailAddress);
-        initParams.setDuracloudEmailAddresses(duracloudEmailAddresses);
-        initParams.setDpnEmailAddresses(dpnEmailAddresses);
-
+        InitParams initParams = createInitParams();
+        
         resource.init(initParams);
 
         DatabaseConfig dbConfig = dbConfigCapture.getValue();
@@ -98,6 +98,27 @@ public class SnapshotResourceTest extends EasyMockTestBase {
                      notifyConfig.getDuracloudEmailAddresses()[0]);
         assertEquals(dpnEmailAddresses[0],
                      notifyConfig.getDpnEmailAddresses()[0]);
+    }
+
+    /**
+     * @return
+     */
+    private InitParams createInitParams() {
+        InitParams initParams = new InitParams();
+        initParams.setDatabaseUser(databaseUser);
+        initParams.setDatabasePassword(databasePassword);
+        initParams.setDatabaseURL(databaseURL);
+        initParams.setClean(clean);
+        initParams.setAwsAccessKey(awsAccessKey);
+        initParams.setAwsSecretKey(awsSecretKey);
+        initParams.setOriginatorEmailAddress(originatorEmailAddress);
+        initParams.setDuracloudEmailAddresses(duracloudEmailAddresses);
+        initParams.setDpnEmailAddresses(dpnEmailAddresses);
+        initParams.setDuracloudUsername(duracloudUsername);
+        initParams.setDuracloudPassword(duracloudPassword);
+        initParams.setWorkDir(workDir);
+        initParams.setContentDirRoot(contentDirRoot);
+        return initParams;
     }
 
     @Test
@@ -118,10 +139,51 @@ public class SnapshotResourceTest extends EasyMockTestBase {
 
     @Test
     public void testCreate() throws SnapshotException {
+        setupInitialize();
+        String host = "host";
+        String port = "444";
+        String storeId = "storeId";
+        String spaceId = "spaceId";
+        String snapshotId = "snapshotId";
+        
+        Capture<SnapshotConfig> snapshotConfigCapture = new Capture<>();
         EasyMock.expect(manager.executeSnapshotAsync(
-                     EasyMock.isA(SnapshotConfig.class)))
+                     EasyMock.capture(snapshotConfigCapture)))
                 .andReturn(new SnapshotStatus("test","test"));
+
+        
         replay();
-        resource.create("host", "444", "storeId", "spaceId", "snapshotId");
+        resource.init(createInitParams());
+        resource.create(host, port, storeId, spaceId, snapshotId);
+
+        SnapshotConfig snapshotConfig = snapshotConfigCapture.getValue();
+        assertEquals(new File(contentDirRoot
+                         + File.separator + snapshotConfig.getSnapshotId()),
+                     snapshotConfig.getContentDir());
+        assertEquals(new File(workDir),
+                          snapshotConfig.getWorkDir());
+
+        assertEquals(host, snapshotConfig.getHost());
+        assertEquals(Integer.parseInt(port), snapshotConfig.getPort());
+        assertEquals(storeId, snapshotConfig.getStoreId());
+        assertEquals(spaceId, snapshotConfig.getSpace());
+        assertEquals(snapshotId, snapshotConfig.getSnapshotId());
+        assertEquals(duracloudUsername, snapshotConfig.getUsername());
+        assertEquals(duracloudPassword, snapshotConfig.getPassword());
+    }
+
+    /**
+     * 
+     */
+    private void setupInitialize() {
+        initializer.init(EasyMock.isA(DatabaseConfig.class));
+        EasyMock.expectLastCall();
+
+        executionListener.initialize(EasyMock.isA(SnapshotNotifyConfig.class));
+        EasyMock.expectLastCall();
+
+        manager.init();
+        EasyMock.expectLastCall();
+
     }
 }

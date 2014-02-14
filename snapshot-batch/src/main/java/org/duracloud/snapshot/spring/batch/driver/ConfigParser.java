@@ -7,8 +7,6 @@
  */
 package org.duracloud.snapshot.spring.batch.driver;
 
-import java.io.File;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -17,6 +15,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
+
+import java.io.File;
 
 /**
  * @author Erik Paulsson Date: 2/7/14
@@ -123,11 +124,43 @@ public class ConfigParser {
         Option clean =
             new Option("C", "clean", false, "Wipe clean database, content, and"
                 + " work directories on startup.");
-
         cmdOptions.addOption(clean);
 
-        // aws options
+        // notification options
+        Option awsUsername =
+            new Option("aa", "aws-access-key", true,
+                       "An AWS Access Key that allows calls to be made to " +
+                       "AWS services");
+        awsUsername.setRequired(true);
+        cmdOptions.addOption(awsUsername);
 
+        Option awsPassword =
+            new Option("as", "aws-secret-key", true,
+                       "An AWS Secret Key that allows calls to be made to " +
+                       "AWS services");
+        awsPassword.setRequired(true);
+        cmdOptions.addOption(awsPassword);
+
+        Option originatorEmail =
+            new Option("eo", "email-originator", true,
+                       "The email address used in the TO field of email " +
+                       "notifications");
+        originatorEmail.setRequired(true);
+        cmdOptions.addOption(originatorEmail);
+
+        Option duracloudEmail =
+            new Option("edc", "email-duracloud", true,
+                       "The email address used to provide information to " +
+                       "the DuraCloud team");
+        duracloudEmail.setRequired(true);
+        cmdOptions.addOption(duracloudEmail);
+
+        Option dpnEmail =
+            new Option("edn", "email-dpn", true,
+                       "The email address used to provide information to " +
+                       "the DPN team");
+        dpnEmail.setRequired(true);
+        cmdOptions.addOption(dpnEmail);
     }
 
     protected SnapshotConfig processSnapshotConfigOptions(String[] args)
@@ -207,6 +240,43 @@ public class ConfigParser {
         return config;
     }
 
+    public SnapshotNotifyConfig processNotifyCommandLine(String[] args) {
+        SnapshotNotifyConfig config = null;
+        try {
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmd = parser.parse(cmdOptions, args);
+
+            config = new SnapshotNotifyConfig();
+            config.setSesUsername(cmd.getOptionValue("aa"));
+            config.setSesPassword(cmd.getOptionValue("as"));
+            config.setOriginatorEmailAddress(cmd.getOptionValue("eo"));
+
+            String[] duracloudEmails = new String[1];
+            duracloudEmails[0] = cmd.getOptionValue("edc");
+            config.setDuracloudEmailAddresses(duracloudEmails);
+
+            String[] dpnEmails = new String[1];
+            dpnEmails[0] = cmd.getOptionValue("edn");
+            config.setDpnEmailAddresses(dpnEmails);
+        } catch (ParseException e) {
+            printHelp(e.getMessage());
+        }
+        return config;
+    }
+
+    public DuracloudConfig processDuracloudCommandLine(String[] args) {
+        DuracloudConfig config = null;
+        try {
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmd = parser.parse(cmdOptions, args);
+            config = new DuracloudConfig(cmd.getOptionValue("u"),
+                                         cmd.getOptionValue("p"));
+        } catch (ParseException e) {
+            printHelp(e.getMessage());
+        }
+        return config;
+    }
+
     private void printHelp(String message) {
         System.out.println("\n-----------------------\n"
             + message + "\n-----------------------\n");
@@ -216,21 +286,4 @@ public class ConfigParser {
         System.exit(1);
     }
 
-    /**
-     * @param args
-     * @return
-     */
-    public DuracloudConfig processDuracloudCommandLine(String[] args) {
-        try {
-            CommandLineParser parser = new PosixParser();
-            CommandLine cmd = parser.parse(cmdOptions, args);
-            return new DuracloudConfig(cmd.getOptionValue("u"),
-                                       cmd.getOptionValue("p"));
-        } catch (ParseException e) {
-            printHelp(e.getMessage());
-        }
-        
-        return null;
-
-    }
 }

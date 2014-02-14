@@ -8,9 +8,11 @@
 package org.duracloud.snapshot.spring.batch.driver;
 
 import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
+import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
 import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -27,9 +29,12 @@ public class App {
     public static void main(String[] args) throws Exception {
         ConfigParser configParser =
             new ConfigParser();
-        SnapshotConfig config = configParser.processSnapshotConfigCommandLine(args);
-
-        DatabaseConfig dbConfig = configParser.processDBCommandLine(args);
+        SnapshotConfig config =
+            configParser.processSnapshotConfigCommandLine(args);
+        DatabaseConfig dbConfig =
+            configParser.processDBCommandLine(args);
+        SnapshotNotifyConfig notifyConfig =
+            configParser.processNotifyCommandLine(args);
 
         DuracloudConfig duracloudConfig = configParser.processDuracloudCommandLine(args);
 
@@ -41,17 +46,21 @@ public class App {
         ApplicationContext context =
             new ClassPathXmlApplicationContext(springConfig);
 
-        //initialize database
+        // initialize database
         DatabaseInitializer databaseInitializer =
             (DatabaseInitializer) context.getBean("databaseInitializer");
         databaseInitializer.init(dbConfig);
 
-        //initialize the snapshot job manager
+        // initialize the snapshot execution listener
+        SnapshotExecutionListener executionListener =
+            (SnapshotExecutionListener) context.getBean("jobListener");
+        executionListener.initialize(notifyConfig);
+
+        // initialize the snapshot job manager
         SnapshotJobManager manager =
             (SnapshotJobManager) context.getBean("snapshotJobManager");
         manager.init(duracloudConfig);
-        
-       
+
         try {
 
             SnapshotStatus status = manager.executeSnapshot(config);

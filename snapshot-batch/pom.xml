@@ -20,6 +20,31 @@
     <mysql.driver.version>5.1.28</mysql.driver.version>
   </properties>
 
+  <build>
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.duracloud.snapshot.spring.batch.driver.App</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <groupId>org.duracloud</groupId>

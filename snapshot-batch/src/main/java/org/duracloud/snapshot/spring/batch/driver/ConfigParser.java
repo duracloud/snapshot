@@ -198,8 +198,7 @@ public class ConfigParser {
      * 
      * Prints a help message and exits the JVM on parse failure.
      * 
-     * @param args
-     *            command line configuration values
+     * @param args command line configuration values
      * @return populated SnapshotConfig
      */
     public SnapshotConfig processSnapshotConfigCommandLine(String[] args) {
@@ -218,8 +217,7 @@ public class ConfigParser {
      * 
      * Prints a help message and exits the JVM on parse failure.
      * 
-     * @param args
-     *            command line configuration values
+     * @param args command line configuration values
      * @return populated DatabaseConfig
      */
     public DatabaseConfig processDBCommandLine(String[] args) {
@@ -240,6 +238,14 @@ public class ConfigParser {
         return config;
     }
 
+    /**
+     * Parses command line configuration into an SnapshotNotifyConfig structure.
+     *
+     * Prints a help message and exits the JVM on parse failure.
+     *
+     * @param args command line configuration values
+     * @return populated SnapshotNotifyConfig
+     */
     public SnapshotNotifyConfig processNotifyCommandLine(String[] args) {
         SnapshotNotifyConfig config = null;
         try {
@@ -264,6 +270,14 @@ public class ConfigParser {
         return config;
     }
 
+    /**
+     * Parses command line configuration into an DuracloudConfig structure.
+     *
+     * Prints a help message and exits the JVM on parse failure.
+     *
+     * @param args command line configuration values
+     * @return populated DuracloudConfig
+     */
     public DuracloudConfig processDuracloudCommandLine(String[] args) {
         DuracloudConfig config = null;
         try {

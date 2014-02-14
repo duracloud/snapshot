@@ -35,8 +35,8 @@ public class App {
             configParser.processDBCommandLine(args);
         SnapshotNotifyConfig notifyConfig =
             configParser.processNotifyCommandLine(args);
-
-        DuracloudConfig duracloudConfig = configParser.processDuracloudCommandLine(args);
+        DuracloudConfig duracloudConfig =
+            configParser.processDuracloudCommandLine(args);
 
         String[] springConfig = {
             "spring/batch/config/context.xml",

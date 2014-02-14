@@ -8,6 +8,8 @@
 package org.duracloud.snapshot.spring.batch;
 
 import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.jdbc.datasource.init.DataSourceInitializer;
@@ -22,6 +24,9 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
  *         Date: Feb 12, 2014
  */
 public class DatabaseInitializer {
+
+    private static final Logger LOGGER =
+        LoggerFactory.getLogger(DatabaseInitializer.class);
 
     private Resource dropSchema;
 
@@ -42,7 +47,23 @@ public class DatabaseInitializer {
         dataSource.setPassword(databaseConfig.getPassword());
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(databasePopulator(databaseConfig));
-        initializer.afterPropertiesSet();
+
+        try {
+            initializer.afterPropertiesSet();
+        } catch (Exception e) {
+            Throwable rootCause = getRootCause(e);
+
+            // The database initialization SQL scripts create the necessary
+            // tables.  If the exception indicates that the database already
+            // contains tables then ignore the exception and continue on,
+            // otherwise throw the exception.
+            if(rootCause.getMessage().contains("already exists")) {
+                LOGGER.info("Database initialization - tables already exist: {}",
+                            rootCause.getMessage());
+            } else {
+                throw e;
+            }
+        }
     }
 
     private DatabasePopulator databasePopulator(DatabaseConfig databaseConfig) {
@@ -52,5 +73,12 @@ public class DatabaseInitializer {
         }
         populator.addScript(schema);
         return populator;
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+        if(throwable.getCause() != null) {
+            return getRootCause(throwable.getCause());
+        }
+        return throwable;
     }
 }

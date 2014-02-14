@@ -44,7 +44,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private File contentDir;
     private OutputWriter outputWriter;
     private BufferedWriter propsWriter;
-    private BufferedWriter md5Witer;
+    private BufferedWriter md5Writer;
     private BufferedWriter sha256Writer;
     private ChecksumUtil sha256ChecksumUtil;
     private ContentItem snapshotPropsContentItem;
@@ -59,7 +59,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         this.contentDir = contentDir;
         this.outputWriter = outputWriter;
         this.propsWriter = propsWriter;
-        this.md5Witer = md5Writer;
+        this.md5Writer = md5Writer;
         this.sha256Writer = sha256Writer;
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
@@ -110,8 +110,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
 
     protected void writeMD5Checksum(ContentItem contentItem,
                                     String md5Checksum) throws IOException {
-        synchronized (md5Witer) {
-            md5Witer.write(md5Checksum + "  data/" +
+        synchronized (md5Writer) {
+            md5Writer.write(md5Checksum + "  data/" +
                                contentItem.getContentId() + "\n");
         }
     }
@@ -168,7 +168,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         LOGGER.debug("Step complete with status: {}",
                      stepExecution.getExitStatus());
         try {
-            md5Witer.close();
+            md5Writer.close();
         } catch (IOException ioe) {
             LOGGER.error("Error closing MD5 manifest BufferedWriter: ", ioe);
         }

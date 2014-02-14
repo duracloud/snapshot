@@ -7,10 +7,20 @@
  */
 package org.duracloud.snapshot.rest;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
+import org.duracloud.snapshot.spring.batch.SnapshotException;
+import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
+import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
+import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
+import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
+import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
+import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -25,19 +35,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
-
-import org.apache.commons.httpclient.HttpStatus;
-import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
-import org.duracloud.snapshot.spring.batch.SnapshotException;
-import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
-import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
-import org.duracloud.snapshot.spring.batch.SnapshotStatus;
-import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
-import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -59,18 +60,20 @@ public class SnapshotResource {
 
     @Context
     UriInfo uriInfo;
-    
+   
     private File workDir;
     private File contentDirRoot;
-    
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
+    private SnapshotExecutionListener executionListener;
     
     @Autowired
     public SnapshotResource(SnapshotJobManager jobManager, 
-                            DatabaseInitializer databaseInitializer) {
+                            DatabaseInitializer databaseInitializer,
+                            SnapshotExecutionListener executionListener) {
         this.jobManager = jobManager;
         this.databaseInitializer = databaseInitializer;
+        this.executionListener = executionListener;
     }    
     
     @Path("init")
@@ -89,6 +92,17 @@ public class SnapshotResource {
             //initialize database
             databaseInitializer.init(dbConfig);
             
+            SnapshotNotifyConfig notifyConfig = new SnapshotNotifyConfig();
+            notifyConfig.setSesUsername(initParams.getAwsAccessKey());
+            notifyConfig.setSesPassword(initParams.getAwsSecretKey());
+            notifyConfig.setDuracloudEmailAddresses(
+                initParams.getDuracloudEmailAddresses());
+            notifyConfig.setDpnEmailAddresses(
+                initParams.getDpnEmailAddresses());
+            notifyConfig.setOriginatorEmailAddress(
+                initParams.getOriginatorEmailAddress());
+            this.executionListener.initialize(notifyConfig);
+
             this.jobManager.init();
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
@@ -207,8 +221,6 @@ public class SnapshotResource {
                            .build();
         }
     }
-
-
 
     @Path("{id}/cancel")
     @POST

@@ -56,7 +56,6 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     }
 
     public void afterJob(JobExecution jobExecution) {
-        // TODO: Use constants to get ID and content dir path values
         String snapshotId =
             jobExecution.getJobParameters()
                         .getString(SnapshotConstants.SNAPSHOT_ID);

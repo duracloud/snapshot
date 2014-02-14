@@ -31,7 +31,9 @@ public class EasyMockTestBase {
     }
 
     protected <T> T createMock(Class<T> mockClass){
-       return EasyMock.createMock(mockClass); 
+        T mock = EasyMock.createMock(mockClass);
+        mocks.add(mock);
+        return mock;
     }
     
     protected void replay() {

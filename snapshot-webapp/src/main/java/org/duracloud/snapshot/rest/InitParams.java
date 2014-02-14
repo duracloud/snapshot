@@ -19,7 +19,8 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 @JsonDeserialize
 public class InitParams {
     private String originatorEmailAddress = null;
-    private String[] adminEmailAddresses = null;
+    private String[] duracloudEmailAddresses = null;
+    private String[] dpnEmailAddresses = null;
     private String awsAccessKey;
     private String awsSecretKey;
     private String databaseUser;
@@ -85,18 +86,35 @@ public class InitParams {
     public void setOriginatorEmailAddress(String originatorEmailAddress) {
         this.originatorEmailAddress = originatorEmailAddress;
     }
+
     /**
-     * @return the adminEmailAddresses
+     * @return the duracloudEmailAddresses
      */
-    public String[] getAdminEmailAddresses() {
-        return adminEmailAddresses;
+    public String[] getDuracloudEmailAddresses() {
+        return duracloudEmailAddresses;
     }
+
     /**
-     * @param adminEmailAddresses the adminEmailAddresses to set
+     * @param duracloudEmailAddresses the duracloudEmailAddresses to set
      */
-    public void setAdminEmailAddresses(String[] adminEmailAddresses) {
-        this.adminEmailAddresses = adminEmailAddresses;
+    public void setDuracloudEmailAddresses(String[] duracloudEmailAddresses) {
+        this.duracloudEmailAddresses = duracloudEmailAddresses;
     }
+
+    /**
+     * @return the dpnEmailAddresses
+     */
+    public String[] getDpnEmailAddresses() {
+        return dpnEmailAddresses;
+    }
+
+    /**
+     * @param dpnEmailAddresses the dpnEmailAddresses to set
+     */
+    public void setDpnEmailAddresses(String[] dpnEmailAddresses) {
+        this.dpnEmailAddresses = dpnEmailAddresses;
+    }
+
     /**
      * @return the awsAccessKey
      */

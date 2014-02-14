@@ -29,7 +29,8 @@
     <snapshot.database.password>snapshot</snapshot.database.password>
     <snapshot.database.url>jdbc:mysql://localhost/snapshot</snapshot.database.url>
     <snapshot.originatorEmailAddress>test@duracloud.org</snapshot.originatorEmailAddress>
-    <snapshot.adminEmailAddress>admin-test@duracloud.org</snapshot.adminEmailAddress>
+    <snapshot.duracloudEmailAddress>duracloud-test@duracloud.org</snapshot.duracloudEmailAddress>
+    <snapshot.dpnEmailAddress>dpn-test@duracloud.org</snapshot.dpnEmailAddress>
     <snapshot.clean>true</snapshot.clean>
 
   </properties>

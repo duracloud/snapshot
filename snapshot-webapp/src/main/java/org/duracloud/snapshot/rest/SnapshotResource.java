@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.rest;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.lang.StringUtils;
 import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SnapshotException;
 import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
@@ -112,30 +113,27 @@ public class SnapshotResource {
         }
     }   
     
-    private void initializeLocalDirectories(InitParams initParams) throws IOException{
-        String defaultDirRoot =
-            System.getProperty("java.io.tmpdir") + File.separator;
-        
+    private void initializeLocalDirectories(InitParams initParams)  {
+        if(StringUtils.isBlank(initParams.getWorkDir()))       {
+            throw new IllegalArgumentException("workDir must not be blank.");
+        }
+
+        if(StringUtils.isBlank(initParams.getContentDirRoot()))       {
+            throw new IllegalArgumentException("contentDirRoot must not be blank.");
+        }
+
         this.workDir =
-            createDirectoryIfNotExists(initParams.getWorkDir(), defaultDirRoot
-                + "snapshot-work");
-
+            createDirectoryIfNotExists(initParams.getWorkDir());
         this.contentDirRoot =
-            createDirectoryIfNotExists(initParams.getContentDirRoot(), defaultDirRoot
-                + "snapshot-content");
-
+            createDirectoryIfNotExists(initParams.getContentDirRoot());
+        
     }
 
     /**
      * @param path
-     * @param defaultDir
      * @return
      */
-    private File createDirectoryIfNotExists(String path, String defaultDir) {
-        if(path == null){
-            path = defaultDir;
-        }
-
+    private File createDirectoryIfNotExists(String path) {
         File wdir = new File(path);
         if(!wdir.exists()){
             if (!wdir.mkdirs()) {

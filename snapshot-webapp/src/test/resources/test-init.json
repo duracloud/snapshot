@@ -7,5 +7,7 @@
      databaseUser: "${snapshot.database.username}",
      databasePassword: "${snapshot.database.password}",
      databaseURL: "${snapshot.database.url}",
+     contentDirRoot:"${snapshot.contentDirRoot"},
+     workDir:"${snapshot.workDir}",
      clean: "${snapshot.clean}"
 }

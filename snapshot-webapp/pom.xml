@@ -32,6 +32,8 @@
     <snapshot.duracloudEmailAddress>duracloud-test@duracloud.org</snapshot.duracloudEmailAddress>
     <snapshot.dpnEmailAddress>dpn-test@duracloud.org</snapshot.dpnEmailAddress>
     <snapshot.clean>true</snapshot.clean>
+    <snapshot.workDir>${project.build.directory/test-snapshot-work</snapshot.workDir>
+    <snapshot.contentDirRoot>${project.build.directory/test-snapshot-content</snapshot.contentDirRoot>
 
   </properties>
 

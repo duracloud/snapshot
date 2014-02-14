@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.rest;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -58,8 +59,9 @@ public class SnapshotResource {
 
     @Context
     UriInfo uriInfo;
-
     
+    private File workDir;
+    private File contentDirRoot;
     
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
@@ -78,6 +80,7 @@ public class SnapshotResource {
     public Response init(InitParams initParams) {
         try {
             
+            initializeLocalDirectories(initParams);            
             DatabaseConfig dbConfig  = new DatabaseConfig();
             dbConfig.setUrl(initParams.getDatabaseURL());
             dbConfig.setUsername(initParams.getDatabaseUser());
@@ -93,7 +96,47 @@ public class SnapshotResource {
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
         }
+    }   
+    
+    private void initializeLocalDirectories(InitParams initParams) throws IOException{
+        String defaultDirRoot =
+            System.getProperty("java.io.tmpdir") + File.separator;
+        
+        this.workDir =
+            createDirectoryIfNotExists(initParams.getWorkDir(), defaultDirRoot
+                + "snapshot-work");
+
+        this.contentDirRoot =
+            createDirectoryIfNotExists(initParams.getContentDirRoot(), defaultDirRoot
+                + "snapshot-content");
+
     }
+
+    /**
+     * @param path
+     * @param defaultDir
+     * @return
+     */
+    private File createDirectoryIfNotExists(String path, String defaultDir) {
+        if(path == null){
+            path = defaultDir;
+        }
+
+        File wdir = new File(path);
+        if(!wdir.exists()){
+            if (!wdir.mkdirs()) {
+                throw new RuntimeException("failed to initialize "
+                    + path + ": directory could not be created.");
+            }
+        }
+        
+        if(!wdir.canWrite()){
+            throw new RuntimeException(wdir.getAbsolutePath() + " must be writable.");
+        }
+
+        return wdir;
+    }
+
     /**
      * Returns a list of snapshots.
      * 
@@ -183,14 +226,19 @@ public class SnapshotResource {
                            @PathParam("spaceId") String spaceId,
                            @PathParam("snapshotId") String snapshotId) {
 
-        SnapshotConfig config = new SnapshotConfig();
-        config.setHost(host);
-        config.setPort(Integer.parseInt(port));
-        config.setStoreId(storeId);
-        config.setSpace(spaceId);
-        config.setSnapshotId(snapshotId);
-
         try {
+
+            SnapshotConfig config = new SnapshotConfig();
+            config.setHost(host);
+            config.setPort(Integer.parseInt(port));
+            config.setStoreId(storeId);
+            config.setSpace(spaceId);
+            config.setSnapshotId(snapshotId);
+            config.setWorkDir(this.workDir);
+            
+            File contentDir = new File(this.contentDirRoot,snapshotId);
+            contentDir.mkdir();
+            config.setContentDir(contentDir);
             SnapshotStatus status = this.jobManager.executeSnapshotAsync(config);
             return Response.created(null)
                 .entity(status)

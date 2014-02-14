@@ -26,7 +26,37 @@ public class InitParams {
     private String databasePassword;
     private String databaseURL;
     private boolean clean = false;
+    private String workDir;
+    private String contentDirRoot;
     
+    /**
+     * @return the workDir
+     */
+    public String getWorkDir() {
+        return workDir;
+    }
+
+    /**
+     * @param workDir the workDir to set
+     */
+    public void setWorkDir(String workDir) {
+        this.workDir = workDir;
+    }
+
+    /**
+     * @return the contentDirRoot
+     */
+    public String getContentDirRoot() {
+        return contentDirRoot;
+    }
+
+    /**
+     * @param contentDirRoot the contentDirRoot to set
+     */
+    public void setContentDirRoot(String contentDirRoot) {
+        this.contentDirRoot = contentDirRoot;
+    }
+
     /**
      * @return the clean
      */
@@ -127,4 +157,5 @@ public class InitParams {
     public void setDatabaseURL(String databaseURL) {
         this.databaseURL = databaseURL;
     }
+
 }

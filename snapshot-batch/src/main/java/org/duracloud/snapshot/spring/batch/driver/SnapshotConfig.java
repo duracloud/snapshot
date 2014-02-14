@@ -15,9 +15,10 @@ import java.io.File;
  */
 public class SnapshotConfig {
 
+    private static final String DEFAULT_CONTEXT = "durastore";
     private String host;
     private int port;
-    private String context;
+    private String context = DEFAULT_CONTEXT;
     private String username;
     private String password;
     private String storeId;

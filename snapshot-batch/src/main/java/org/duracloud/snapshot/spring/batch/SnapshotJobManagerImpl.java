@@ -356,9 +356,9 @@ public class SnapshotJobManagerImpl
      */
     private JobParameters createJobParameters(String snapshotId, String contentDir) {
         Map<String, JobParameter> map = new HashMap<>();
-        map.put("snapshotId", new JobParameter(snapshotId, true));
+        map.put(SnapshotConstants.SNAPSHOT_ID, new JobParameter(snapshotId, true));
         if(contentDir != null){
-            map.put("contentDir", new JobParameter(contentDir));
+            map.put(SnapshotConstants.CONTENT_DIR, new JobParameter(contentDir));
         }
         JobParameters params = new JobParameters(map);
         return params;

@@ -57,9 +57,12 @@ public class SnapshotExecutionListener implements JobExecutionListener {
 
     public void afterJob(JobExecution jobExecution) {
         // TODO: Use constants to get ID and content dir path values
-        String snapshotId = jobExecution.getJobParameters().getString("id");
+        String snapshotId =
+            jobExecution.getJobParameters()
+                        .getString(SnapshotConstants.SNAPSHOT_ID);
         String snapshotPath =
-            jobExecution.getJobParameters().getString("content-dir");
+            jobExecution.getJobParameters()
+                        .getString(SnapshotConstants.CONTENT_DIR);
         LOGGER.debug("Completed snapshot: {} with status: {}",
                      snapshotId, jobExecution.getStatus());
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {

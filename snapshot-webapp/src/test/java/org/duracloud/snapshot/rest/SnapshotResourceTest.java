@@ -15,7 +15,7 @@ import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
-import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
@@ -42,12 +42,10 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     private String[] dpnEmailAddresses = {"dpn-email"};
     private String duracloudUsername = "duracloud-username";
     private String duracloudPassword = "duracloud-password";
-    private String workDir =
-        System.getProperty("java.io.tmpdir")
-            + File.separator + "snapshot-work";
-    private String contentDirRoot =
-        System.getProperty("java.io.tmpdir")
-            + File.separator + "snapshot-content";
+    private File workDir = new File(System.getProperty("java.io.tmpdir")
+        + "snapshot-work");
+    private File contentDirRoot = new File(System.getProperty("java.io.tmpdir")
+        + "snapshot-content");
     
     private boolean clean = true;
 
@@ -75,7 +73,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         executionListener.initialize(EasyMock.capture(notifyConfigCapture));
         EasyMock.expectLastCall();
 
-        Capture<DuracloudConfig> duracloudConfigCapture = new Capture<>();
+        Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
         manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
 
@@ -101,10 +99,12 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         assertEquals(dpnEmailAddresses[0],
                      notifyConfig.getDpnEmailAddresses()[0]);
 
-        DuracloudConfig duracloudConfig = duracloudConfigCapture.getValue();
+        SnapshotJobManagerConfig jobManagerConfig = duracloudConfigCapture.getValue();
 
-        assertEquals(duracloudUsername, duracloudConfig.getUsername());
-        assertEquals(duracloudPassword, duracloudConfig.getPassword());
+        assertEquals(duracloudUsername, jobManagerConfig.getDuracloudUsername());
+        assertEquals(duracloudPassword, jobManagerConfig.getDuracloudPassword());
+        assertEquals(contentDirRoot, jobManagerConfig.getContentRootDir());
+        assertEquals(workDir, jobManagerConfig.getWorkDir());
 
     }
 
@@ -124,8 +124,8 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         initParams.setDpnEmailAddresses(dpnEmailAddresses);
         initParams.setDuracloudUsername(duracloudUsername);
         initParams.setDuracloudPassword(duracloudPassword);
-        initParams.setWorkDir(workDir);
-        initParams.setContentDirRoot(contentDirRoot);
+        initParams.setWorkDir(workDir.getAbsolutePath());
+        initParams.setContentDirRoot(contentDirRoot.getAbsolutePath());
         return initParams;
     }
 
@@ -165,12 +165,6 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         resource.create(host, port, storeId, spaceId, snapshotId);
 
         SnapshotConfig snapshotConfig = snapshotConfigCapture.getValue();
-        assertEquals(new File(contentDirRoot
-                         + File.separator + snapshotConfig.getSnapshotId()),
-                     snapshotConfig.getContentDir());
-        assertEquals(new File(workDir),
-                          snapshotConfig.getWorkDir());
-
         assertEquals(host, snapshotConfig.getHost());
         assertEquals(Integer.parseInt(port), snapshotConfig.getPort());
         assertEquals(storeId, snapshotConfig.getStoreId());
@@ -188,7 +182,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         executionListener.initialize(EasyMock.isA(SnapshotNotifyConfig.class));
         EasyMock.expectLastCall();
 
-        manager.init(EasyMock.isA(DuracloudConfig.class));
+        manager.init(EasyMock.isA(SnapshotJobManagerConfig.class));
         EasyMock.expectLastCall();
 
     }

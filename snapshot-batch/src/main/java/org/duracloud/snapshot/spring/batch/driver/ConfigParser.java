@@ -14,7 +14,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
-import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 
 import java.io.File;
@@ -187,7 +187,6 @@ public class ConfigParser {
         config.setStoreId(cmd.getOptionValue("i"));
         config.setSnapshotId(cmd.getOptionValue("n"));
         config.setContentDir(new File(cmd.getOptionValue("c")));
-        config.setWorkDir(new File(cmd.getOptionValue("w")));
 
         return config;
     }
@@ -278,13 +277,15 @@ public class ConfigParser {
      * @param args command line configuration values
      * @return populated DuracloudConfig
      */
-    public DuracloudConfig processDuracloudCommandLine(String[] args) {
-        DuracloudConfig config = null;
+    public SnapshotJobManagerConfig processDuracloudCommandLine(String[] args) {
+        SnapshotJobManagerConfig config = null;
         try {
             CommandLineParser parser = new PosixParser();
             CommandLine cmd = parser.parse(cmdOptions, args);
-            config = new DuracloudConfig(cmd.getOptionValue("u"),
-                                         cmd.getOptionValue("p"));
+            config = new SnapshotJobManagerConfig();
+            config.setDuracloudUsername(cmd.getOptionValue("u"));
+            config.setDuracloudPassword(cmd.getOptionValue("p"));
+            config.setWorkDir(new File(cmd.getOptionValue("w")));
         } catch (ParseException e) {
             printHelp(e.getMessage());
         }

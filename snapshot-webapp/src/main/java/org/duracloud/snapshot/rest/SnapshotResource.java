@@ -15,7 +15,7 @@ import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotNotFoundException;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
-import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
@@ -63,11 +63,6 @@ public class SnapshotResource {
     @Context
     UriInfo uriInfo;
    
-    private File workDir;
-    private File contentDirRoot;
-    private String duracloudUsername;
-    private String duracloudPassword;
-    
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
     private SnapshotExecutionListener executionListener;
@@ -87,44 +82,51 @@ public class SnapshotResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
-            
             initializeLocalDirectories(initParams); 
-            
-            this.duracloudUsername = initParams.getDuracloudUsername();
-            this.duracloudPassword = initParams.getDuracloudPassword();
-           
-            DatabaseConfig dbConfig  = new DatabaseConfig();
-            dbConfig.setUrl(initParams.getDatabaseURL());
-            dbConfig.setUsername(initParams.getDatabaseUser());
-            dbConfig.setPassword(initParams.getDatabasePassword());
-            dbConfig.setClean(initParams.isClean());
-            //initialize database
-            databaseInitializer.init(dbConfig);
-            
-            SnapshotNotifyConfig notifyConfig = new SnapshotNotifyConfig();
-            notifyConfig.setSesUsername(initParams.getAwsAccessKey());
-            notifyConfig.setSesPassword(initParams.getAwsSecretKey());
-            notifyConfig.setDuracloudEmailAddresses(
-                initParams.getDuracloudEmailAddresses());
-            notifyConfig.setDpnEmailAddresses(
-                initParams.getDpnEmailAddresses());
-            notifyConfig.setOriginatorEmailAddress(
-                initParams.getOriginatorEmailAddress());
-            this.executionListener.initialize(notifyConfig);
-
-            DuracloudConfig duracloudConfig = new DuracloudConfig();
-            duracloudConfig.setUsername(initParams.getDuracloudUsername());
-            duracloudConfig.setPassword(initParams.getDuracloudPassword());
-            this.jobManager.init(duracloudConfig);
+            initDatabase(initParams);
+            initExecutionListener(initParams);
+            initJobManager(initParams);
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
         }
-    }   
-    
-    private void initializeLocalDirectories(InitParams initParams)  {
+    }
+
+    /**
+     * @param initParams
+     */
+    private void initDatabase(InitParams initParams) {
+        DatabaseConfig dbConfig  = new DatabaseConfig();
+        dbConfig.setUrl(initParams.getDatabaseURL());
+        dbConfig.setUsername(initParams.getDatabaseUser());
+        dbConfig.setPassword(initParams.getDatabasePassword());
+        dbConfig.setClean(initParams.isClean());
+        //initialize database
+        databaseInitializer.init(dbConfig);
+    }
+
+    /**
+     * @param initParams
+     */
+    private void initExecutionListener(InitParams initParams) {
+        SnapshotNotifyConfig notifyConfig = new SnapshotNotifyConfig();
+        notifyConfig.setSesUsername(initParams.getAwsAccessKey());
+        notifyConfig.setSesPassword(initParams.getAwsSecretKey());
+        notifyConfig.setDuracloudEmailAddresses(
+            initParams.getDuracloudEmailAddresses());
+        notifyConfig.setDpnEmailAddresses(
+            initParams.getDpnEmailAddresses());
+        notifyConfig.setOriginatorEmailAddress(
+            initParams.getOriginatorEmailAddress());
+        this.executionListener.initialize(notifyConfig);
+    }
+
+    /**
+     * @param initParams
+     */
+    private void initJobManager(InitParams initParams) {
         if(StringUtils.isBlank(initParams.getWorkDir()))       {
             throw new IllegalArgumentException("workDir must not be blank.");
         }
@@ -133,10 +135,20 @@ public class SnapshotResource {
             throw new IllegalArgumentException("contentDirRoot must not be blank.");
         }
 
-        this.workDir =
+        File workDir =
             createDirectoryIfNotExists(initParams.getWorkDir());
-        this.contentDirRoot =
+        File contentDirRoot =
             createDirectoryIfNotExists(initParams.getContentDirRoot());
+
+        SnapshotJobManagerConfig jobManagerConfig = new SnapshotJobManagerConfig();
+        jobManagerConfig.setDuracloudUsername(initParams.getDuracloudUsername());
+        jobManagerConfig.setDuracloudPassword(initParams.getDuracloudPassword());
+        jobManagerConfig.setContentRootDir(contentDirRoot);
+        jobManagerConfig.setWorkDir(workDir);
+        this.jobManager.init(jobManagerConfig);
+    }   
+    
+    private void initializeLocalDirectories(InitParams initParams)  {
         
     }
 
@@ -255,11 +267,6 @@ public class SnapshotResource {
             config.setStoreId(storeId);
             config.setSpace(spaceId);
             config.setSnapshotId(snapshotId);
-            config.setWorkDir(this.workDir);
-            
-            File contentDir = new File(this.contentDirRoot,snapshotId);
-            contentDir.mkdir();
-            config.setContentDir(contentDir);
             SnapshotStatus status = this.jobManager.executeSnapshotAsync(config);
             return Response.created(null)
                 .entity(status)

@@ -27,7 +27,7 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.spring.batch.config.DuracloudConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,7 +74,7 @@ public class SnapshotJobManagerImpl
     private TaskExecutor taskExecutor;
     private ApplicationContext context;
     private ExecutorService executor;
-    private DuracloudConfig duracloudConfig;
+    private SnapshotJobManagerConfig config;
     
     @Autowired
     public SnapshotJobManagerImpl(
@@ -125,14 +125,14 @@ public class SnapshotJobManagerImpl
      * .snapshot.rest.InitParams)
      */
     @Override
-    public void init(DuracloudConfig duracloudConfig) {
+    public void init(SnapshotJobManagerConfig config) {
         
         if (isInitialized()) {
             log.warn("Already initialized. Ignorning");
             return;
         }
 
-        this.duracloudConfig = duracloudConfig;
+        this.config = config;
         
         this.jobRepository = (JobRepository) context.getBean("jobRepository");
 
@@ -193,18 +193,18 @@ public class SnapshotJobManagerImpl
     }
 
     /**
-     * @param config
+     * @param snapshotConfig
      * @return
      * @throws SnapshotException
      */
-    private SnapshotStatus executeJob(Job job, SnapshotConfig config)
+    private SnapshotStatus executeJob(Job job, SnapshotConfig snapshotConfig)
         throws SnapshotException {
 
-        String snapshotId = config.getSnapshotId();
+        String snapshotId = snapshotConfig.getSnapshotId();
         
+        File contentDir = resolveContentDir(snapshotConfig,this.config);
         JobParameters params =
-            createJobParameters(snapshotId, config.getContentDir()
-                                                  .getAbsolutePath());
+            createJobParameters(snapshotId, contentDir.getAbsolutePath());
         try {
             JobExecution execution = jobLauncher.run(job, params);
             return createSnapshotStatus(snapshotId, execution);
@@ -217,25 +217,25 @@ public class SnapshotJobManagerImpl
     }
 
     /**
-     * @param config
+     * @param snapshotConfig
      * @return
      * @throws SnapshotException
      */
-    private Job buildJob(SnapshotConfig config) throws SnapshotException {
+    private Job buildJob(SnapshotConfig snapshotConfig) throws SnapshotException {
         Job job;
         try {
 
             StoreClientUtil clientUtil = new StoreClientUtil();
             ContentStore contentStore =
-                clientUtil.createContentStore(config.getHost(),
-                                              config.getPort(),
-                                              config.getContext(),
-                                              duracloudConfig.getUsername(),
-                                              duracloudConfig.getPassword(),
-                                              config.getStoreId());
+                clientUtil.createContentStore(snapshotConfig.getHost(),
+                                              snapshotConfig.getPort(),
+                                              snapshotConfig.getContext(),
+                                              config.getDuracloudUsername(),
+                                              config.getDuracloudPassword(),
+                                              snapshotConfig.getStoreId());
 
             List<String> spaces = new ArrayList<>();
-            spaces.add(config.getSpace());
+            spaces.add(snapshotConfig.getSpace());
             RetrievalSource retrievalSource =
                 new DuraStoreStitchingRetrievalSource(contentStore,
                                                       spaces,
@@ -244,26 +244,23 @@ public class SnapshotJobManagerImpl
             ItemReader<ContentItem> itemReader =
                 new SpaceItemReader(retrievalSource);
 
-            File contentDir = config.getContentDir();
-            File workDir = config.getWorkDir();
+            File contentDir = resolveContentDir(snapshotConfig, this.config);
+            File workDir =  this.config.getWorkDir();
             OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
 
             Path propsPath =
-                FileSystems.getDefault().getPath(config.getContentDir()
-                                                       .getAbsolutePath(),
+                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
                                                  "content-properties.json");
             BufferedWriter propsWriter =
                 Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
 
             Path md5Path =
-                FileSystems.getDefault().getPath(config.getContentDir()
-                                                       .getAbsolutePath(),
+                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
                                                  "manifest-md5.txt");
             BufferedWriter md5Writer =
                 Files.newBufferedWriter(md5Path, StandardCharsets.UTF_8);
             Path sha256Path =
-                FileSystems.getDefault().getPath(config.getContentDir()
-                                                       .getAbsolutePath(),
+                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
                                                  "manifest-sha256.txt");
             BufferedWriter sha256Writer =
                 Files.newBufferedWriter(sha256Path, StandardCharsets.UTF_8);
@@ -301,6 +298,30 @@ public class SnapshotJobManagerImpl
             throw new SnapshotException(e.getMessage(), e);
         }
         return job;
+    }
+
+    /**
+     * @param contentDir
+     * @return
+     */
+    private File resolveContentDir(SnapshotConfig snapshotConfig,
+                                   SnapshotJobManagerConfig jobConfig) {
+        File contentDir = snapshotConfig.getContentDir();
+        if (contentDir == null) {
+            if (jobConfig.getContentRootDir() != null) {
+                contentDir =
+                    new File(jobConfig.getContentRootDir(),
+                             snapshotConfig.getSnapshotId());
+            }
+        }
+        
+        if(contentDir != null){
+            contentDir.mkdirs();
+            return contentDir;
+        }
+        
+        throw new IllegalStateException("both contentDir and contentDirRoot settings are null. This case should never occur!");
+
     }
 
     /*
@@ -342,7 +363,7 @@ public class SnapshotJobManagerImpl
 
         checkInitialized();
 
-        JobParameters params = createJobParameters(snapshotId, null);
+        JobParameters params = createJobParameters(snapshotId, "/Users/danny/tmp/snapshot/content/"+snapshotId);
         JobExecution ex =
             this.jobRepository.getLastJobExecution(SNAPSHOT_JOB_NAME, params);
         if (ex != null) {
@@ -362,9 +383,7 @@ public class SnapshotJobManagerImpl
     private JobParameters createJobParameters(String snapshotId, String contentDir) {
         Map<String, JobParameter> map = new HashMap<>();
         map.put(SnapshotConstants.SNAPSHOT_ID, new JobParameter(snapshotId, true));
-        if(contentDir != null){
-            map.put(SnapshotConstants.CONTENT_DIR, new JobParameter(contentDir));
-        }
+        map.put(SnapshotConstants.CONTENT_DIR, new JobParameter(contentDir));
         JobParameters params = new JobParameters(map);
         return params;
     }

@@ -23,7 +23,6 @@ public class SnapshotConfig {
     private String snapshotId;
     private String space;
     private File contentDir;
-    private File workDir;
 
     public String getHost() {
         return host;
@@ -81,11 +80,4 @@ public class SnapshotConfig {
         this.contentDir = contentDir;
     }
 
-    public File getWorkDir() {
-        return workDir;
-    }
-
-    public void setWorkDir(File workDir) {
-        this.workDir = workDir;
-    }
 }

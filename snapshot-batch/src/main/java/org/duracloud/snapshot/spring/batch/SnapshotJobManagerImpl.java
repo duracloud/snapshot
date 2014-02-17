@@ -7,19 +7,6 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
@@ -51,6 +38,19 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
@@ -300,10 +300,6 @@ public class SnapshotJobManagerImpl
         return job;
     }
 
-    /**
-     * @param contentDir
-     * @return
-     */
     private File resolveContentDir(SnapshotConfig snapshotConfig,
                                    SnapshotJobManagerConfig jobConfig) {
         File contentDir = snapshotConfig.getContentDir();
@@ -363,7 +359,9 @@ public class SnapshotJobManagerImpl
 
         checkInitialized();
 
-        JobParameters params = createJobParameters(snapshotId, "/Users/danny/tmp/snapshot/content/"+snapshotId);
+        String contentDir = config.getContentRootDir() +
+                            File.separator + snapshotId;
+        JobParameters params = createJobParameters(snapshotId, contentDir);
         JobExecution ex =
             this.jobRepository.getLastJobExecution(SNAPSHOT_JOB_NAME, params);
         if (ex != null) {

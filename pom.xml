@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <version>1.0.0</version>
+  <groupId>org.duracloud.snapshot</groupId>
+  <artifactId>snapshot-parent</artifactId>
+  <packaging>pom</packaging>
+  <name>DuraCloud Snapshot Parent Pom</name>
+
+  <organization>
+    <name>DuraSpace</name>
+    <url>http://www.duraspace.org</url>
+  </organization>
+
+  <inceptionYear>2014</inceptionYear>
+
+  <prerequisites>
+    <maven>3.0.0</maven>
+  </prerequisites>
+  
+  <modules>
+    <module>snapshot-batch</module>
+    <module>snapshot-webapp</module>
+  </modules>
+
+  
+  <properties>
+    <slf4j.version>1.7.5</slf4j.version>
+    <springframework.version>4.0.0.RELEASE</springframework.version>
+    <duracloud.version>3.0.0-SNAPSHOT</duracloud.version>
+    <unitTests>**/*Test.class</unitTests>
+    <integrationTests>**/Test*.class</integrationTests>
+    <instrumentedTests>**/*Test*__*.class</instrumentedTests>
+    <innerClasses>**/*$*</innerClasses>
+    <log.level.default>INFO</log.level.default>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <skipITs>true</skipITs>
+  </properties>
+   
+  <repositories>
+    <repository>
+      <id>duraspace-thirdparty</id>
+      <name>DuraSpace Thirdparty</name>
+      <url>https://m2.duraspace.org/content/repositories/thirdparty</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>duraspace-releases</id>
+      <name>DuraSpace Releases Maven Repository</name>
+      <url>https://m2.duraspace.org/content/repositories/releases</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>duraspace-snapshots</id>
+      <name>DuraSpace Snapshots Maven Repository</name>
+      <url>https://m2.duraspace.org/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>central</id>
+      <name>Maven Repository Switchboard</name>
+      <url>http://repo1.maven.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+
+    <repository>
+      <id>maven2-repository.dev.java.net</id>
+      <name>Java.net Repository for Maven</name>
+      <url>http://download.java.net/maven/2/</url>
+      <layout>default</layout>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>buildnumber-maven-plugin</artifactId> 
+        <version>1.1</version> <executions> <execution> <phase>generate-resources</phase> 
+        <goals> <goal>create</goal> </goals> </execution> </executions> <configuration> 
+        <doCheck>false</doCheck> <doUpdate>false</doUpdate> <shortRevisionLength>5</shortRevisionLength> 
+        </configuration> </plugin> -->
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <systemProperties />
+        </configuration>
+        <executions>
+          <execution>
+            <id>test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skip>${skipTests}</skip>
+              <systemProperties />
+              <excludes>
+                <exclude>${integrationTests}</exclude>
+                <exclude>${instrumentedTests}</exclude>
+                <exclude>${innerClasses}</exclude>
+              </excludes>
+              <includes>
+                <include>${unitTests}</include>
+              </includes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>integrationtest</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <skip>${skipITs}</skip>
+              <excludes>
+                <exclude>${unitTests}</exclude>
+                <exclude>${instrumentedTests}</exclude>
+                <exclude>${innerClasses}</exclude>
+              </excludes>
+              <includes>
+                <include>${integrationTests}</include>
+              </includes>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- This execution 'default-test' overrides the built-in default 
+              execution for the test phase. Thus unit tests aren't run when you running 
+              integration tests. It comes in handy when trying to debug a single integration 
+              test as you only need to attach your debugger once. -->
+            <id>default-test</id>
+            <configuration>
+              <skipTests>true</skipTests>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>2.4</version>
+          <configuration>
+              <descriptors>
+                  <descriptor>src/main/assembly/dep.xml</descriptor>
+              </descriptors>
+          </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>${springframework.version}</version>
+        <scope>compile</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-beans</artifactId>
+        <version>${springframework.version}</version>
+        <scope>compile</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-test</artifactId>
+        <version>${springframework.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>1.0.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <scope>test</scope>
+        <version>4.11</version>
+        <exclusions>
+          <exclusion>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.easymock</groupId>
+        <artifactId>easymockclassextension</artifactId>
+        <version>3.0</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+</project>

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <version>1.0.0</version>
+  <groupId>org.duracloud.snapshot</groupId>
+  <artifactId>snapshot</artifactId>
+  <packaging>war</packaging>
+  <name>Snapshot Rest Interface</name>
+
+  <description>A java web application that exposes a rest interface to Snapshot</description>
+
+  <parent>
+    <groupId>org.duracloud.snapshot</groupId>
+    <artifactId>snapshot-parent</artifactId>
+    <version>1.0.0</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <properties>
+    <!-- Specify alternate tomcat port when running mvn tomcat:run or run-war 
+      by adding -Dmaven.tomcat.port property The tomcat plugin configuration -> 
+      port settings does not appear to work. http://stackoverflow.com/questions/646649/alternate-port-for-tomcat-not-8080-when-starting-with-maven -->
+
+    <!-- this tomcat port is for deploying on a already running tomcat server -->
+    <tomcat.port>8080</tomcat.port>
+    <jersey.version>2.5.1</jersey.version>
+    <snapshot.database.username>snapshot</snapshot.database.username>
+    <snapshot.database.password>snapshot</snapshot.database.password>
+    <snapshot.database.url>jdbc:mysql://localhost/snapshot</snapshot.database.url>
+    <snapshot.originatorEmailAddress>test@duracloud.org</snapshot.originatorEmailAddress>
+    <snapshot.duracloudEmailAddress>duracloud-test@duracloud.org</snapshot.duracloudEmailAddress>
+    <snapshot.dpnEmailAddress>dpn-test@duracloud.org</snapshot.dpnEmailAddress>
+    <snapshot.clean>true</snapshot.clean>
+    <snapshot.workDir>${project.build.directory/test-snapshot-work</snapshot.workDir>
+    <snapshot.contentDirRoot>${project.build.directory/test-snapshot-content</snapshot.contentDirRoot>
+    <snapshot.duracloudUsername>root</snapshot.duracloudUsername>
+    <snapshot.duracloudPassword>rpw</snapshot.duracloudPassword>
+
+  </properties>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+      <!-- This test resource configutation is necessary for the jersey test 
+        framework to work properly. -->
+      <testResource>
+        <directory>src/main/webapp/WEB-INF</directory>
+        <includes>
+          <include>applicationContext.xml</include>
+        </includes>
+      </testResource>
+    </testResources>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-war-plugin</artifactId>
+      <configuration>
+        <webResources>
+          <resource>
+            <directory>src/main/webapp</directory>
+            <includes>
+            </includes>
+            <filtering>true</filtering>
+          </resource>
+        </webResources>
+      </configuration>
+    </plugin>
+    <plugin>
+      <groupId>org.apache.tomcat.maven</groupId>
+      <artifactId>tomcat7-maven-plugin</artifactId>
+      <version>2.2</version>
+      <executions>
+        <execution>
+          <id>tomcat-deploy</id>
+          <phase>install</phase>
+          <goals>
+            <goal>deploy-only</goal>
+          </goals>
+          <configuration>
+            <server>tomcat-server</server>
+            <url>
+              http://localhost:${tomcat.port}/manager</url>
+            <update>true</update>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-batch</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.ext</groupId>
+      <artifactId>jersey-spring3</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-json-jackson</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>log4j-over-slf4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+      <version>3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>servlet-api</artifactId>
+      <version>2.5</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <version>${springframework.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-beans</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymockclassextension</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+      <artifactId>jersey-test-framework-provider-bundle</artifactId>
+      <type>pom</type>
+      <scope>test</scope>
+      <version>${jersey.version}</version>
+    </dependency>
+  </dependencies>
+</project>

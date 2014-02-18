@@ -5,3 +5,4 @@ target
 duracloud.home_IS_UNDEFINED
 *.iml
 .idea
+snapshot-batch/dependency-reduced-pom.xml

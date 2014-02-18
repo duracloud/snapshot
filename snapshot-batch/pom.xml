@@ -23,23 +23,32 @@
   <build>
     <plugins>
 
+      <!-- Builds an executable jar which executes the app driver -->
       <plugin>
-        <artifactId>maven-assembly-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifest>
-              <mainClass>org.duracloud.snapshot.spring.batch.driver.App</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-          </execution>
-        </executions>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.2</version>
+          <executions>
+              <execution>
+                  <phase>package</phase>
+                  <goals>
+                      <goal>shade</goal>
+                  </goals>
+                  <configuration>
+                      <transformers>
+                          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                              <mainClass>org.duracloud.snapshot.spring.batch.driver.App</mainClass>
+                          </transformer>
+                          <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                              <resource>META-INF/spring.handlers</resource>
+                          </transformer>
+                          <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                              <resource>META-INF/spring.schemas</resource>
+                          </transformer>
+                      </transformers>
+                  </configuration>
+              </execution>
+          </executions>
       </plugin>
 
     </plugins>

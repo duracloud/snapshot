@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.spring.batch.driver;
+package org.duracloud.snapshot.spring.batch.config;
 
 /**
  * @author Daniel Bernstein

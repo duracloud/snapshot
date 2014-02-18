@@ -11,6 +11,8 @@ import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
 import org.duracloud.snapshot.spring.batch.SnapshotJobManager;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
+import org.duracloud.snapshot.spring.batch.config.DatabaseConfig;
+import org.duracloud.snapshot.spring.batch.config.SnapshotConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.slf4j.Logger;

@@ -7,7 +7,7 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
-import org.duracloud.snapshot.spring.batch.driver.DatabaseConfig;
+import org.duracloud.snapshot.spring.batch.config.DatabaseConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;

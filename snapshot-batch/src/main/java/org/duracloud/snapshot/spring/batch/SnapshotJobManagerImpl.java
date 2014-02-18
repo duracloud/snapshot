@@ -14,8 +14,8 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.spring.batch.config.SnapshotConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
-import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -325,7 +325,7 @@ public class SnapshotJobManagerImpl
      * 
      * @see
      * org.duracloud.snapshot.spring.batch.SnapshotJobManager#executeSnapshotSync
-     * (org.duracloud.snapshot.spring.batch.driver.SnapshotConfig)
+     * (org.duracloud.snapshot.spring.batch.config.SnapshotConfig)
      */
     @Override
     public SnapshotStatus executeSnapshot(SnapshotConfig config)

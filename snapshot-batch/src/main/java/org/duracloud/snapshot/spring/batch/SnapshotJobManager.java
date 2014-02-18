@@ -7,8 +7,8 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
+import org.duracloud.snapshot.spring.batch.config.SnapshotConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
-import org.duracloud.snapshot.spring.batch.driver.SnapshotConfig;
 
 /**
  * An interface defining the interaction between the REST

@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
+import org.springframework.batch.core.JobParameters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.List;
  */
 public class SnapshotExecutionListener implements JobExecutionListener {
 
-    private static final Logger LOGGER =
+    private static final Logger log =
         LoggerFactory.getLogger(SnapshotExecutionListener.class);
 
     private NotificationManager notificationManager;
@@ -56,15 +57,14 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     }
 
     public void afterJob(JobExecution jobExecution) {
-        String snapshotId =
-            jobExecution.getJobParameters()
-                        .getString(SnapshotConstants.SNAPSHOT_ID);
-        String snapshotPath =
-            jobExecution.getJobParameters()
-                        .getString(SnapshotConstants.CONTENT_DIR);
-        LOGGER.debug("Completed snapshot: {} with status: {}",
-                     snapshotId, jobExecution.getStatus());
-        if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
+        JobParameters jobParams = jobExecution.getJobParameters();
+        BatchStatus status = jobExecution.getStatus();
+
+        String snapshotId = jobParams.getString(SnapshotConstants.SNAPSHOT_ID);
+        String snapshotPath = jobParams.getString(SnapshotConstants.CONTENT_DIR);
+
+        log.debug("Completed snapshot: {} with status: {}", snapshotId, status);
+        if(BatchStatus.COMPLETED.equals(status)) {
             // Job success. Email Chronopolis/DPN AND DuraSpace teams about
             // snapshot ready for transfer into preservation storage.
             String subject =

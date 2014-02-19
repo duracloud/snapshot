@@ -10,14 +10,18 @@ package org.duracloud.snapshot.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.MessageFormat;
+import java.util.Properties;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.duracloud.snapshot.spring.batch.SnapshotStatus;
 import org.glassfish.jersey.client.ClientConfig;
@@ -40,8 +44,19 @@ public class TestSnapshotRest extends JerseyTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        target = target();
+    }
 
-        InputStream is = getClass().getResourceAsStream("test-init.json");
+    /**
+     * @throws IOException
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     */
+    private void doInit()
+        throws IOException,
+            JsonParseException,
+            JsonMappingException {
+        InputStream is = getClass().getResourceAsStream("/test-init.json");
         ObjectMapper mapper = new ObjectMapper();
         InitParams params = mapper.readValue(is, InitParams.class);
         Entity<InitParams> entity = Entity.entity(params, MediaType.APPLICATION_JSON);
@@ -50,11 +65,6 @@ public class TestSnapshotRest extends JerseyTest {
                   .request(MediaType.APPLICATION_JSON)
                   .post(entity, ResponseDetails.class);
         assertNotNull(details);
-
-        target = target();
-
-        
-        
     }
     
     @Override
@@ -93,24 +103,16 @@ public class TestSnapshotRest extends JerseyTest {
     */
 
     @Test
-    public void testGet() {
-        String id = "1";
-        SnapshotStatus responseMsg =
-            target.path(id)
-                  .request(MediaType.APPLICATION_JSON)
-                  .get(SnapshotStatus.class);
-        assertNotNull(responseMsg);
-        assertEquals(id, responseMsg.getId());
-        assertNotNull(responseMsg.getStatus());
-    }
+    public void test() throws Exception {
+        doInit();
 
-    @Test
-    public void testCreate() {
-        String host = "host";
-        String port = "443";
-        String storeId = "1";
-        String spaceId = "space";
-        String snapshotId = "1234";
+        Properties props = new Properties();
+        props.load(getClass().getResourceAsStream("/test.properties"));
+        String host = props.getProperty("host");
+        String port = props.getProperty("port");
+        String storeId = props.getProperty("storeId");
+        String spaceId = props.getProperty("spaceId");
+        String snapshotId = System.currentTimeMillis()+"";
         String path =
             MessageFormat.format("{0}/{1}/{2}/{3}/{4}",
                                  host,
@@ -125,6 +127,17 @@ public class TestSnapshotRest extends JerseyTest {
         assertNotNull(responseMsg);
         assertEquals(snapshotId, responseMsg.getId());
         assertNotNull(responseMsg.getStatus());
+        
+        Thread.sleep(5*1000);
+        responseMsg =
+            target.path(snapshotId)
+                  .request(MediaType.APPLICATION_JSON)
+                  .get(SnapshotStatus.class);
+        assertNotNull(responseMsg);
+        assertEquals(snapshotId, responseMsg.getId());
+        assertNotNull(responseMsg.getStatus());
     }
+
+
 
 }

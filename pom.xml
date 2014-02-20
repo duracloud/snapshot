@@ -20,6 +20,7 @@
   </prerequisites>
   
   <modules>
+    <module>snapshot-common-test</module>
     <module>snapshot-batch</module>
     <module>snapshot-webapp</module>
   </modules>

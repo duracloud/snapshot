@@ -7,13 +7,12 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
-import org.duracloud.client.ContentStore;
-import org.duracloud.common.model.ContentItem;
-import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
-import org.duracloud.retrieval.mgmt.OutputWriter;
-import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
-import org.duracloud.retrieval.source.RetrievalSource;
-import org.duracloud.retrieval.util.StoreClientUtil;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import org.duracloud.snapshot.spring.batch.config.SnapshotConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.slf4j.Logger;
@@ -23,34 +22,14 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
@@ -61,10 +40,7 @@ import java.util.concurrent.Executors;
 
 public class SnapshotJobManagerImpl
     implements SnapshotJobManager, ApplicationContextAware {
-    /**
-     * 
-     */
-    private static final String SNAPSHOT_JOB_NAME = "snapshot";
+
     private static final Logger log =
         LoggerFactory.getLogger(SnapshotJobManagerImpl.class);
     private JobExecutionListener jobListener;
@@ -75,6 +51,7 @@ public class SnapshotJobManagerImpl
     private ApplicationContext context;
     private ExecutorService executor;
     private SnapshotJobManagerConfig config;
+    private SnapshotJobBuilder jobBuilder;
     
     @Autowired
     public SnapshotJobManagerImpl(
@@ -86,22 +63,6 @@ public class SnapshotJobManagerImpl
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
         this.executor = Executors.newFixedThreadPool(10);
-    }
-
-    /**
-     * @param jobLauncher
-     *            the jobLauncher to set
-     */
-    public void setJobLauncher(JobLauncher jobLauncher) {
-        this.jobLauncher = jobLauncher;
-    }
-
-    /**
-     * @param jobRepository
-     *            the jobRepository to set
-     */
-    protected void setJobRepository(JobRepository jobRepository) {
-        this.jobRepository = jobRepository;
     }
 
     /*
@@ -134,9 +95,9 @@ public class SnapshotJobManagerImpl
 
         this.config = config;
         
-        this.jobRepository = (JobRepository) context.getBean("jobRepository");
+        this.jobRepository = (JobRepository) context.getBean(JOB_REPOSITORY_KEY);
 
-        this.jobLauncher = (JobLauncher) context.getBean("jobLauncher");
+        this.jobLauncher = (JobLauncher) context.getBean(JOB_LAUNCHER_KEY);
     }
 
     /**
@@ -202,7 +163,7 @@ public class SnapshotJobManagerImpl
 
         String snapshotId = snapshotConfig.getSnapshotId();
         
-        File contentDir = resolveContentDir(snapshotConfig,this.config);
+        File contentDir = SnapshotUtils.resolveContentDir(snapshotConfig,this.config);
         JobParameters params =
             createJobParameters(snapshotId, contentDir.getAbsolutePath());
         try {
@@ -221,104 +182,21 @@ public class SnapshotJobManagerImpl
      * @return
      * @throws SnapshotException
      */
-    private Job buildJob(SnapshotConfig snapshotConfig) throws SnapshotException {
-        Job job;
-        try {
-
-            StoreClientUtil clientUtil = new StoreClientUtil();
-            ContentStore contentStore =
-                clientUtil.createContentStore(snapshotConfig.getHost(),
-                                              snapshotConfig.getPort(),
-                                              snapshotConfig.getContext(),
-                                              config.getDuracloudUsername(),
-                                              config.getDuracloudPassword(),
-                                              snapshotConfig.getStoreId());
-
-            List<String> spaces = new ArrayList<>();
-            spaces.add(snapshotConfig.getSpace());
-            RetrievalSource retrievalSource =
-                new DuraStoreStitchingRetrievalSource(contentStore,
-                                                      spaces,
-                                                      false);
-
-            ItemReader<ContentItem> itemReader =
-                new SpaceItemReader(retrievalSource);
-
-            File contentDir = resolveContentDir(snapshotConfig, this.config);
-            File workDir =  this.config.getWorkDir();
-            OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
-
-            Path propsPath =
-                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
-                                                 "content-properties.json");
-            BufferedWriter propsWriter =
-                Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
-
-            Path md5Path =
-                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
-                                                 "manifest-md5.txt");
-            BufferedWriter md5Writer =
-                Files.newBufferedWriter(md5Path, StandardCharsets.UTF_8);
-            Path sha256Path =
-                FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
-                                                 "manifest-sha256.txt");
-            BufferedWriter sha256Writer =
-                Files.newBufferedWriter(sha256Path, StandardCharsets.UTF_8);
-
-            ItemWriter itemWriter =
-                new SpaceItemWriter(retrievalSource,
-                                    contentDir,
-                                    outputWriter,
-                                    propsWriter,
-                                    md5Writer,
-                                    sha256Writer);
-
-            SimpleStepFactoryBean<ContentItem, File> stepFactory =
-                new SimpleStepFactoryBean<>();
-            stepFactory.setJobRepository(jobRepository);
-            stepFactory.setTransactionManager(transactionManager);
-            stepFactory.setBeanName("step1");
-            stepFactory.setItemReader(itemReader);
-            stepFactory.setItemWriter(itemWriter);
-            stepFactory.setCommitInterval(1);
-            stepFactory.setThrottleLimit(20);
-            stepFactory.setTaskExecutor(taskExecutor);
-            Step step = (Step) stepFactory.getObject();
-
-            JobBuilderFactory jobBuilderFactory =
-                new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get(SNAPSHOT_JOB_NAME);
-            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
-            simpleJobBuilder.listener(jobListener);
-
-            job = simpleJobBuilder.build();
-
-        } catch (Exception e) {
-            log.error("Error creating job: {}", e.getMessage(), e);
-            throw new SnapshotException(e.getMessage(), e);
-        }
-        return job;
-    }
-
-    private File resolveContentDir(SnapshotConfig snapshotConfig,
-                                   SnapshotJobManagerConfig jobConfig) {
-        File contentDir = snapshotConfig.getContentDir();
-        if (contentDir == null) {
-            if (jobConfig.getContentRootDir() != null) {
-                contentDir =
-                    new File(jobConfig.getContentRootDir(),
-                             snapshotConfig.getSnapshotId());
-            }
+    public Job buildJob(SnapshotConfig snapshotConfig) throws SnapshotException {
+        if(jobBuilder == null) {
+            jobBuilder = new SnapshotJobBuilder();
         }
         
-        if(contentDir != null){
-            contentDir.mkdirs();
-            return contentDir;
-        }
-        
-        throw new IllegalStateException("both contentDir and contentDirRoot settings are null. This case should never occur!");
-
+        return jobBuilder.build(snapshotConfig,
+                                config,
+                                jobListener,
+                                jobRepository,
+                                jobLauncher,
+                                transactionManager,
+                                taskExecutor);
     }
+
+ 
 
     /*
      * (non-Javadoc)
@@ -363,7 +241,7 @@ public class SnapshotJobManagerImpl
                             File.separator + snapshotId;
         JobParameters params = createJobParameters(snapshotId, contentDir);
         JobExecution ex =
-            this.jobRepository.getLastJobExecution(SNAPSHOT_JOB_NAME, params);
+            this.jobRepository.getLastJobExecution(SnapshotConstants.SNAPSHOT_JOB_NAME, params);
         if (ex != null) {
             return createSnapshotStatus(snapshotId, ex);
         }

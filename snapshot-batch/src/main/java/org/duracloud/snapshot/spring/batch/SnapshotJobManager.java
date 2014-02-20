@@ -17,8 +17,12 @@ import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
  * @author Daniel Bernstein
  *         Date: Feb 11, 2014
  */
-public interface SnapshotJobManager {
+public interface SnapshotJobManager  {
 
+    
+    public final static String JOB_REPOSITORY_KEY = "jobRepository";
+    public final static String JOB_LAUNCHER_KEY = "jobLauncher";
+    
     /**
      * Lazily initializes the component.  The data source must be fully configured
      * when this method is called; otherwise it will fail.

@@ -110,6 +110,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-common-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
       <artifactId>jersey-spring3</artifactId>
       <version>${jersey.version}</version>

@@ -7,8 +7,11 @@
  */
 package org.duracloud.snapshot.rest;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.File;
 
+import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.spring.batch.DatabaseInitializer;
 import org.duracloud.snapshot.spring.batch.SnapshotException;
 import org.duracloud.snapshot.spring.batch.SnapshotExecutionListener;
@@ -21,16 +24,16 @@ import org.duracloud.snapshot.spring.batch.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.junit.Before;
+import org.easymock.Mock;
+import org.easymock.TestSubject;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author Daniel Bernstein
  *         Date: Feb 4, 2014
  */
-public class SnapshotResourceTest extends EasyMockTestBase {
+
+public class SnapshotResourceTest extends SnapshotTestBase {
     
     private String databaseUser = "db-user";
     private String databasePassword = "db-pass";
@@ -49,20 +52,24 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     
     private boolean clean = true;
 
+    @Mock
     private SnapshotJobManager manager;
+    @TestSubject
     private SnapshotResource resource;
+    @Mock
     private DatabaseInitializer initializer;
+    @Mock
     private SnapshotExecutionListener executionListener;
     
-    @Before
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
+     */
+    @Override
     public void setup() {
-        manager = createMock(SnapshotJobManager.class);
-        initializer = createMock(DatabaseInitializer.class);
-        executionListener = createMock(SnapshotExecutionListener.class);
-
-        resource = new SnapshotResource(manager,initializer, executionListener);
+        super.setup();
+        resource = new SnapshotResource(manager, initializer, executionListener);
     }
-
+    
     @Test
     public void testInit() {
         Capture<DatabaseConfig> dbConfigCapture = new Capture<>();
@@ -77,7 +84,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
         manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
 
-        replay();
+        replayAll();
 
         InitParams initParams = createInitParams();
         
@@ -133,7 +140,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     public void testGetStatusSuccess() throws SnapshotException {
         EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
                 .andReturn(new SnapshotStatus("snapshotId", "testStatus"));
-        replay();
+        replayAll();
         resource.getStatus("snapshotId");
     }
 
@@ -141,7 +148,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
     public void testGetStatusNotFound() throws SnapshotException {
         EasyMock.expect(manager.getStatus(EasyMock.isA(String.class)))
                 .andThrow(new SnapshotNotFoundException("test"));
-        replay();
+        replayAll();
         resource.getStatus("snapshotId");
     }
 
@@ -160,7 +167,7 @@ public class SnapshotResourceTest extends EasyMockTestBase {
                 .andReturn(new SnapshotStatus("test","test"));
 
         
-        replay();
+        replayAll();
         resource.init(createInitParams());
         resource.create(host, port, storeId, spaceId, snapshotId);
 

@@ -7,35 +7,31 @@
  */
 package org.duracloud.snapshot.spring.batch;
 
+import static org.junit.Assert.assertTrue;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.spring.batch.config.SnapshotNotifyConfig;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import org.easymock.EasyMockRunner;
-import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.assertTrue;
-
 /**
  * @author Bill Branan
  *         Date: 2/18/14
  */
-@RunWith(EasyMockRunner.class)
-public class SnapshotExecutionListenerTest extends EasyMockSupport {
+public class SnapshotExecutionListenerTest extends SnapshotTestBase {
 
     private String snapshotID = "snapshot-id";
     private String contentDir = "content-dir";
@@ -53,6 +49,7 @@ public class SnapshotExecutionListenerTest extends EasyMockSupport {
 
     @Before
     public void setup() {
+        super.setup();
         executionListener =
             new SnapshotExecutionListener(notificationManager);
 
@@ -62,11 +59,6 @@ public class SnapshotExecutionListenerTest extends EasyMockSupport {
         jobParamMap.put(SnapshotConstants.CONTENT_DIR,
                         new JobParameter(contentDir));
         jobParams = new JobParameters(jobParamMap);
-    }
-
-    @After
-    public void tearDown() {
-        verifyAll();
     }
 
     @Test

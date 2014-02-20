@@ -73,6 +73,13 @@
       <version>${duracloud.version}</version>
     </dependency>
 
+
+    <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-common-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- Spring Core -->
     <dependency>
       <groupId>org.springframework</groupId>

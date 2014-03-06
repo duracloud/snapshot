@@ -45,10 +45,10 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     private String[] dpnEmailAddresses = {"dpn-email"};
     private String duracloudUsername = "duracloud-username";
     private String duracloudPassword = "duracloud-password";
-    private File workDir = new File(System.getProperty("java.io.tmpdir")
-        + "snapshot-work");
-    private File contentDirRoot = new File(System.getProperty("java.io.tmpdir")
-        + "snapshot-content");
+    private File workDir = new File(System.getProperty("java.io.tmpdir"),
+        "snapshot-work");
+    private File contentDirRoot = new File(System.getProperty("java.io.tmpdir"),
+        "snapshot-content");
     
     private boolean clean = true;
 

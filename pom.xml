@@ -28,7 +28,7 @@
   
   <properties>
     <slf4j.version>1.7.5</slf4j.version>
-    <springframework.version>4.0.0.RELEASE</springframework.version>
+    <springframework.version>4.0.2.RELEASE</springframework.version>
     <duracloud.version>3.0.0-SNAPSHOT</duracloud.version>
     <unitTests>**/*Test.class</unitTests>
     <integrationTests>**/Test*.class</integrationTests>

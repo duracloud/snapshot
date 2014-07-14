@@ -21,6 +21,7 @@
   
   <modules>
     <module>snapshot-common-test</module>
+    <module>snapshot-common-db</module>
     <module>snapshot-batch</module>
     <module>snapshot-webapp</module>
   </modules>
@@ -28,8 +29,10 @@
   
   <properties>
     <slf4j.version>1.7.5</slf4j.version>
-    <springframework.version>4.0.2.RELEASE</springframework.version>
-    <duracloud.version>3.0.0-SNAPSHOT</duracloud.version>
+    <springframework.version>4.0.5.RELEASE</springframework.version>
+    <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
+    <duracloud.version>3.1.1</duracloud.version>
+    <hibernate.version>4.3.5.Final</hibernate.version>
     <unitTests>**/*Test.class</unitTests>
     <integrationTests>**/Test*.class</integrationTests>
     <instrumentedTests>**/*Test*__*.class</instrumentedTests>
@@ -246,6 +249,19 @@
       </dependency>
 
       <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-jpa</artifactId>
+        <version>${springframework.data.jpa.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+        <version>1.4</version>
+      </dependency>
+      
+
+      <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
@@ -269,6 +285,17 @@
         <version>${slf4j.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-entitymanager</artifactId>
+        <version>${hibernate.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-core</artifactId>
+        <version>${hibernate.version}</version>
+      </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>

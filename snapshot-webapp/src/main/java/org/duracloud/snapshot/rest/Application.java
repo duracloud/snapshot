@@ -25,7 +25,9 @@ public class Application extends ResourceConfig{
         public Application () {
             super(
                 RequestContextFilter.class,
+                GeneralResource.class,
                 SnapshotResource.class,
+                RestorationResource.class,
                 SnapshotObjectMapperProvider.class,
                 JacksonFeature.class);
             

@@ -16,7 +16,7 @@
   </parent>
 
   <properties>
-    <spring.batch.version>2.2.2.RELEASE</spring.batch.version>
+    <spring.batch.version>3.0.1.RELEASE</spring.batch.version>
     <mysql.driver.version>5.1.28</mysql.driver.version>
   </properties>
 
@@ -69,10 +69,26 @@
 
     <dependency>
       <groupId>org.duracloud</groupId>
+      <artifactId>synctool</artifactId>
+      <version>${duracloud.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-log4j12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.duracloud</groupId>
       <artifactId>common-notification</artifactId>
       <version>${duracloud.version}</version>
     </dependency>
 
+    <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-jpa</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.duracloud.snapshot</groupId>
@@ -80,6 +96,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-common-db</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <!-- Spring Core -->
     <dependency>
       <groupId>org.springframework</groupId>

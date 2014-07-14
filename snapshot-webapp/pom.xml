@@ -41,6 +41,7 @@
     <snapshot.duracloud.spaceId>test-space</snapshot.duracloud.spaceId>
     <snapshot.duracloud.storeId>0</snapshot.duracloud.storeId>
 
+
   </properties>
 
   <build>
@@ -112,10 +113,28 @@
 
     <dependency>
       <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-common-db</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
       <artifactId>snapshot-common-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.duracloud</groupId>
+      <artifactId>common-json</artifactId>
+      <version>${duracloud.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.hibernate</groupId>
+      <artifactId>hibernate-entitymanager</artifactId>
+    </dependency>
+    
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
@@ -134,6 +153,22 @@
       <artifactId>servlet-api</artifactId>
       <version>2.5</version>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.springframework.data</groupId>
+        <artifactId>spring-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>commons-dbcp</groupId>
+        <artifactId>commons-dbcp</artifactId>
+    </dependency>
+
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>5.1.25</version>
     </dependency>
 
     <dependency>

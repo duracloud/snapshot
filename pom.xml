@@ -23,7 +23,7 @@
     <module>snapshot-common-test</module>
     <module>snapshot-common-db</module>
     <module>snapshot-batch</module>
-    <module>snapshot-webapp</module>
+    <module>snapshot-bridge-webapp</module>
   </modules>
 
   

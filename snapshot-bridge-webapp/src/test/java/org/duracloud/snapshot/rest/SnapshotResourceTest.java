@@ -66,7 +66,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Test
     public void testGetStatusSuccess() throws SnapshotException {
 
-        EasyMock.expect(snapshotRepo.findByName("snapshotName"))
+        EasyMock.expect(snapshotRepo.findByName("snapshotId"))
                 .andReturn(snapshot);
         EasyMock.expect(snapshot.getStatus())
                 .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
@@ -74,14 +74,14 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         .andReturn("status text");
 
         replayAll();
-        resource.getStatus("snapshotName");
+        resource.getStatus("snapshotId");
     }
 
     @Test
     public void testGetStatusNotFound() throws SnapshotException {
-        EasyMock.expect(snapshotRepo.findByName("snapshotName")).andReturn(null);
+        EasyMock.expect(snapshotRepo.findByName("snapshotId")).andReturn(null);
         replayAll();
-        resource.getStatus("snapshotName");
+        resource.getStatus("snapshotId");
     }
 
     @Test
@@ -90,21 +90,21 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String port = "444";
         String storeId = "storeId";
         String spaceId = "spaceId";
-        String snapshotName = "snapshot-name";
+        String snapshotId = "snapshot-name";
         String description = "description";
         String email = "email";
 
-        EasyMock.expect(manager.executeSnapshot(snapshotName))
+        EasyMock.expect(manager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
 
-        EasyMock.expect(snapshotRepo.findByName(snapshotName)).andReturn(null);
+        EasyMock.expect(snapshotRepo.findByName(snapshotId)).andReturn(null);
 
         EasyMock.expect(snapshotRepo.saveAndFlush(EasyMock.isA(Snapshot.class)))
                 .andReturn(snapshot);
 
         replayAll();
 
-        resource.create(snapshotName, new SnapshotRequestParams(host,
+        resource.create(snapshotId, new SnapshotRequestParams(host,
                                                               port,
                                                               storeId,
                                                               spaceId,

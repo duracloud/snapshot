@@ -115,28 +115,28 @@ public class SnapshotResource {
     
 
 
-    @Path("{snapshotName}")
+    @Path("{snapshotId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     /**
      * Returns the status of a snapshot. The fields available in the response will match
      * those in <code>SnapshotStatus</code>.
-     * @param snapshotName
+     * @param snapshotId
      * @return
      */
-    public Response getStatus(@PathParam("snapshotName") String snapshotName) {
+    public Response getStatus(@PathParam("snapshotId") String snapshotId) {
         try {
-            Snapshot snapshot = this.snapshotRepo.findByName(snapshotName);
+            Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
             if(snapshot == null){
-                throw new SnapshotNotFoundException(snapshotName);
+                throw new SnapshotNotFoundException(snapshotId);
             }
             return Response.ok()
                            .entity(new JSONObject().put("status",
                                                         snapshot.getStatus())
                                                    .put("details",
                                                         snapshot.getStatusText())
-                                                   .put("snapshotName",
-                                                        snapshotName))
+                                                   .put("snapshotId",
+                                                        snapshotId))
                            .build();
         } catch (SnapshotNotFoundException ex) {
             log.error(ex.getMessage(), ex);
@@ -151,17 +151,17 @@ public class SnapshotResource {
         }
     }
 
-    @Path("{snapshotName}")
+    @Path("{snapshotId}")
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response create(@PathParam("snapshotName") String snapshotName,
+    public Response create(@PathParam("snapshotId") String snapshotId,
                            @Valid SnapshotRequestParams params) {
 
         try {
-            if (this.snapshotRepo.findByName(snapshotName) != null) {
+            if (this.snapshotRepo.findByName(snapshotId) != null) {
                 throw new SnapshotAlreadyExistsException("A snapshot with id "
-                    + snapshotName
+                    + snapshotId
                     + " already exists - please use a different name");
             }
 
@@ -172,17 +172,17 @@ public class SnapshotResource {
             source.setStoreId(params.getStoreId());
             Snapshot snapshot = new Snapshot();
             snapshot.setModified(new Date());
-            snapshot.setName(snapshotName);
+            snapshot.setName(snapshotId);
             snapshot.setSource(source);
             snapshot.setDescription(params.getDescription());
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
             snapshot.setUserEmail(params.getUserEmail());
             this.snapshotRepo.saveAndFlush(snapshot);
 
-            this.jobManager.executeSnapshot(snapshotName);
+            this.jobManager.executeSnapshot(snapshotId);
             return Response.created(null)
-                           .entity(new JSONObject().put("snapshotName",
-                                                        snapshotName)
+                           .entity(new JSONObject().put("snapshotId",
+                                                        snapshotId)
                                                    .put("message", "success"))
                            .build();
         } catch (Exception ex) {
@@ -193,24 +193,24 @@ public class SnapshotResource {
         }
     }
     
-    @Path("{snapshotName}/complete")
+    @Path("{snapshotId}/complete")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response complete(@PathParam("snapshotName") String snapshotName) {
+    public Response complete(@PathParam("snapshotId") String snapshotId) {
 
         try {
-            Snapshot snapshot = this.snapshotRepo.findByName(snapshotName);
+            Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
             if (snapshot == null) {
                 throw new SnapshotAlreadyExistsException("A snapshot with id "
-                    + snapshotName
+                    + snapshotId
                     + " does not exist.");
             }
             
             
             snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
             this.snapshotRepo.saveAndFlush(snapshot);
-            String message =  "Snapshot complete: " + snapshotName;
+            String message =  "Snapshot complete: " + snapshotId;
             List<String> recipients = new ArrayList<>(Arrays.asList(this.config.getDuracloudEmailAddresses()));
             String userEmail = snapshot.getUserEmail();
             if(userEmail != null){

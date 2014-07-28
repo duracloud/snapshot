@@ -81,21 +81,24 @@ public class RestorationResourceTest extends SnapshotTestBase {
     public void testSnapshotRestorationStatus() throws SnapshotException, JSONException {
         long restorationId = 1000;
         Restoration restoration = createMock(Restoration.class);
-        
-        EasyMock.expect(manager.get(restorationId))
-                .andReturn(restoration);
-        
-        EasyMock.expect(restoration.getStatus()).andReturn(RestorationStatus.DPN_TRANSFER_COMPLETE);
+
+        EasyMock.expect(manager.get(restorationId)).andReturn(restoration);
+
+        EasyMock.expect(restoration.getId()).andReturn(restorationId);
+
+        EasyMock.expect(restoration.getStatus())
+                .andReturn(RestorationStatus.DPN_TRANSFER_COMPLETE);
         EasyMock.expect(restoration.getMemo()).andReturn("test");
         replayAll();
         Response response = resource.getStatus(restorationId);
-        
+
         Assert.assertNotNull(response);
-        
-        JSONObject jsonObject = (JSONObject)response.getEntity();
+
+        JSONObject jsonObject = (JSONObject) response.getEntity();
         Assert.assertNotNull(jsonObject);
-        Assert.assertEquals(jsonObject.get("status"), RestorationStatus.DPN_TRANSFER_COMPLETE);
-        Assert.assertEquals(jsonObject.get("details"), "test" );
+        Assert.assertEquals(jsonObject.get("status"),
+                            RestorationStatus.DPN_TRANSFER_COMPLETE);
+        Assert.assertEquals(jsonObject.get("details"), "test");
         
     }
 

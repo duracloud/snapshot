@@ -14,20 +14,23 @@ package org.duracloud.snapshot.manager;
 public class SnapshotSummary {
  
     private String snapshotId;
-    /**
-     * 
-     */
-    public SnapshotSummary() {}
+    private String description;
+    
     
     /**
      * @param snapshotId
      */
-    public SnapshotSummary(String snapshotId) {
+    public SnapshotSummary(String snapshotId, String description) {
         super();
         this.snapshotId = snapshotId;
+        this.setDescription(description);
     }
 
 
+    /**
+     * 
+     */
+    public SnapshotSummary() {}
 
     /**
      * @return the snapshotId
@@ -41,6 +44,22 @@ public class SnapshotSummary {
      */
     public void setSnapshotId(String snapshotId) {
         this.snapshotId = snapshotId;
+    }
+
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
     }
     
     

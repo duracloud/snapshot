@@ -102,6 +102,8 @@ public class RestorationResource {
             return Response.ok()
                            .entity(new JSONObject().put("status",
                                                         restoration.getStatus())
+                                                   .put("restorationId",
+                                                        restoration.getId())
                                                    .put("details",
                                                         restoration.getMemo()))
                            .build();
@@ -128,8 +130,10 @@ public class RestorationResource {
             Restoration status =
                 this.restorationManager.restorationCompleted(restorationId);
             return Response.ok()
-                           .entity(new JSONObject().put("status", status))
-                           .build();
+                           .entity(new JSONObject()                                                   
+                                           .put("restorationId", restorationId)
+                                           .put("status", status))
+                                           .build();
         } catch (RestorationNotFoundException ex) {
             log.error(ex.getMessage(), ex);
             return Response.status(HttpStatus.SC_NOT_FOUND)

@@ -7,16 +7,23 @@
  */
 package org.duracloud.snapshot.rest;
 
+
+import javax.ws.rs.core.Response;
+
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.duracloud.snapshot.bridge.rest.RestorationResource;
 import org.duracloud.snapshot.bridge.rest.RestoreParams;
 import org.duracloud.snapshot.bridge.service.RestorationManager;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.db.model.RestorationStatus;
 import org.duracloud.snapshot.manager.SnapshotException;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -67,6 +74,28 @@ public class RestorationResourceTest extends SnapshotTestBase {
                 .andReturn(EasyMock.createMock(Restoration.class));
         replayAll();
         resource.restoreComplete(restorationId);
+        
+    }
+
+    @Test
+    public void testSnapshotRestorationStatus() throws SnapshotException, JSONException {
+        long restorationId = 1000;
+        Restoration restoration = createMock(Restoration.class);
+        
+        EasyMock.expect(manager.get(restorationId))
+                .andReturn(restoration);
+        
+        EasyMock.expect(restoration.getStatus()).andReturn(RestorationStatus.DPN_TRANSFER_COMPLETE);
+        EasyMock.expect(restoration.getMemo()).andReturn("test");
+        replayAll();
+        Response response = resource.getStatus(restorationId);
+        
+        Assert.assertNotNull(response);
+        
+        JSONObject jsonObject = (JSONObject)response.getEntity();
+        Assert.assertNotNull(jsonObject);
+        Assert.assertEquals(jsonObject.get("status"), RestorationStatus.DPN_TRANSFER_COMPLETE);
+        Assert.assertEquals(jsonObject.get("details"), "test" );
         
     }
 

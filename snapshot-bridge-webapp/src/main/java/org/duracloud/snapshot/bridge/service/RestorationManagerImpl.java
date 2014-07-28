@@ -241,5 +241,19 @@ public class RestorationManagerImpl  implements RestorationManager{
             config.getRestorationRootDir()+ File.separator + restorationId;
         return contentDir;
     }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.bridge.service.RestorationManager#getStatus(java.lang.String)
+     */
+    @Override
+    public Restoration get(Long restorationId)
+        throws RestorationNotFoundException {
+        Restoration restoration =  this.restorationRepo.findOne(restorationId);
+        if(restoration == null){
+            throw new RestorationNotFoundException(restorationId);
+        }
+        
+        return restoration;
+    }
 
 }

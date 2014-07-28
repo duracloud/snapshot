@@ -182,5 +182,18 @@ public class RestorationManagerTest  extends SnapshotTestBase {
         EasyMock.expect(this.restorationRepo.getOne(restorationId)).andReturn(restoration);
         EasyMock.expect(restoration.getStatus()).andReturn(RestorationStatus.WAITING_FOR_DPN);
     }
+    
+    @Test
+    public void testGet() throws Exception{
+        
+        Restoration restoration = createMock(Restoration.class);
+        EasyMock.expect(restorationRepo.findOne(EasyMock.anyLong())).andReturn(restoration);
+        replayAll();
+        
+        Restoration output = this.manager.get(1000l);
+        
+        Assert.assertNotNull(output);
+        
+    }
 
 }

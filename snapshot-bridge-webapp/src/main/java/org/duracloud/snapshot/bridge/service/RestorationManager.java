@@ -54,4 +54,10 @@ public interface RestorationManager {
             SnapshotInProcessException,
             NoRestorationInProcessException,
             SnapshotException;
+
+    /**
+     * @param restorationId
+     * @return
+     */
+    Restoration get(Long restorationId) throws RestorationNotFoundException;
 }

@@ -17,6 +17,7 @@ public class SnapshotRequestParams {
     private String storeId;
     private String spaceId;
     private String description;
+    private String userEmail;
 
     /**
      * @param host
@@ -25,12 +26,13 @@ public class SnapshotRequestParams {
      * @param spaceId
      */
     public SnapshotRequestParams(
-        String host, String port, String storeId, String spaceId, String description) {
+        String host, String port, String storeId, String spaceId, String description, String userEmail) {
         this.host = host;
         this.port = port;
         this.storeId = storeId;
         this.spaceId = spaceId;
         this.description = description;
+        this.userEmail = userEmail;
     }
     
     /**
@@ -99,5 +101,19 @@ public class SnapshotRequestParams {
      */
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    /**
+     * @return the userEmail
+     */
+    public String getUserEmail() {
+        return userEmail;
+    }
+    
+    /**
+     * @param userEmail the userEmail to set
+     */
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 }

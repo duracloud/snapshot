@@ -30,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.bridge.service.RestorationManager;
 import org.duracloud.snapshot.bridge.service.RestorationManagerConfig;
 import org.duracloud.snapshot.db.DatabaseConfig;
@@ -69,18 +70,21 @@ public class GeneralResource {
     private SnapshotExecutionListener jobListener;
     private RestorationManager restorationManager;
     private NotificationManager notificationManager;
+    private BridgeConfiguration bridgeConfiguration;
     
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
                             RestorationManager restorationManager,
                             DatabaseInitializer databaseInitializer,
                             SnapshotExecutionListener jobListener,
-                            NotificationManager notificationManager) {
+                            NotificationManager notificationManager, 
+                            BridgeConfiguration bridgeConfiguration) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
         this.databaseInitializer = databaseInitializer;
         this.jobListener = jobListener;
         this.notificationManager = notificationManager;
+        this.bridgeConfiguration = bridgeConfiguration;
     }    
     
     @Path("init")
@@ -89,6 +93,7 @@ public class GeneralResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
+            initBridgeConfiguration(initParams);
             initializeLocalDirectories(initParams); 
             initDatabase(initParams);
             initExecutionListener(initParams);
@@ -101,6 +106,13 @@ public class GeneralResource {
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
         }
+    }
+
+    /**
+     * @param initParams
+     */
+    private void initBridgeConfiguration(InitParams initParams) {
+        this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
     }
 
     /**

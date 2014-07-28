@@ -118,10 +118,12 @@ public class TestSnapshotRest extends JerseyTest {
         String port = props.getProperty("port");
         String storeId = props.getProperty("storeId");
         String spaceId = props.getProperty("spaceId");
+        String email = props.getProperty("email");
+
         String snapshotId = System.currentTimeMillis()+"";
         String description = "description";
         SnapshotRequestParams params =
-            new SnapshotRequestParams(host, port, storeId, spaceId, description);
+            new SnapshotRequestParams(host, port, storeId, spaceId, description, email);
         Entity<SnapshotRequestParams> entity =
             Entity.entity(params, MediaType.APPLICATION_JSON);        
         

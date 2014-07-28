@@ -41,6 +41,7 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     private SnapshotStatus status;
     @Column(nullable=true, length = 512)
     private String statusText;
+    private String userEmail;
        
     /**
      * @return the snapshotName
@@ -146,6 +147,18 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
      */
     public void setStatusText(String statusText) {
         this.statusText = statusText;
+    }
+    /**
+     * @return the userEmail
+     */
+    public String getUserEmail() {
+        return userEmail;
+    }
+    /**
+     * @param userEmail the userEmail to set
+     */
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     

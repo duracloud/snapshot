@@ -7,7 +7,10 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -24,6 +27,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotStatus;
@@ -43,7 +49,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @author Daniel Bernstein Date: Feb 4, 2014
  */
 @Component
-@Path("/snapshots")
+@Path("/snapshot")
 public class SnapshotResource {
     
     private static Logger log = LoggerFactory.getLogger(SnapshotResource.class);
@@ -60,12 +66,20 @@ public class SnapshotResource {
     private SnapshotJobManager jobManager;
 
     private SnapshotRepo snapshotRepo;
+    
+    private NotificationManager notificationManager;
 
+    private BridgeConfiguration config; 
+    
     @Autowired
-    public SnapshotResource(SnapshotJobManager jobManager, SnapshotRepo snapshotRepo) {
+    public SnapshotResource(
+        SnapshotJobManager jobManager, SnapshotRepo snapshotRepo,
+        NotificationManager notificationManager, BridgeConfiguration config) {
         this.jobManager = jobManager;
         this.snapshotRepo = snapshotRepo;
-    }    
+        this.notificationManager = notificationManager;
+        this.config = config;
+    }
     
     /**
      * Returns a list of snapshots.
@@ -142,6 +156,7 @@ public class SnapshotResource {
             snapshot.setSource(source);
             snapshot.setDescription(params.getDescription());
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
+            snapshot.setUserEmail(params.getUserEmail());
             this.snapshotRepo.saveAndFlush(snapshot);
 
             this.jobManager.executeSnapshot(snapshotId);
@@ -155,4 +170,47 @@ public class SnapshotResource {
                            .build();
         }
     }
+    
+    @Path("{snapshotId}/complete")
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response complete(@PathParam("snapshotId") String snapshotId) {
+
+        try {
+            Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
+            if (snapshot == null) {
+                throw new SnapshotAlreadyExistsException("A snapshot with id "
+                    + snapshotId
+                    + " does not exist.");
+            }
+            
+            
+            snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
+            this.snapshotRepo.saveAndFlush(snapshot);
+            String message =  "Snapshot complete: " + snapshotId;
+            List<String> recipients = new ArrayList<>(Arrays.asList(this.config.getDuracloudEmailAddresses()));
+            String userEmail = snapshot.getUserEmail();
+            if(userEmail != null){
+                recipients.add(userEmail);
+            }
+            
+            if(recipients.size() > 0){
+                this.notificationManager.sendNotification(NotificationType.EMAIL,
+                                                          message,
+                                                          message,
+                                                          recipients.toArray(new String[0]));
+            }
+            
+            return Response.created(null)
+                           .entity(new ResponseDetails("success"))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
 }

@@ -7,17 +7,17 @@
  */
 package org.duracloud.snapshot.rest;
 
-import java.util.concurrent.Future;
-
+import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.bridge.rest.SnapshotRequestParams;
 import org.duracloud.snapshot.bridge.rest.SnapshotResource;
+import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotStatus;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.manager.SnapshotException;
 import org.duracloud.snapshot.manager.SnapshotJobManager;
-import org.duracloud.snapshot.manager.SnapshotNotFoundException;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -25,42 +25,52 @@ import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 
 /**
- * @author Daniel Bernstein
- *         Date: Feb 4, 2014
+ * @author Daniel Bernstein Date: Feb 4, 2014
  */
 
 public class SnapshotResourceTest extends SnapshotTestBase {
-    
+
     @Mock
     private SnapshotJobManager manager;
-    
-    @Mock 
-    private Future<BatchStatus> future;
-    
+
     @Mock
     private SnapshotRepo snapshotRepo;
-    
+
+    @Mock
+    private NotificationManager notificationManager;
+
+    @Mock
+    private BridgeConfiguration bridgeConfiguration;
+
     @TestSubject
     private SnapshotResource resource;
 
     @Mock
     private Snapshot snapshot;
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
     public void setup() {
         super.setup();
-        resource = new SnapshotResource(manager, snapshotRepo);
+        resource =
+            new SnapshotResource(manager,
+                                 snapshotRepo,
+                                 notificationManager,
+                                 bridgeConfiguration);
     }
-    
+
     @Test
     public void testGetStatusSuccess() throws SnapshotException {
-        
-        EasyMock.expect(snapshotRepo.findByName("snapshotId")).andReturn(snapshot);
-        EasyMock.expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
-        
+
+        EasyMock.expect(snapshotRepo.findByName("snapshotId"))
+                .andReturn(snapshot);
+        EasyMock.expect(snapshot.getStatus())
+                .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
+
         replayAll();
         resource.getStatus("snapshotId");
     }
@@ -80,6 +90,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String spaceId = "spaceId";
         String snapshotId = "snapshot-name";
         String description = "description";
+        String email = "email";
 
         EasyMock.expect(manager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
@@ -95,9 +106,39 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                                               port,
                                                               storeId,
                                                               spaceId,
-                                                              description));
+                                                              description,
+                                                              email));
 
     }
 
+    @Test
+    public void testComplete() throws SnapshotException {
+        String snapshotId = "snapshot-name";
+
+        EasyMock.expect(snapshotRepo.findByName(snapshotId))
+                .andReturn(snapshot);
+        snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
+        String adminEmail = "admin-email";
+        String userEmail = "email";
+
+        EasyMock.expect(snapshot.getUserEmail()).andReturn(userEmail);
+        String[] stringArray = new String[] { adminEmail };
+        EasyMock.expect(bridgeConfiguration.getDuracloudEmailAddresses())
+                .andReturn(stringArray);
+
+        EasyMock.expect(snapshotRepo.saveAndFlush(EasyMock.isA(Snapshot.class)))
+                .andReturn(snapshot);
+
+        notificationManager.sendNotification(EasyMock.isA(NotificationType.class),
+                                             EasyMock.isA(String.class),
+                                             EasyMock.isA(String.class),
+                                             EasyMock.eq(adminEmail),
+                                             EasyMock.eq(userEmail));
+        EasyMock.expectLastCall();
+        replayAll();
+
+        resource.complete(snapshotId);
+
+    }
 
 }

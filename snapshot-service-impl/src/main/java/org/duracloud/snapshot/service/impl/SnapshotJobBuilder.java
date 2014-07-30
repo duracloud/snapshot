@@ -32,6 +32,7 @@ import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -73,7 +74,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     public SnapshotJobBuilder(JobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
-                              TaskExecutor taskExecutor) {
+                              TaskExecutor taskExecutor,
+                              SnapshotManager service) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
@@ -134,7 +136,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                                     outputWriter,
                                     propsWriter,
                                     md5Writer,
-                                    sha256Writer);
+                                    sha256Writer,
+                                    snapshotService);
 
             SimpleStepFactoryBean<ContentItem, File> stepFactory =
                 new SimpleStepFactoryBean<>();

@@ -21,6 +21,7 @@ import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -54,7 +55,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                            OutputWriter outputWriter,
                            BufferedWriter propsWriter,
                            BufferedWriter md5Writer,
-                           BufferedWriter sha256Writer) {
+                           BufferedWriter sha256Writer, 
+                           SnapshotManager snapshotService) {
         this.retrievalSource = retrievalSource;
         this.contentDir = contentDir;
         this.outputWriter = outputWriter;

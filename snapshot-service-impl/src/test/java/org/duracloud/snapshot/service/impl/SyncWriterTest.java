@@ -16,7 +16,11 @@ import org.duracloud.client.ContentStore;
 import org.duracloud.domain.Space;
 import org.duracloud.error.NotFoundException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
-import org.duracloud.snapshot.service.impl.SyncWriter;
+import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.InvalidStateTransitionException;
+import org.duracloud.snapshot.service.RestorationNotFoundException;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.sync.endpoint.MonitoredFile;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.duracloud.sync.endpoint.SyncResultType;
@@ -24,6 +28,7 @@ import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Test;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 
 /**
@@ -46,6 +51,15 @@ public class SyncWriterTest extends SnapshotTestBase{
     
     private File watchDir;
     
+    @Mock
+    private RestoreManager restoreManager;
+
+
+    @Mock
+    private Restoration restoration;
+    
+    private Long restorationId = 1000l;
+    
 
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.common.test.SnapshotTestBase#setup()
@@ -56,7 +70,7 @@ public class SyncWriterTest extends SnapshotTestBase{
         watchDir = new File(System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
         watchDir.mkdirs();
         watchDir.deleteOnExit();
-        writer = new SyncWriter(watchDir, endpoint, contentStore, "spaceId"); 
+        writer = new SyncWriter(restorationId, watchDir, endpoint, contentStore, "spaceId", restoreManager); 
     }
     
     /* (non-Javadoc)
@@ -102,18 +116,50 @@ public class SyncWriterTest extends SnapshotTestBase{
         
         contentStore.createSpace(EasyMock.isA(String.class));
         EasyMock.expectLastCall();
-        
+
+        setupBeforeTransition();
         replayAll();
         
         this.writer.beforeStep(stepExecution);
         
     }
     
+    
+    @Test
+    public void testAfterStep() throws Exception {
+        
+        EasyMock.expect(this.restoreManager.transitionRestoreStatus(EasyMock.eq(restorationId),
+                                                                    EasyMock.eq(RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE),
+                                                                    EasyMock.isA(String.class)))
+                .andReturn(restoration);
+        
+        EasyMock.expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
+        replayAll();
+        
+        this.writer.afterStep(stepExecution);
+        
+    }
+
+    /**
+     * @throws InvalidStateTransitionException
+     * @throws RestorationNotFoundException
+     */
+    private void setupBeforeTransition()
+        throws InvalidStateTransitionException,
+            RestorationNotFoundException {
+        EasyMock.expect(this.restoreManager.transitionRestoreStatus(EasyMock.eq(restorationId),
+                                                                    EasyMock.eq(RestoreStatus.TRANSFERRING_TO_DURACLOUD),
+                                                                    EasyMock.isA(String.class)))
+                .andReturn(restoration);
+    }
+    
     @Test
     public void testBeforeStepSpaceAlreadyExistsEmpty() throws Exception {
+        setupBeforeTransition();
+
         Space space = new Space();
         space.setContentIds(new ArrayList<String>());
-        
+
         EasyMock.expect(contentStore.getSpace(EasyMock.isA(String.class),
                                               EasyMock.isNull(String.class),
                                               EasyMock.anyInt(),
@@ -129,6 +175,8 @@ public class SyncWriterTest extends SnapshotTestBase{
 
     @Test
     public void testBeforeStepSpaceAlreadyExistsNotEmpty() throws Exception {
+        setupBeforeTransition();
+
         Space space = new Space();
         space.setContentIds(new ArrayList<String>(Arrays.asList(new String[]{"test"})));
         

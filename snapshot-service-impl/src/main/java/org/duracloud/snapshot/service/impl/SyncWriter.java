@@ -16,6 +16,10 @@ import org.duracloud.common.retry.Retrier;
 import org.duracloud.domain.Space;
 import org.duracloud.error.ContentStoreException;
 import org.duracloud.error.NotFoundException;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.InvalidStateTransitionException;
+import org.duracloud.snapshot.service.RestorationNotFoundException;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.sync.endpoint.MonitoredFile;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.duracloud.sync.endpoint.SyncResultType;
@@ -39,20 +43,24 @@ public class SyncWriter
     private File watchDir;
     private ContentStore contentStore;
     private String destinationSpaceId;
-    
+    private RestoreManager restoreManager;
+    private Long restorationId;
     
     /**
      * @param endpoint
      * @param watchDir
      * @param contentStore 
+     * @param restoreRepo 
      * @param string 
      */
-    public SyncWriter(File watchDir, SyncEndpoint endpoint, ContentStore contentStore, String destinationSpaceId) {
+    public SyncWriter(Long restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore, String destinationSpaceId, RestoreManager restoreManager) {
         super();
         this.endpoint = endpoint;
         this.watchDir = watchDir;
         this.contentStore = contentStore;
         this.destinationSpaceId = destinationSpaceId;
+        this.restoreManager = restoreManager;
+        this.restorationId = restorationId;
     }
 
     //StepExecution Interface
@@ -61,6 +69,15 @@ public class SyncWriter
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        try {
+            restoreManager.transitionRestoreStatus(restorationId,
+                                                   RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE,
+                                                   "");
+        } catch (Exception e) {
+            log.error("failed to transition restore status: " + e.getMessage(), e);
+            return ExitStatus.FAILED;
+        }
+
         return stepExecution.getExitStatus();
     }
 
@@ -70,6 +87,9 @@ public class SyncWriter
     @Override
     public void beforeStep(StepExecution stepExecution) {
        try {
+            restoreManager.transitionRestoreStatus(restorationId,
+                                                   RestoreStatus.TRANSFERRING_TO_DURACLOUD,
+                                                   "");
            Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
            if(!CollectionUtils.isEmpty(space.getContentIds())){
                 stepExecution.addFailureException(new RuntimeException("destination space "
@@ -82,7 +102,7 @@ public class SyncWriter
             } catch (ContentStoreException e) {
                 stepExecution.addFailureException(e);
             }
-        } catch (ContentStoreException ex) {
+        } catch (Exception ex) {
             stepExecution.addFailureException(ex);
         }
     }    

@@ -9,6 +9,7 @@ package org.duracloud.snapshot.rest;
 
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.bridge.rest.SnapshotResource;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
@@ -17,8 +18,7 @@ import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.SnapshotStatus;
-import org.duracloud.snapshot.manager.SnapshotException;
-import org.duracloud.snapshot.manager.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;

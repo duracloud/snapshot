@@ -11,15 +11,15 @@ package org.duracloud.snapshot.rest;
 import javax.ws.rs.core.Response;
 
 import org.codehaus.jettison.json.JSONException;
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.bridge.rest.RestoreResource;
-import org.duracloud.snapshot.bridge.service.RestoreManager;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.GetRestoreStatusBridgeResult;
 import org.duracloud.snapshot.dto.RestoreStatus;
-import org.duracloud.snapshot.manager.SnapshotException;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;

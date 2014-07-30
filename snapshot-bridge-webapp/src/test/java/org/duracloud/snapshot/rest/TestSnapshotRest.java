@@ -27,7 +27,7 @@ import org.duracloud.snapshot.bridge.rest.Application;
 import org.duracloud.snapshot.bridge.rest.InitParams;
 import org.duracloud.snapshot.bridge.rest.ResponseDetails;
 import org.duracloud.snapshot.bridge.rest.SnapshotObjectMapperProvider;
-import org.duracloud.snapshot.dto.CreateSnapshotBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.glassfish.jersey.client.ClientConfig;

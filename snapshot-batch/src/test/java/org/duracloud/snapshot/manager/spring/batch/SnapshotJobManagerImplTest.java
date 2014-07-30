@@ -10,13 +10,11 @@ package org.duracloud.snapshot.manager.spring.batch;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
-import org.duracloud.snapshot.db.repo.RestorationRepo;
+import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
-import org.duracloud.snapshot.manager.SnapshotConstants;
 import org.duracloud.snapshot.manager.SnapshotException;
 import org.duracloud.snapshot.manager.SnapshotNotFoundException;
 import org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig;
-import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -80,7 +78,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     private SnapshotJobManagerConfig config;
 
     @Mock
-    private RestorationRepo restorationRepo;
+    private RestoreRepo restoreRepo;
 
     @Mock
     private SnapshotRepo snapshotRepo;
@@ -95,7 +93,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     public void setup() {
         manager =
             new SnapshotJobManagerImpl(snapshotRepo,
-                                       restorationRepo,
+                                       restoreRepo,
                                        jobLauncher,
                                        jobRepository,
                                        builderManager);

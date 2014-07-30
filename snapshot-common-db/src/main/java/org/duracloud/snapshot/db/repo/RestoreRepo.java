@@ -10,17 +10,15 @@ package org.duracloud.snapshot.db.repo;
 import java.util.List;
 
 import org.duracloud.snapshot.db.model.Restoration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Daniel Bernstein
  *         Date: Jul 21, 2014
  */
-@Repository(value="restorationRepo")
-public interface RestorationRepo extends JpaRepository<Restoration, Long> {
+@Repository(value="restoreRepo")
+public interface RestoreRepo extends JpaRepository<Restoration, Long> {
 
     /**
      * Returns a list of restorations for a given destinantion host.

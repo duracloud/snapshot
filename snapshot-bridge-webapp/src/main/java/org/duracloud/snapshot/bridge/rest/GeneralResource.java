@@ -31,8 +31,8 @@ import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
-import org.duracloud.snapshot.bridge.service.RestorationManager;
-import org.duracloud.snapshot.bridge.service.RestorationManagerConfig;
+import org.duracloud.snapshot.bridge.service.RestoreManager;
+import org.duracloud.snapshot.bridge.service.RestoreManagerConfig;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.manager.SnapshotJobManager;
@@ -68,13 +68,13 @@ public class GeneralResource {
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
     private SnapshotExecutionListener jobListener;
-    private RestorationManager restorationManager;
+    private RestoreManager restorationManager;
     private NotificationManager notificationManager;
     private BridgeConfiguration bridgeConfiguration;
     
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
-                            RestorationManager restorationManager,
+                            RestoreManager restorationManager,
                             DatabaseInitializer databaseInitializer,
                             SnapshotExecutionListener jobListener,
                             NotificationManager notificationManager, 
@@ -137,7 +137,7 @@ public class GeneralResource {
      * @param initParams
      */
     private void initRestorationResource(InitParams initParams) {
-        RestorationManagerConfig config = new RestorationManagerConfig();
+        RestoreManagerConfig config = new RestoreManagerConfig();
         config.setRestorationRootDir(initParams.getContentDirRoot()
             + File.separator + "restorations");
         config.setDpnEmailAddresses(initParams.getDpnEmailAddresses());

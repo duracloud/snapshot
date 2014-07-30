@@ -140,6 +140,7 @@ public class SyncWriter
         //TODO How should this be properly handled.
         //the interface doesn't supply any information about which items were processed
         //and which one(s) failed.
+        //TODO Update the database with the failure status (failed to transfer to duracloud.)
     }
 
 

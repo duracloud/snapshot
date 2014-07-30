@@ -7,7 +7,6 @@
  */
 package org.duracloud.snapshot.db.model;
 
-import java.util.Comparator;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -17,6 +16,8 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+
+import org.duracloud.snapshot.dto.RestoreStatus;
 
 /**
  * @author Daniel Bernstein
@@ -35,9 +36,12 @@ public class Restoration extends BaseEntity {
     private Date startDate;
     private Date endDate;
     @Enumerated(EnumType.STRING)
-    private RestorationStatus status;
+    private RestoreStatus status;
     @Column(length=512)
-    private String memo;
+    private String statusText;
+    
+    private String userEmail;
+
     
     /**
      * @return the snapshot
@@ -90,26 +94,39 @@ public class Restoration extends BaseEntity {
     /**
      * @return the status
      */
-    public RestorationStatus getStatus() {
+    public RestoreStatus getStatus() {
         return status;
     }
     /**
      * @param status the status to set
      */
-    public void setStatus(RestorationStatus status) {
+    public void setStatus(RestoreStatus status) {
         this.status = status;
     }
+
     /**
-     * @return the memo
+     * @return the statusText
      */
-    public String getMemo() {
-        return memo;
+    public String getStatusText() {
+        return statusText;
     }
     /**
-     * @param memo the memo to set
+     * @param statusText the statusText to set
      */
-    public void setMemo(String memo) {
-        this.memo = memo;
+    public void setStatusText(String statusText) {
+        this.statusText = statusText;
+    }
+    /**
+     * @return the userEmail
+     */
+    public String getUserEmail() {
+        return userEmail;
+    }
+    /**
+     * @param userEmail the userEmail to set
+     */
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
   
 

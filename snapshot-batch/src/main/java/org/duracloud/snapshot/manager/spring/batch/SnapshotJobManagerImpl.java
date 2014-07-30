@@ -7,13 +7,9 @@
  */
 package org.duracloud.snapshot.manager.spring.batch;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
-import org.duracloud.snapshot.db.repo.RestorationRepo;
+import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.manager.SnapshotConstants;
 import org.duracloud.snapshot.manager.SnapshotException;
@@ -25,19 +21,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
@@ -56,18 +45,18 @@ public class SnapshotJobManagerImpl
 
     private ApplicationContext context;
     private SnapshotRepo snapshotRepo;
-    private RestorationRepo restorationRepo;
+    private RestoreRepo restoreRepo;
     private SnapshotJobManagerConfig config;
     private BatchJobBuilderManager builderManager;
     
     @Autowired
     public SnapshotJobManagerImpl(SnapshotRepo snapshotRepo,
-                                    RestorationRepo restorationRepo,
+                                    RestoreRepo restoreRepo,
                                     JobLauncher jobLauncher,
                                     JobRepository jobRepository,
                                     BatchJobBuilderManager manager) {
         super();
-        this.restorationRepo = restorationRepo;
+        this.restoreRepo = restoreRepo;
         this.snapshotRepo = snapshotRepo;
         this.builderManager = manager;
         this.jobLauncher = jobLauncher;
@@ -144,12 +133,12 @@ public class SnapshotJobManagerImpl
      * @param restorationId
      * @return
      */
-    private Snapshot getRestoration(Long restorationId)  throws RestorationNotFoundException {
-        Restoration restoration = this.restorationRepo.getOne(restorationId);
+    private Restoration getRestoration(Long restorationId)  throws RestorationNotFoundException {
+        Restoration restoration = this.restoreRepo.findOne(restorationId);
         if(restoration == null){
             throw new RestorationNotFoundException(restorationId);
         }
-        return null;
+        return restoration;
     }
 
  

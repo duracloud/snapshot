@@ -17,24 +17,27 @@ import org.duracloud.snapshot.manager.SnapshotNotFoundException;
  * @author Daniel Bernstein
  *         Date: Jul 15, 2014
  */
-public interface RestorationManager {
+public interface RestoreManager {
     
     /**
      * 
      */
-    void init(RestorationManagerConfig config);
+    void init(RestoreManagerConfig config);
     
     /**
      * Initiates the restoration of a snapshot.
      * @param snapshotId
      * @param destination
+     * @param userEmail
      * @return
      * @throws SnapshotNotFoundException
      * @throws SnapshotInProcessException
      * @throws SnapshotException
      */
-    Restoration restoreSnapshot(String snapshotId, DuracloudEndPointConfig destination)
-        throws SnapshotNotFoundException, 
+    Restoration restoreSnapshot(String snapshotId,
+                                DuracloudEndPointConfig destination,
+                                String userEmail)
+        throws SnapshotNotFoundException,
             SnapshotInProcessException,
             SnapshotException;
 
@@ -60,4 +63,6 @@ public interface RestorationManager {
      * @return
      */
     Restoration get(Long restorationId) throws RestorationNotFoundException;
+
+
 }

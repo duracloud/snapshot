@@ -7,7 +7,6 @@
  */
 package org.duracloud.snapshot.rest;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
@@ -28,9 +27,9 @@ import org.duracloud.snapshot.bridge.rest.Application;
 import org.duracloud.snapshot.bridge.rest.InitParams;
 import org.duracloud.snapshot.bridge.rest.ResponseDetails;
 import org.duracloud.snapshot.bridge.rest.SnapshotObjectMapperProvider;
-import org.duracloud.snapshot.bridge.rest.SnapshotRequestParams;
-import org.duracloud.snapshot.db.model.SnapshotStatus;
-import org.duracloud.snapshot.manager.SnapshotSummary;
+import org.duracloud.snapshot.dto.CreateSnapshotBridgeParameters;
+import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -122,13 +121,13 @@ public class TestSnapshotRest extends JerseyTest {
 
         String snapshotId = System.currentTimeMillis()+"";
         String description = "description";
-        SnapshotRequestParams params =
-            new SnapshotRequestParams(host, port, storeId, spaceId, description, email);
-        Entity<SnapshotRequestParams> entity =
+        CreateSnapshotBridgeParameters params =
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email);
+        Entity<CreateSnapshotBridgeParameters> entity =
             Entity.entity(params, MediaType.APPLICATION_JSON);        
         
         SnapshotStatus responseMsg =
-            target.path("snapshots/"+snapshotId)
+            target.path("snapshot/"+snapshotId)
                   .request(MediaType.APPLICATION_JSON)
                   .put(entity, SnapshotStatus.class);
         assertNotNull(responseMsg);

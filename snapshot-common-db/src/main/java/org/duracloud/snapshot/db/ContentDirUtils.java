@@ -26,7 +26,7 @@ public class ContentDirUtils {
     public static String getSourcePath(Long restorationId, File rootDir) {
         return rootDir.getAbsolutePath()
             + File.separator + "restorations" + File.separator
-            + restorationId;
+            + restorationId + File.separator + "data";
     }
 
 }

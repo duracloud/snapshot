@@ -7,8 +7,10 @@
  */
 package org.duracloud.snapshot.manager.spring.batch;
 
-import static org.junit.Assert.*;
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.HashMap;
@@ -18,14 +20,13 @@ import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.Snapshot;
-import org.duracloud.snapshot.db.model.SnapshotStatus;
-import org.duracloud.snapshot.db.repo.RestorationRepo;
+import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.manager.SnapshotConstants;
 import org.duracloud.snapshot.manager.config.ExecutionListenerConfig;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Before;
@@ -55,7 +56,7 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
     private SnapshotRepo snapshotRepo;
     
     @Mock
-    private RestorationRepo restorationRepo;
+    private RestoreRepo restoreRepo;
     
     @Mock
     private JobInstance job;

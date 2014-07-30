@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.manager.spring.batch;
 
 import java.io.File;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,8 @@ import org.duracloud.retrieval.util.StoreClientUtil;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
-import org.duracloud.snapshot.db.model.Snapshot;
+import org.duracloud.snapshot.db.repo.RestoreRepo;
+import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.manager.SnapshotConstants;
 import org.duracloud.snapshot.manager.SnapshotException;
 import org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig;
@@ -32,7 +34,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.builder.SimpleJobBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,23 +48,26 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Component
 public class RestorationJobBuilder implements BatchJobBuilder<Restoration> {
     private static Logger log = LoggerFactory.getLogger(RestorationJobBuilder.class);
-    private File contentRootDir;
 
     private JobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
+
+    private RestoreRepo restoreRepo;
     
     @Autowired
     public RestorationJobBuilder(JobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
-                              TaskExecutor taskExecutor) {
+                              TaskExecutor taskExecutor,
+                              RestoreRepo restoreRepo) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
+        this.restoreRepo = restoreRepo;
     }
     
     /* (non-Javadoc)
@@ -94,7 +98,7 @@ public class RestorationJobBuilder implements BatchJobBuilder<Restoration> {
             
             File watchDir =
                 new File(ContentDirUtils.getSourcePath(restoration.getId(),
-                                                       this.contentRootDir));
+                                                       jobManagerConfig.getContentRootDir()));
 
             FileSystemReader reader =
                 new FileSystemReader(watchDir);
@@ -122,10 +126,13 @@ public class RestorationJobBuilder implements BatchJobBuilder<Restoration> {
             JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotConstants.RESTORE_JOB_NAME);
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
-
             job = simpleJobBuilder.build();
 
-        } catch (Exception e) {
+            restoration.setStatus(RestoreStatus.TRANSFERRING_TO_DURACLOUD);
+            restoration.setStatusText("Ready to being transferring to duracloud: "
+                + new Date());
+            this.restoreRepo.save(restoration);
+       } catch (Exception e) {
             log.error("Error creating job: {}", e.getMessage(), e);
             throw new SnapshotException(e.getMessage(), e);
         }

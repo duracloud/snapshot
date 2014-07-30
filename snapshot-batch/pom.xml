@@ -102,6 +102,13 @@
       <artifactId>snapshot-common-db</artifactId>
       <version>${project.version}</version>
     </dependency>
+    
+    <dependency>
+      <groupId>org.duracloud</groupId>
+      <artifactId>snapshotdata</artifactId>
+      <version>${duracloud.version}</version>
+    </dependency>
+    
 
     <!-- Spring Core -->
     <dependency>

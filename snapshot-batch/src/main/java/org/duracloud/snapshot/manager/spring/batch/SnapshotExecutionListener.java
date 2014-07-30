@@ -7,14 +7,21 @@
  */
 package org.duracloud.snapshot.manager.spring.batch;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.db.ContentDirUtils;
+import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
-import org.duracloud.snapshot.db.model.SnapshotStatus;
-import org.duracloud.snapshot.db.repo.RestorationRepo;
+import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.manager.SnapshotConstants;
 import org.duracloud.snapshot.manager.config.ExecutionListenerConfig;
 import org.slf4j.Logger;
@@ -44,7 +51,7 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     private SnapshotRepo snapshotRepo;
     
     @Autowired
-    private RestorationRepo restorationRepo;
+    private RestoreRepo restoreRepo;
     
     private ExecutionListenerConfig config;
     
@@ -58,10 +65,10 @@ public class SnapshotExecutionListener implements JobExecutionListener {
     
     
     /**
-     * @param restorationRepo the restorationRepo to set
+     * @param restoreRepo the restoreRepo to set
      */
-    public void setRestorationRepo(RestorationRepo restorationRepo) {
-        this.restorationRepo = restorationRepo;
+    public void setRestorationRepo(RestoreRepo restoreRepo) {
+        this.restoreRepo = restoreRepo;
     }
     
     /**
@@ -118,7 +125,7 @@ public class SnapshotExecutionListener implements JobExecutionListener {
             log.debug("Completed snapshot: {} with status: {}", snapshotName, status);
             handleAfterSnapshotJob(status, snapshot, snapshotPath);
         }else if(jobName.equals(SnapshotConstants.RESTORE_JOB_NAME)){
-            Restoration restoration = restorationRepo.findOne(objectId);
+            Restoration restoration = restoreRepo.findOne(objectId);
             String restorationPath = ContentDirUtils.getSourcePath(restoration.getId(), config.getContentRoot());
             log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
             handleAfterRestorationJob(status, restoration, restorationPath);
@@ -136,15 +143,27 @@ public class SnapshotExecutionListener implements JobExecutionListener {
         log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
         if(BatchStatus.COMPLETED.equals(status)) {
             // Job success. Email duracloud team as well as restoration requestor
-            // TODO Figure out where the duracloud user's email is coming from.
-            // TODO make sure that duracloud space location (host,port,space,store) info
-            //  is included in the email.
+            
+            changeRestoreStatus(restoration,
+                                RestoreStatus.RESTORATION_COMPLETE,
+                                "Completed transfer to duracloud: "
+                                    + new Date());
             String subject =
                 "DuraCloud snapshot has been restored! Restoration ID = " + restoration.getId();
             String message =
-                "A DuraCloud content snapshot has been transferred from " +
-                "bridge storage to DuraCloud";
-            sendEmail(subject, message, this.config.getDuracloudEmailAddresses());
+                "A DuraCloud content snapshot has completed successfully:\n\n";
+            
+            DuracloudEndPointConfig destination = restoration.getDestination();
+            
+            message += "Host: " + destination.getHost() + "\n";
+            message += "Port: " + destination.getPort() + "\n";
+            message += "StoreId: " + destination.getStoreId() + "\n";
+            message += "SpaceId: " + destination.getSpaceId() + "\n";
+            
+            List<String> emailAddresses =
+                new ArrayList<>(Arrays.asList(config.getDuracloudEmailAddresses()));
+            emailAddresses.add(restoration.getUserEmail());
+            sendEmail(subject, message, emailAddresses.toArray(new String[0]));
             
 
         } else {
@@ -153,12 +172,13 @@ public class SnapshotExecutionListener implements JobExecutionListener {
                 "DuraCloud snapshot restoration failed to complete";
             String message =
                 "A DuraCloud snapshot restoration has failed to complete.\n" +
-                "\nsnapshot-id=" + restoration.getId() +
+                "\nrrestore-id=" + restoration.getId() +
                 "\nsnapshot-id=" + restoration.getSnapshot().getName() +
                 "\nsnapshot-path=" + snapshotPath;
                 // TODO: Add details of failure in message
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
+
         }
         
     }
@@ -207,8 +227,8 @@ public class SnapshotExecutionListener implements JobExecutionListener {
 
     /**
      * @param snapshot
-     * @param string 
-     * @param waitingForDpn
+     * @param status 
+     * @param msg
      */
     private void changeSnapshotStatus(Snapshot snapshot,
                                       SnapshotStatus status, String msg) {
@@ -217,6 +237,17 @@ public class SnapshotExecutionListener implements JobExecutionListener {
         snapshotRepo.save(snapshot);
     }
 
+    /**
+     * @param restoration
+     * @param status 
+     * @param msg
+     */
+    private void changeRestoreStatus(Restoration restoration,
+                                      RestoreStatus status, String msg) {
+        restoration.setStatus(status);
+        restoration.setStatusText(msg);
+        restoreRepo.save(restoration);
+    }
 
     private void sendEmail(String subject, String msg, String... destinations) {
         notificationManager.sendNotification(NotificationType.EMAIL,

@@ -11,14 +11,14 @@ package org.duracloud.snapshot.bridge.service;
  * @author Daniel Bernstein
  *         Date: Jul 15, 2014
  */
-public class RestorationManagerConfig {
+public class RestoreManagerConfig {
     private String restorationRootDir;
     private String duracloudUsername;
     private String duracloudPassword;
     private String[] duracloudEmailAddresses;
     private String[] dpnEmailAddresses;
 
-    public RestorationManagerConfig(){}
+    public RestoreManagerConfig(){}
     
     /**
      * @return the restorationRootDir

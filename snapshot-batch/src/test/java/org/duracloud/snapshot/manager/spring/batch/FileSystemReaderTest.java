@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
-import org.duracloud.snapshot.manager.spring.batch.FileSystemReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

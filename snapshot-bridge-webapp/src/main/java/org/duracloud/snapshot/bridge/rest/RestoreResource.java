@@ -23,11 +23,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.codehaus.jettison.json.JSONObject;
-import org.duracloud.snapshot.bridge.service.RestorationManager;
+import org.duracloud.snapshot.bridge.service.RestoreManager;
 import org.duracloud.snapshot.bridge.service.RestorationNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.dto.CompleteRestoreBridgeResult;
+import org.duracloud.snapshot.dto.CreateRestoreBridgeParameters;
+import org.duracloud.snapshot.dto.CreateRestoreBridgeResult;
+import org.duracloud.snapshot.dto.GetRestoreStatusBridgeResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,10 +44,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Path("/restore")
-public class RestorationResource {
+public class RestoreResource {
 
     private static Logger log =
-        LoggerFactory.getLogger(RestorationResource.class);
+        LoggerFactory.getLogger(RestoreResource.class);
 
     @Context
     HttpServletRequest request;
@@ -55,10 +58,10 @@ public class RestorationResource {
     @Context
     UriInfo uriInfo;
 
-    private RestorationManager restorationManager;
+    private RestoreManager restorationManager;
 
     @Autowired
-    public RestorationResource(RestorationManager restorationManager) {
+    public RestoreResource(RestoreManager restorationManager) {
         this.restorationManager = restorationManager;
     }
 
@@ -66,17 +69,20 @@ public class RestorationResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response restoreSnapshot(@Valid RestoreParams params) {
+    public Response restoreSnapshot(CreateRestoreBridgeParameters  params) {
         try {
             DuracloudEndPointConfig destination = new DuracloudEndPointConfig();
             destination.setHost(params.getHost());
             destination.setPort(Integer.valueOf(params.getPort()));
             destination.setStoreId(params.getStoreId());
             destination.setSpaceId(params.getSpaceId());
-            Restoration restorationRequest =
+            Restoration result =
                 this.restorationManager.restoreSnapshot(params.getSnapshotId(),
-                                                        destination);
-            return Response.ok().entity(restorationRequest).build();
+                                                        destination, params.getUserEmail());
+            return Response.ok()
+                           .entity(new CreateRestoreBridgeResult(result.getId(),
+                                                                 result.getStatus()))
+                           .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return Response.serverError()
@@ -100,12 +106,8 @@ public class RestorationResource {
                 this.restorationManager.get(restorationId);
 
             return Response.ok()
-                           .entity(new JSONObject().put("status",
-                                                        restoration.getStatus())
-                                                   .put("restorationId",
-                                                        restoration.getId())
-                                                   .put("details",
-                                                        restoration.getMemo()))
+                           .entity(new GetRestoreStatusBridgeResult(restoration.getStatus(),
+                                                                    restoration.getStatusText()))
                            .build();
         } catch (RestorationNotFoundException ex) {
             log.error(ex.getMessage(), ex);
@@ -127,13 +129,12 @@ public class RestorationResource {
         restoreComplete(@PathParam("restorationId") Long restorationId) {
 
         try {
-            Restoration status =
+            Restoration restoration =
                 this.restorationManager.restorationCompleted(restorationId);
             return Response.ok()
-                           .entity(new JSONObject()                                                   
-                                           .put("restorationId", restorationId)
-                                           .put("status", status))
-                                           .build();
+                           .entity(new CompleteRestoreBridgeResult(restoration.getStatus(),
+                                                                   restoration.getStatusText()))
+                           .build();
         } catch (RestorationNotFoundException ex) {
             log.error(ex.getMessage(), ex);
             return Response.status(HttpStatus.SC_NOT_FOUND)

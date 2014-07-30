@@ -21,14 +21,14 @@ import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.bridge.rest.GeneralResource;
 import org.duracloud.snapshot.bridge.rest.InitParams;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
-import org.duracloud.snapshot.bridge.service.RestorationManager;
-import org.duracloud.snapshot.bridge.service.RestorationManagerConfig;
+import org.duracloud.snapshot.bridge.service.RestoreManager;
+import org.duracloud.snapshot.bridge.service.RestoreManagerConfig;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.manager.SnapshotJobManager;
-import org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.manager.config.ExecutionListenerConfig;
+import org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.manager.spring.batch.SnapshotExecutionListener;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -71,7 +71,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private SnapshotJobManager manager;
 
     @Mock
-    private RestorationManager restorationManager;
+    private RestoreManager restorationManager;
 
     @TestSubject
     private GeneralResource resource;
@@ -114,7 +114,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
         
-        Capture<RestorationManagerConfig> restorationConfigCapture = new Capture<>();
+        Capture<RestoreManagerConfig> restorationConfigCapture = new Capture<>();
         restorationManager.init(EasyMock.capture(restorationConfigCapture));
         EasyMock.expectLastCall();
 
@@ -157,7 +157,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         assertEquals(workDir, jobManagerConfig.getWorkDir());
 
         
-        RestorationManagerConfig restorationConfig = restorationConfigCapture.getValue();
+        RestoreManagerConfig restorationConfig = restorationConfigCapture.getValue();
         assertEquals(duracloudEmailAddresses[0],
                      restorationConfig.getDuracloudEmailAddresses()[0]);
         assertEquals(dpnEmailAddresses[0],

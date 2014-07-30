@@ -18,7 +18,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.springframework.context.annotation.Lazy;
+import org.duracloud.snapshot.dto.SnapshotStatus;
 
 /**
  * @author Daniel Bernstein

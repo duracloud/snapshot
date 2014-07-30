@@ -31,7 +31,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <springframework.version>4.0.5.RELEASE</springframework.version>
     <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
-    <duracloud.version>3.1.1</duracloud.version>
+    <duracloud.version>3.2.0-SNAPSHOT</duracloud.version>
     <hibernate.version>4.3.5.Final</hibernate.version>
     <unitTests>**/*Test.class</unitTests>
     <integrationTests>**/Test*.class</integrationTests>

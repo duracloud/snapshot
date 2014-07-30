@@ -124,6 +124,12 @@
     
     <dependency>
       <groupId>org.duracloud</groupId>
+      <artifactId>snapshotdata</artifactId>
+      <version>${duracloud.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.duracloud</groupId>
       <artifactId>common-json</artifactId>
       <version>${duracloud.version}</version>
     </dependency>

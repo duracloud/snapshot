@@ -33,20 +33,25 @@ import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
+import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotStatusBridgeResult;
-import org.duracloud.snapshot.dto.SnapshotStatus;
-import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -57,7 +62,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 @Component
 @Path("/snapshot")
 public class SnapshotResource {
-    
+
     private static Logger log = LoggerFactory.getLogger(SnapshotResource.class);
 
     @Context
@@ -68,26 +73,28 @@ public class SnapshotResource {
 
     @Context
     UriInfo uriInfo;
-   
+
     private SnapshotJobManager jobManager;
 
+    private SnapshotContentItemRepo snapshotContentItemRepo;
     private SnapshotRepo snapshotRepo;
-    
+
     private NotificationManager notificationManager;
 
-    private BridgeConfiguration config; 
-    
-    
+    private BridgeConfiguration config;
+
     @Autowired
     public SnapshotResource(
         SnapshotJobManager jobManager, SnapshotRepo snapshotRepo,
+        SnapshotContentItemRepo snapshotContentItemRepo,
         NotificationManager notificationManager, BridgeConfiguration config) {
         this.jobManager = jobManager;
         this.snapshotRepo = snapshotRepo;
+        this.snapshotContentItemRepo = snapshotContentItemRepo;
         this.notificationManager = notificationManager;
         this.config = config;
     }
-    
+
     /**
      * Returns a list of snapshots.
      * 
@@ -96,18 +103,19 @@ public class SnapshotResource {
     @Path("/")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response list(@RequestHeader(required=true,value="source-host") String sourceHost) {
+    public Response list(GetSnapshotListBridgeParameters params) {
         try {
-            
-            List<Snapshot> snapshots = this.snapshotRepo.findBySourceHost(sourceHost);
-            
+
+            List<Snapshot> snapshots =
+                this.snapshotRepo.findBySourceHost(params.getSourceHost());
+
             List<SnapshotSummary> summaries = new ArrayList<>(snapshots.size());
-            for(Snapshot snapshot : snapshots){
+            for (Snapshot snapshot : snapshots) {
                 summaries.add(new SnapshotSummary(snapshot.getName(),
                                                   snapshot.getStatus(),
                                                   snapshot.getDescription()));
             }
-            
+
             return Response.ok()
                            .entity(new GetSnapshotListBridgeResult(summaries))
                            .build();
@@ -118,8 +126,6 @@ public class SnapshotResource {
                            .build();
         }
     }
-    
-
 
     @Path("{snapshotId}")
     @GET
@@ -133,7 +139,7 @@ public class SnapshotResource {
     public Response getStatus(@PathParam("snapshotId") String snapshotId) {
         try {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
-            if(snapshot == null){
+            if (snapshot == null) {
                 throw new SnapshotNotFoundException(snapshotId);
             }
             return Response.ok()
@@ -158,7 +164,7 @@ public class SnapshotResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(@PathParam("snapshotId") String snapshotId,
-                            CreateSnapshotBridgeParameters params) {
+                           CreateSnapshotBridgeParameters params) {
 
         try {
             if (this.snapshotRepo.findByName(snapshotId) != null) {
@@ -182,10 +188,9 @@ public class SnapshotResource {
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
 
             this.jobManager.executeSnapshot(snapshotId);
-            CreateSnapshotBridgeResult result = new CreateSnapshotBridgeResult(snapshotId, snapshot.getStatus());
-            return Response.created(null)
-                           .entity(result)
-                           .build();
+            CreateSnapshotBridgeResult result =
+                new CreateSnapshotBridgeResult(snapshotId, snapshot.getStatus());
+            return Response.created(null).entity(result).build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return Response.serverError()
@@ -193,7 +198,7 @@ public class SnapshotResource {
                            .build();
         }
     }
-    
+
     @Path("{snapshotId}/complete")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -204,30 +209,67 @@ public class SnapshotResource {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
             if (snapshot == null) {
                 throw new SnapshotAlreadyExistsException("A snapshot with id "
-                    + snapshotId
-                    + " does not exist.");
+                    + snapshotId + " does not exist.");
             }
-            
-            
+
             snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
             this.snapshotRepo.saveAndFlush(snapshot);
-            String message =  "Snapshot complete: " + snapshotId;
-            List<String> recipients = new ArrayList<>(Arrays.asList(this.config.getDuracloudEmailAddresses()));
+            String message = "Snapshot complete: " + snapshotId;
+            List<String> recipients =
+                new ArrayList<>(Arrays.asList(this.config.getDuracloudEmailAddresses()));
             String userEmail = snapshot.getUserEmail();
-            if(userEmail != null){
+            if (userEmail != null) {
                 recipients.add(userEmail);
             }
-            
-            if(recipients.size() > 0){
+
+            if (recipients.size() > 0) {
                 this.notificationManager.sendNotification(NotificationType.EMAIL,
                                                           message,
                                                           message,
                                                           recipients.toArray(new String[0]));
             }
-            
-            return Response.created(null)
+
+            return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
                                                                     snapshot.getStatusText()))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /**
+     * @param params
+     * @return
+     */
+    @Path("{snapshotId}/content")
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getContent(@PathParam("snapshotId") String snapshotId,
+                               GetSnapshotContentBridgeParameters params) {
+
+        try {
+
+            PageRequest pageable =
+                new PageRequest(params.getPage(),
+                                params.getPageSize());
+
+            List<SnapshotContentItem> items =
+                this.snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWith(snapshotId,
+                                                                     params.getPrefix(),
+                                                                     pageable);
+
+
+            List<String> ids = new ArrayList<>();
+            for(SnapshotContentItem item: items){
+                ids.add(item.getContentId());
+            }
+            return Response.ok(null)
+                           .entity(new GetSnapshotContentBridgeResult(ids))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);

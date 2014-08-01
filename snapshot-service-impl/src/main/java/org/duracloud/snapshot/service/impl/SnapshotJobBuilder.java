@@ -69,18 +69,20 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
+    private SnapshotManager snapshotManager;
     
     @Autowired
     public SnapshotJobBuilder(JobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
                               TaskExecutor taskExecutor,
-                              SnapshotManager service) {
+                              SnapshotManager snapshotManager) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
+        this.snapshotManager = snapshotManager;
     }
 
     /* (non-Javadoc)
@@ -131,13 +133,14 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                 createWriter(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
             ItemWriter itemWriter =
-                new SpaceItemWriter(retrievalSource,
+                new SpaceItemWriter(snapshot,
+                                    retrievalSource,
                                     contentDir,
                                     outputWriter,
                                     propsWriter,
                                     md5Writer,
                                     sha256Writer,
-                                    snapshotService);
+                                    snapshotManager);
 
             SimpleStepFactoryBean<ContentItem, File> stepFactory =
                 new SimpleStepFactoryBean<>();

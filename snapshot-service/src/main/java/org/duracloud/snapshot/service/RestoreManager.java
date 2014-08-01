@@ -23,8 +23,10 @@ public interface RestoreManager {
     
     /**
      * 
+     * @param config
+     * @param jobManager
      */
-    void init(RestoreManagerConfig config);
+    void init(RestoreManagerConfig config, SnapshotJobManager jobManager);
     
     /**
      * Initiates the restoration of a snapshot.
@@ -73,7 +75,6 @@ public interface RestoreManager {
      * @param message
      * @return
      */
-    @Transactional
     public Restoration transitionRestoreStatus(Long restorationId,
                                                RestoreStatus status,
                                                String message)

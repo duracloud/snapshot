@@ -36,7 +36,9 @@ import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 
 
@@ -50,21 +52,37 @@ public class RestoreManagerImpl  implements RestoreManager{
         LoggerFactory.getLogger(RestoreManagerImpl.class);
     private RestoreManagerConfig config;
     private SnapshotJobManager jobManager;
-    private NotificationManager notificationManager;
-    private RestoreRepo restoreRepo;
-    private SnapshotRepo snapshotRepo;
 
     @Autowired
-    public RestoreManagerImpl(  SnapshotJobManager jobManager, 
-                                    NotificationManager notificationManager,
-                                    RestoreRepo restoreRepo, 
-                                    SnapshotRepo snapshotRepo) {
-        this.jobManager = jobManager;
-        this.notificationManager = notificationManager;
-        this.restoreRepo = restoreRepo;
-        this.snapshotRepo = snapshotRepo;
-    }    
+    private NotificationManager notificationManager;
+    @Autowired
+    private RestoreRepo restoreRepo;
+    @Autowired
+    private SnapshotRepo snapshotRepo;
 
+    public RestoreManagerImpl() {}    
+    
+    /**
+     * @param snapshotRepo the snapshotRepo to set
+     */
+    public void setSnapshotRepo(SnapshotRepo snapshotRepo) {
+        this.snapshotRepo = snapshotRepo;
+    }
+    
+    /**
+     * @param notificationManager the notificationManager to set
+     */
+    public void setNotificationManager(NotificationManager notificationManager) {
+        this.notificationManager = notificationManager;
+    }
+    
+    /**
+     * @param restoreRepo the restoreRepo to set
+     */
+    public void setRestoreRepo(RestoreRepo restoreRepo) {
+        this.restoreRepo = restoreRepo;
+    }
+ 
 
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.RestorationManager#restoreSnapshot(java.lang.String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig)
@@ -231,8 +249,9 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#init(org.duracloud.snapshot.restoration.RestorationConfig)
      */
     @Override
-    public void init(RestoreManagerConfig config) {
+    public void init(RestoreManagerConfig config, SnapshotJobManager jobManager) {
         this.config = config;
+        this.jobManager = jobManager;
     }
     
     private String getRestorationContentDir(Long restorationId) {
@@ -264,6 +283,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * java.lang.String)
      */
     @Override
+    @Transactional
     public Restoration transitionRestoreStatus(Long restorationId,
                                                RestoreStatus status,
                                                String message)

@@ -28,7 +28,7 @@ public class SnapshotContentItem extends BaseEntity implements Comparator<Snapsh
     @Column(name="content_id", nullable=false, length = 1024)
     private String contentId;
     
-    @Column(name="content_id_hash", nullable=false, length=30)
+    @Column(name="content_id_hash", nullable=false, length=50)
     private String contentIdHash;
     
     @ManyToOne(optional=false,targetEntity=Snapshot.class)

@@ -36,22 +36,10 @@
       <version>${project.version}</version>
     </dependency>
 
-
-    <!-- Spring Batch dependencies -->
-    <dependency>
-      <groupId>org.springframework.batch</groupId>
-      <artifactId>spring-batch-core</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>common-notification</artifactId>
       <version>${duracloud.version}</version>
-    </dependency>
-    
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-core</artifactId>
     </dependency>
     
     <dependency>
@@ -60,6 +48,18 @@
       <version>${duracloud.version}</version>
     </dependency>
     
+    
 
+    <!-- Spring Batch dependencies -->
+    <dependency>
+      <groupId>org.springframework.batch</groupId>
+      <artifactId>spring-batch-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-core</artifactId>
+    </dependency>
+  
   </dependencies>
 </project>

@@ -131,16 +131,13 @@ public class RestorationManagerImplTest  extends SnapshotTestBase {
      */
     private void setupManager() {
         manager =
-            new RestoreManagerImpl(jobManager,
-                                       notificationManager,
-                                       restoreRepo,
-                                       snapshotRepo);
+            new RestoreManagerImpl();
         RestoreManagerConfig config = new RestoreManagerConfig();
         config.setDpnEmailAddresses(new String[] {"a"});
         config.setDuracloudEmailAddresses(new String[]{"b"});
         config.setRestorationRootDir(System.getProperty("java.io.tmpdir")
             + File.separator + System.currentTimeMillis());
-        manager.init(config);
+        manager.init(config, jobManager);
     }
 
     /**

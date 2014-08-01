@@ -21,7 +21,9 @@ import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
+import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
+import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -38,7 +40,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                                         StepExecutionListener,
                                         ItemWriteListener<ContentItem> {
 
-    private static final Logger LOGGER =
+    private static final Logger log =
         LoggerFactory.getLogger(SpaceItemWriter.class);
 
     private RetrievalSource retrievalSource;
@@ -49,14 +51,17 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private BufferedWriter sha256Writer;
     private ChecksumUtil sha256ChecksumUtil;
     private ContentItem snapshotPropsContentItem;
+    private SnapshotManager snapshotManager;
+    private Snapshot snapshot;
 
-    public SpaceItemWriter(RetrievalSource retrievalSource,
+    public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
                            File contentDir,
                            OutputWriter outputWriter,
                            BufferedWriter propsWriter,
                            BufferedWriter md5Writer,
                            BufferedWriter sha256Writer, 
-                           SnapshotManager snapshotService) {
+                           SnapshotManager snapshotManager) {
+        this.snapshot = snapshot;
         this.retrievalSource = retrievalSource;
         this.contentDir = contentDir;
         this.outputWriter = outputWriter;
@@ -65,12 +70,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         this.sha256Writer = sha256Writer;
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
+        this.snapshotManager = snapshotManager;
     }
 
     @Override
     public void write(List<? extends ContentItem> items) throws IOException {
         for(ContentItem contentItem: items) {
-            LOGGER.debug("writing: {}", contentItem.getContentId());
+            log.debug("writing: {}", contentItem.getContentId());
 
             if(! contentItem.getContentId().equals(Constants.SNAPSHOT_ID)) {
                 File dataDir = new File(contentDir, "data");
@@ -104,9 +110,25 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 writeSHA256Checksum(contentItem, localFile);
             }
             writeContentProperties(contentItem, props, lastItem);
+            writeToSnapshotManager(contentItem, props);
         } else {
             // TODO: throw Exception???
 
+        }
+    }
+
+    /**
+     * @param contentItem
+     * @param props
+     */
+    private void writeToSnapshotManager(ContentItem contentItem,
+                                        Map<String, String> props) throws IOException{
+        try {
+            this.snapshotManager.addContentItem(snapshot, contentItem.getContentId(), props);
+        } catch (SnapshotManagerException e) {
+            log.error("failed to add snapshot content item: "
+                + contentItem + ": " + e.getMessage(), e);
+            throw new IOException(e);
         }
     }
 
@@ -158,29 +180,29 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             try {
                 retrieveFile(snapshotPropsContentItem, contentDir, false, true);
             } catch (IOException ioe) {
-                LOGGER.error("Error retrieving the snapshot properties file: ",
+                log.error("Error retrieving the snapshot properties file: ",
                              ioe);
             }
         } else {
-            LOGGER.error("No snapshot properties file found. (" +
+            log.error("No snapshot properties file found. (" +
                              Constants.SNAPSHOT_ID + ")");
         }
     }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        LOGGER.debug("Step complete with status: {}",
+        log.debug("Step complete with status: {}",
                      stepExecution.getExitStatus());
         try {
             md5Writer.close();
         } catch (IOException ioe) {
-            LOGGER.error("Error closing MD5 manifest BufferedWriter: ", ioe);
+            log.error("Error closing MD5 manifest BufferedWriter: ", ioe);
         }
 
         try {
             sha256Writer.close();
         } catch (IOException ioe) {
-            LOGGER.error("Error closing SHA-256 manifest BufferedWriter: ", ioe);
+            log.error("Error closing SHA-256 manifest BufferedWriter: ", ioe);
         }
 
         retrieveSnapshotProperties();
@@ -189,13 +211,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 propsWriter.write("]\n");
             }
         } catch (IOException ioe) {
-            LOGGER.error("Error writing end of content property " +
+            log.error("Error writing end of content property " +
                              "manifest: ", ioe);
         }
         try {
             propsWriter.close();
         } catch (IOException ioe) {
-            LOGGER.error("Error closing content property " +
+            log.error("Error closing content property " +
                              "manifest BufferedWriter: ", ioe);
         }
         return stepExecution.getExitStatus();
@@ -208,7 +230,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 propsWriter.write("[\n");
             }
         } catch (IOException ioe) {
-            LOGGER.error("Error writing start of content property " +
+            log.error("Error writing start of content property " +
                              "manifest: ", ioe);
         }
     }
@@ -220,7 +242,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         for(ContentItem item: items) {
             sb.append(item.getContentId() + ", ");
         }
-        LOGGER.error("Error writing item(s): " + sb.toString(), e);
+        log.error("Error writing item(s): " + sb.toString(), e);
         // TODO: write error entry to database?
     }
 

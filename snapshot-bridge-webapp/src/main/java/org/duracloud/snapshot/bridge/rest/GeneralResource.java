@@ -145,7 +145,7 @@ public class GeneralResource {
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
         
-        this.restorationManager.init(config);
+        this.restorationManager.init(config, jobManager);
     }
 
     /**

@@ -115,7 +115,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         
         Capture<RestoreManagerConfig> restorationConfigCapture = new Capture<>();
-        restorationManager.init(EasyMock.capture(restorationConfigCapture));
+        restorationManager.init(EasyMock.capture(restorationConfigCapture), EasyMock.isA(SnapshotJobManager.class));
         EasyMock.expectLastCall();
 
         Collection<NotificationConfig> collection = new ArrayList<>();

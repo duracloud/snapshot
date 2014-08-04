@@ -107,7 +107,7 @@ public class SnapshotResource {
         try {
 
             List<Snapshot> snapshots =
-                this.snapshotRepo.findBySourceHost(params.getSourceHost());
+                this.snapshotRepo.findBySourceHost(params.getHost());
 
             List<SnapshotSummary> summaries = new ArrayList<>(snapshots.size());
             for (Snapshot snapshot : snapshots) {

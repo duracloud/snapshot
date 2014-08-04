@@ -42,7 +42,8 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
 
 /**
- * @author Daniel Bernstein Date: Feb 4, 2014
+ * @author Daniel Bernstein 
+ *         Date: Feb 4, 2014
  */
 
 public class SnapshotResourceTest extends SnapshotTestBase {
@@ -193,7 +194,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getStatus()).andReturn(status);
 
         snapshotList.add(snapshot);
-        EasyMock.expect(params.getSourceHost()).andReturn(sourceHost);
+        EasyMock.expect(params.getHost()).andReturn(sourceHost);
         EasyMock.expect(this.snapshotRepo.findBySourceHost(sourceHost))
                 .andReturn(snapshotList);
         replayAll();
@@ -239,17 +240,15 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         replayAll();
         
-        
-        
         Response response = resource.getContent(snapshotId, params);
         GetSnapshotContentBridgeResult result = (GetSnapshotContentBridgeResult)response.getEntity();
 
-//        PageRequest pageRequest = pageRequestCapture.getValue();
-//        
-//        Assert.assertEquals(page, pageRequest.getPageNumber());
-//        Assert.assertEquals(pageSize, pageRequest.getPageSize());
-//        
-//        Assert.assertEquals("test", result.getContentIds().get(0));
+        PageRequest pageRequest = pageRequestCapture.getValue();
+        
+        Assert.assertEquals(page, pageRequest.getPageNumber());
+        Assert.assertEquals(pageSize, pageRequest.getPageSize());
+        
+        Assert.assertEquals("test", result.getContentIds().get(0));
 
     }
 }

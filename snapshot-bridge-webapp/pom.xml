@@ -105,7 +105,13 @@
 
     <dependency>
       <groupId>org.duracloud.snapshot</groupId>
-      <artifactId>snapshot-batch</artifactId>
+      <artifactId>snapshot-service-impl</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.duracloud.snapshot</groupId>
+      <artifactId>snapshot-service</artifactId>
       <version>${project.version}</version>
     </dependency>
 

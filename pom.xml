@@ -21,8 +21,10 @@
   
   <modules>
     <module>snapshot-common-test</module>
+    <module>snapshot-common</module>
     <module>snapshot-common-db</module>
-    <module>snapshot-batch</module>
+    <module>snapshot-service</module>
+    <module>snapshot-service-impl</module>
     <module>snapshot-bridge-webapp</module>
   </modules>
 
@@ -31,6 +33,7 @@
     <slf4j.version>1.7.5</slf4j.version>
     <springframework.version>4.0.5.RELEASE</springframework.version>
     <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
+    <spring.batch.version>3.0.1.RELEASE</spring.batch.version>
     <duracloud.version>3.2.0-SNAPSHOT</duracloud.version>
     <hibernate.version>4.3.5.Final</hibernate.version>
     <unitTests>**/*Test.class</unitTests>
@@ -252,6 +255,13 @@
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-jpa</artifactId>
         <version>${springframework.data.jpa.version}</version>
+      </dependency>
+
+      <!-- Spring Batch dependencies -->
+      <dependency>
+        <groupId>org.springframework.batch</groupId>
+        <artifactId>spring-batch-core</artifactId>
+        <version>${spring.batch.version}</version>
       </dependency>
 
       <dependency>

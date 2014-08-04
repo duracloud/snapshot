@@ -36,7 +36,7 @@ public class Restoration extends BaseEntity {
     private Date startDate;
     private Date endDate;
     @Enumerated(EnumType.STRING)
-    private RestoreStatus status;
+    private RestoreStatus status = RestoreStatus.INITIALIZED;
     @Column(length=512)
     private String statusText;
     

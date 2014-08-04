@@ -31,14 +31,14 @@ import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
-import org.duracloud.snapshot.bridge.service.RestoreManager;
-import org.duracloud.snapshot.bridge.service.RestoreManagerConfig;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
-import org.duracloud.snapshot.manager.SnapshotJobManager;
-import org.duracloud.snapshot.manager.config.ExecutionListenerConfig;
-import org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig;
-import org.duracloud.snapshot.manager.spring.batch.SnapshotExecutionListener;
+import org.duracloud.snapshot.service.RestoreManager;
+import org.duracloud.snapshot.service.RestoreManagerConfig;
+import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
+import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
+import org.duracloud.snapshot.service.impl.SnapshotExecutionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,7 +145,7 @@ public class GeneralResource {
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
         
-        this.restorationManager.init(config);
+        this.restorationManager.init(config, jobManager);
     }
 
     /**

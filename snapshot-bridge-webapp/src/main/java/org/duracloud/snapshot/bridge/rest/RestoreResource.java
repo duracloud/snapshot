@@ -8,7 +8,6 @@
 package org.duracloud.snapshot.bridge.rest;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,14 +22,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.duracloud.snapshot.bridge.service.RestoreManager;
-import org.duracloud.snapshot.bridge.service.RestorationNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.bridge.CompleteRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetRestoreStatusBridgeResult;
+import org.duracloud.snapshot.service.RestorationNotFoundException;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

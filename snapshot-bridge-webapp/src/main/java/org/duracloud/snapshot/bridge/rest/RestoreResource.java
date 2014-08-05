@@ -78,7 +78,7 @@ public class RestoreResource {
             Restoration result =
                 this.restorationManager.restoreSnapshot(params.getSnapshotId(),
                                                         destination, params.getUserEmail());
-            return Response.ok()
+            return Response.created(null)
                            .entity(new CreateRestoreBridgeResult(result.getId(),
                                                                  result.getStatus()))
                            .build();

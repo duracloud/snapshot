@@ -97,8 +97,15 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             
             File watchDir =
                 new File(ContentDirUtils.getSourcePath(restoration.getId(),
-                                                       jobManagerConfig.getContentRootDir()));
+                                                       jobManagerConfig.getContentRootDir())
+                    + File.separator + "data");
 
+            if (!watchDir.exists()) {
+                throw new RuntimeException("The content directory for the restored snapshot " +
+                		                   "does not exist in bridge storage: missing watchDir: " + 
+                		                   watchDir.getAbsolutePath());
+            }
+            
             FileSystemReader reader =
                 new FileSystemReader(watchDir);
 

@@ -201,7 +201,6 @@ public class SnapshotResource {
 
     @Path("{snapshotId}/complete")
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response complete(@PathParam("snapshotId") String snapshotId) {
 
@@ -247,7 +246,6 @@ public class SnapshotResource {
      */
     @Path("{snapshotId}/content")
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getContent(@PathParam("snapshotId") String snapshotId,
                                GetSnapshotContentBridgeParameters params) {

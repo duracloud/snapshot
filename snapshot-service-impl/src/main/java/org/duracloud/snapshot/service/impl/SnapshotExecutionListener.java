@@ -140,6 +140,11 @@ public class SnapshotExecutionListener implements JobExecutionListener {
                                            Restoration restoration,
                                            String snapshotPath) {
         log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
+
+        Snapshot snapshot = restoration.getSnapshot();
+        String snapshotId = snapshot.getName();
+        Long restoreId = restoration.getId();
+
         if(BatchStatus.COMPLETED.equals(status)) {
             // Job success. Email duracloud team as well as restoration requestor
             
@@ -147,17 +152,19 @@ public class SnapshotExecutionListener implements JobExecutionListener {
                                 RestoreStatus.RESTORATION_COMPLETE,
                                 "Completed transfer to duracloud: "
                                     + new Date());
+            
             String subject =
-                "DuraCloud snapshot has been restored! Restoration ID = " + restoration.getId();
+                "DuraCloud snapshot " + snapshotId + " has been restored! Restore ID = " + restoreId;
             String message =
-                "A DuraCloud content snapshot has completed successfully:\n\n";
+                "A DuraCloud snapshot restore  has completed successfully:\n\n";
             
             DuracloudEndPointConfig destination = restoration.getDestination();
-            
-            message += "Host: " + destination.getHost() + "\n";
-            message += "Port: " + destination.getPort() + "\n";
-            message += "StoreId: " + destination.getStoreId() + "\n";
-            message += "SpaceId: " + destination.getSpaceId() + "\n";
+            message += "SnapshotId: " + snapshotId + "\n";
+            message += "Restore Id: " + restoreId + "\n";
+            message += "Destination Host: " + destination.getHost() + "\n";
+            message += "Destination Port: " + destination.getPort() + "\n";
+            message += "Destination StoreId: " + destination.getStoreId() + "\n";
+            message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
             
             List<String> emailAddresses =
                 new ArrayList<>(Arrays.asList(config.getDuracloudEmailAddresses()));
@@ -168,11 +175,11 @@ public class SnapshotExecutionListener implements JobExecutionListener {
         } else {
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =
-                "DuraCloud snapshot restoration failed to complete";
+                "DuraCloud snapshot "+ snapshotId + " restoration failed to complete";
             String message =
                 "A DuraCloud snapshot restoration has failed to complete.\n" +
-                "\nrrestore-id=" + restoration.getId() +
-                "\nsnapshot-id=" + restoration.getSnapshot().getName() +
+                "\nrrestore-id=" + restoreId +
+                "\nsnapshot-id=" + snapshotId +
                 "\nsnapshot-path=" + snapshotPath;
                 // TODO: Add details of failure in message
             sendEmail(subject, message,

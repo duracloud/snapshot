@@ -138,8 +138,7 @@ public class GeneralResource {
      */
     private void initRestorationResource(InitParams initParams) {
         RestoreManagerConfig config = new RestoreManagerConfig();
-        config.setRestorationRootDir(initParams.getContentDirRoot()
-            + File.separator + "restorations");
+        config.setRestorationRootDir(initParams.getContentDirRoot());
         config.setDpnEmailAddresses(initParams.getDpnEmailAddresses());
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());

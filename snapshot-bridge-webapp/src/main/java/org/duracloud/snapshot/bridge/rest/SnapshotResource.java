@@ -20,6 +20,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -43,7 +44,6 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotStatusBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -103,11 +103,11 @@ public class SnapshotResource {
     @Path("/")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response list(GetSnapshotListBridgeParameters params) {
+    public Response list(@QueryParam("host") String host) {
         try {
 
             List<Snapshot> snapshots =
-                this.snapshotRepo.findBySourceHost(params.getHost());
+                this.snapshotRepo.findBySourceHost(host);
 
             List<SnapshotSummary> summaries = new ArrayList<>(snapshots.size());
             for (Snapshot snapshot : snapshots) {

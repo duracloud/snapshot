@@ -182,8 +182,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Test
     public void testGetSnapshotList() {
         String sourceHost = "source-host";
-        GetSnapshotListBridgeParameters params =
-            createMock(GetSnapshotListBridgeParameters.class);
 
         String snapshotName = "snapshot-name";
         String description = "description";
@@ -194,12 +192,11 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getStatus()).andReturn(status);
 
         snapshotList.add(snapshot);
-        EasyMock.expect(params.getHost()).andReturn(sourceHost);
         EasyMock.expect(this.snapshotRepo.findBySourceHost(sourceHost))
                 .andReturn(snapshotList);
         replayAll();
 
-        Response response = this.resource.list(params);
+        Response response = this.resource.list(sourceHost);
 
         GetSnapshotListBridgeResult result =
             (GetSnapshotListBridgeResult) response.getEntity();

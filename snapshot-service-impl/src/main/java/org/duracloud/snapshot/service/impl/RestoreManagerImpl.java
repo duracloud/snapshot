@@ -7,12 +7,6 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.SnapshotException;
@@ -36,9 +30,14 @@ import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 
 
@@ -114,12 +113,16 @@ public class RestoreManagerImpl  implements RestoreManager{
         File restoreDir = getRestoreDir(restoration.getId());
         restoreDir.mkdirs();
 
-        //send email to DPN 
+        //send email to DPN
+        String subject = "Snapshot Restoration Request for Snapshot ID = " +
+                         snapshotId;
+        String body = "Please perform a snapshot restore.\n\nSnapshot ID: " +
+                      snapshotId + "\nRestore Location: " +
+                      restoreDir.getAbsolutePath();
         notificationManager.sendNotification(NotificationType.EMAIL,
-                                 "Snapshot Restoration Request for Snapshot ID = " + snapshotId,
-                                 "Please restore the following snapshot to the following location: " + restoreDir.getAbsolutePath(),
-                                 getAllEMailAddresses(this.config));
-
+                                             subject,
+                                             body,
+                                             getAllEMailAddresses(this.config));
         return restoration;
     }
 

@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.rest;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -19,6 +20,7 @@ import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.bridge.rest.SnapshotResource;
 import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
+import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
@@ -29,7 +31,6 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.easymock.Capture;
@@ -69,6 +70,9 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Mock
     private Snapshot snapshot;
 
+    @Mock
+    private DuracloudEndPointConfig source;
+
     /*
      * (non-Javadoc)
      * 
@@ -86,23 +90,32 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetStatusSuccess() throws SnapshotException {
+    public void testGetSuccess() throws SnapshotException {
 
         EasyMock.expect(snapshotRepo.findByName("snapshotId"))
                 .andReturn(snapshot);
         EasyMock.expect(snapshot.getStatus())
                 .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
-        EasyMock.expect(snapshot.getStatusText()).andReturn("status text");
 
+        EasyMock.expect(snapshot.getSource()).andReturn(source);
+        
+        EasyMock.expect(source.getHost()).andReturn("host");
+        EasyMock.expect(source.getSpaceId()).andReturn("spaceId");
+        EasyMock.expect(source.getStoreId()).andReturn("storeId");
+        EasyMock.expect(snapshot.getDescription()).andReturn("description");
+        EasyMock.expect(snapshot.getSnapshotDate()).andReturn(new Date());
+        EasyMock.expect(snapshot.getName()).andReturn("snapshotId");
+       
+        
         replayAll();
-        resource.getStatus("snapshotId");
+        resource.getSnapshot("snapshotId");
     }
 
     @Test
-    public void testGetStatusNotFound() throws SnapshotException {
+    public void testGetNotFound() throws SnapshotException {
         EasyMock.expect(snapshotRepo.findByName("snapshotId")).andReturn(null);
         replayAll();
-        resource.getStatus("snapshotId");
+        resource.getSnapshot("snapshotId");
     }
 
     @Test

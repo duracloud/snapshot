@@ -42,10 +42,10 @@ import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotStatusBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,15 +136,25 @@ public class SnapshotResource {
      * @param snapshotId
      * @return
      */
-    public Response getStatus(@PathParam("snapshotId") String snapshotId) {
+    public Response getSnapshot(@PathParam("snapshotId") String snapshotId) {
         try {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
             if (snapshot == null) {
                 throw new SnapshotNotFoundException(snapshotId);
             }
+            
+            GetSnapshotBridgeResult result = new GetSnapshotBridgeResult();
+            DuracloudEndPointConfig source = snapshot.getSource();
+            result.setDescription(snapshot.getDescription());
+            result.setSnapshotDate(snapshot.getSnapshotDate());
+            result.setSnapshotId(snapshot.getName());
+            result.setSourceHost(source.getHost());
+            result.setSourceSpaceId(source.getSpaceId());
+            result.setSourceStoreId(source.getStoreId());
+            result.setStatus(snapshot.getStatus());
+            
             return Response.ok()
-                           .entity(new GetSnapshotStatusBridgeResult(snapshot.getStatus(),
-                                                                     snapshot.getStatusText()))
+                           .entity(result)
                            .build();
         } catch (SnapshotNotFoundException ex) {
             log.error(ex.getMessage(), ex);

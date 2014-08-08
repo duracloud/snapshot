@@ -27,7 +27,7 @@ import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.bridge.CompleteRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetRestoreStatusBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetRestoreBridgeResult;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
@@ -94,19 +94,17 @@ public class RestoreResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     /**
-     * Returns the status of a snapshot. The fields available in the response will match
-     * those in <code>SnapshotStatus</code>.
+     * Returns the status of a restoration.
      * @param snapshotId
      * @return
      */
-    public Response getStatus(@PathParam("restorationId") Long restorationId) {
+    public Response get(@PathParam("restorationId") Long restorationId) {
         try {
             Restoration restoration =
                 this.restorationManager.get(restorationId);
-
+            
             return Response.ok()
-                           .entity(new GetRestoreStatusBridgeResult(restoration.getStatus(),
-                                                                    restoration.getStatusText()))
+                           .entity(toGetRestoreBridgeResult(restoration))
                            .build();
         } catch (RestorationNotFoundException ex) {
             log.error(ex.getMessage(), ex);
@@ -119,6 +117,58 @@ public class RestoreResource {
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();
         }
+    }
+    
+    @Path("by-snapshot/{snapshotId}")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    /**
+     * Returns the status of a restoration by snapshot id.
+     * @param snapshotId
+     * @return
+     */
+    public Response get(@PathParam("snapshotId") String snapshotId) {
+        try {
+            Restoration restoration =
+                this.restorationManager.getBySnapshotId(snapshotId);
+            
+            return Response.ok()
+                           .entity(toGetRestoreBridgeResult(restoration))
+                           .build();
+        } catch (RestorationNotFoundException ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.status(HttpStatus.SC_NOT_FOUND)
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /**
+     * @param restorationId
+     * @param restoration
+     * @return
+     */
+    private GetRestoreBridgeResult
+        toGetRestoreBridgeResult(Restoration restoration) {
+        DuracloudEndPointConfig destination = restoration.getDestination();
+        GetRestoreBridgeResult result = new GetRestoreBridgeResult();
+        result.setId(restoration.getId());
+        result.setSnapshotId(restoration.getSnapshot().getName());
+        result.setStartDate(restoration.getStartDate());
+        result.setEndDate(restoration.getEndDate());
+        result.setStatus(restoration.getStatus());
+        result.setStatusText(restoration.getStatusText());
+        result.setDestinationStoreId(destination.getStoreId());
+        result.setDestinationHost(destination.getHost());
+        result.setDestinationPort(destination.getPort());
+        result.setDestinationSpaceId(destination.getSpaceId());
+
+        return result;
     }
 
     @Path("{restorationId}/complete")

@@ -8,6 +8,8 @@
 package org.duracloud.snapshot.rest;
 
 
+import java.util.Date;
+
 import javax.ws.rs.core.Response;
 
 import org.codehaus.jettison.json.JSONException;
@@ -16,9 +18,9 @@ import org.duracloud.snapshot.bridge.rest.RestoreResource;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
-import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
-import org.duracloud.snapshot.dto.bridge.GetRestoreStatusBridgeResult;
+import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -74,26 +76,48 @@ public class RestoreResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testSnapshotRestorationStatus() throws SnapshotException, JSONException {
+    public void testGetRestore() throws SnapshotException, JSONException {
         long restorationId = 1000;
-        Restoration restoration = createMock(Restoration.class);
-
+        Restoration restoration = setupRestoration();
         EasyMock.expect(manager.get(restorationId)).andReturn(restoration);
-
-        EasyMock.expect(restoration.getStatus())
-                .andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
-        EasyMock.expect(restoration.getStatusText()).andReturn("test");
-
         replayAll();
-        Response response = resource.getStatus(restorationId);
-
+        Response response = resource.get(restorationId);
         Assert.assertNotNull(response);
+        Assert.assertNotNull(response.getEntity());
+    }
+    
+    @Test
+    public void testGetRestoreBySnapshot() throws SnapshotException, JSONException {
+        String snapshotId = "snapshot-id";
+        Restoration restoration = setupRestoration();
+        EasyMock.expect(manager.getBySnapshotId(snapshotId)).andReturn(restoration);
+        replayAll();
+        Response response = resource.get(snapshotId);
+        Assert.assertNotNull(response);
+        Assert.assertNotNull(response.getEntity());
+    }
 
-        GetRestoreStatusBridgeResult entity = (GetRestoreStatusBridgeResult) response.getEntity();
-        Assert.assertNotNull(entity);
-        Assert.assertEquals(entity.getStatus(),
-                            RestoreStatus.DPN_TRANSFER_COMPLETE);
+    /**
+     * @return
+     */
+    private Restoration setupRestoration() {
+        Restoration r = createMock(Restoration.class);
+        EasyMock.expect(r.getId()).andReturn(1000l);
+        EasyMock.expect(r.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        Snapshot snapshot = createMock(Snapshot.class);
+        EasyMock.expect(r.getSnapshot()).andReturn(snapshot);
+        EasyMock.expect(snapshot.getName()).andReturn("snapshot-id");
+        EasyMock.expect(r.getStartDate()).andReturn(new Date());
+        EasyMock.expect(r.getEndDate()).andReturn(new Date());
+        EasyMock.expect(r.getStatusText()).andReturn("status text");
+        DuracloudEndPointConfig dest = createMock(DuracloudEndPointConfig.class);
+        EasyMock.expect(r.getDestination()).andReturn(dest);
+        EasyMock.expect(dest.getHost()).andReturn("host");
+        EasyMock.expect(dest.getPort()).andReturn(443);
+        EasyMock.expect(dest.getStoreId()).andReturn("store-id");
+        EasyMock.expect(dest.getSpaceId()).andReturn("space-id");
         
+        return r;
     }
 
 }

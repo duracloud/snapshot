@@ -32,5 +32,5 @@ public interface RestoreRepo extends JpaRepository<Restoration, Long> {
      * @param name
      * @return
      */
-    public List<Restoration> findBySnapshotName(String name);
+    public List<Restoration> findBySnapshotNameOrderByModifiedDesc(String name);
 }

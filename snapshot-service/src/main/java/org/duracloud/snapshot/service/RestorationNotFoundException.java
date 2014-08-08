@@ -18,4 +18,11 @@ public class RestorationNotFoundException extends SnapshotException {
     public RestorationNotFoundException(Long restorationId){
         super("No restoration with id = " + restorationId + " found.",null);
     }
+
+    /**
+     * @param string
+     */
+    public RestorationNotFoundException(String message) {
+        super(message, null);
+    }
 }

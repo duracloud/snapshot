@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -275,6 +276,19 @@ public class RestoreManagerImpl  implements RestoreManager{
         return restoration;
     }
     
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.RestoreManager#getBySnapshotId(java.lang.String)
+     */
+    @Override
+    public Restoration getBySnapshotId(String snapshotId) throws RestorationNotFoundException {
+        List<Restoration> restorations =  this.restoreRepo.findBySnapshotNameOrderByModifiedDesc(snapshotId);
+        if(CollectionUtils.isEmpty(restorations)){
+            throw new RestorationNotFoundException("No restorations associated with snapshot " + snapshotId);
+        }
+        
+        return restorations.get(0);
+    }
     
     
     /*

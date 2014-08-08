@@ -79,4 +79,10 @@ public interface RestoreManager {
                                                RestoreStatus status,
                                                String message)
         throws InvalidStateTransitionException, RestorationNotFoundException;
+
+    /**
+     * @param snapshotId
+     * @return
+     */
+    Restoration getBySnapshotId(String snapshotId)  throws RestorationNotFoundException ;
 }

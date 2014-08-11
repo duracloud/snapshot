@@ -43,7 +43,6 @@ import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -52,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -258,19 +258,27 @@ public class SnapshotResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getContent(@PathParam("snapshotId") String snapshotId,
-                               GetSnapshotContentBridgeParameters params) {
+                               @QueryParam(value="page") Integer page,
+                               @QueryParam(value="pageSize") Integer pageSize,
+                               @QueryParam(value="prefix") String prefix) {
 
         try {
 
+            if(page == null){
+                page = 0;
+            }
+            if(pageSize == null || pageSize > 1000){
+                page = 1000;
+            }
+            
             PageRequest pageable =
-                new PageRequest(params.getPage(),
-                                params.getPageSize());
+                new PageRequest(page,
+                                pageSize);
 
             List<SnapshotContentItem> items =
                 this.snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWith(snapshotId,
-                                                                     params.getPrefix(),
+                                                                     prefix,
                                                                      pageable);
-
 
             List<String> ids = new ArrayList<>();
             for(SnapshotContentItem item: items){

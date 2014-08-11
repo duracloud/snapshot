@@ -29,7 +29,6 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -232,10 +231,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String prefix = "prefix";
         int page = 1;
         int pageSize = 5;
-        GetSnapshotContentBridgeParameters params = createMock(GetSnapshotContentBridgeParameters.class);
-        EasyMock.expect(params.getPage()).andReturn(page);
-        EasyMock.expect(params.getPageSize()).andReturn(pageSize);
-        EasyMock.expect(params.getPrefix()).andReturn(prefix);
  
         Capture<PageRequest> pageRequestCapture = new Capture<>();
         
@@ -250,7 +245,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         replayAll();
         
-        Response response = resource.getContent(snapshotId, params);
+        Response response = resource.getContent(snapshotId, page, pageSize, prefix);
         GetSnapshotContentBridgeResult result = (GetSnapshotContentBridgeResult)response.getEntity();
 
         PageRequest pageRequest = pageRequestCapture.getValue();

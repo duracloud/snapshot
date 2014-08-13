@@ -7,26 +7,6 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
 import org.apache.commons.httpclient.HttpStatus;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
@@ -46,12 +26,31 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.impl.PropertiesSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestParam;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -250,10 +249,6 @@ public class SnapshotResource {
         }
     }
 
-    /**
-     * @param params
-     * @return
-     */
     @Path("{snapshotId}/content")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -261,31 +256,40 @@ public class SnapshotResource {
                                @QueryParam(value="page") Integer page,
                                @QueryParam(value="pageSize") Integer pageSize,
                                @QueryParam(value="prefix") String prefix) {
-
         try {
-
             if(page == null){
                 page = 0;
             }
-            if(pageSize == null || pageSize > 1000){
+            if(pageSize == null || pageSize < 1 || pageSize > 1000){
                 page = 1000;
             }
             
-            PageRequest pageable =
-                new PageRequest(page,
-                                pageSize);
+            PageRequest pageable = new PageRequest(page, pageSize);
+            List<SnapshotContentItem> items = this.snapshotContentItemRepo
+                .findBySnapshotNameAndContentIdStartingWith(snapshotId,
+                                                            prefix,
+                                                            pageable);
 
-            List<SnapshotContentItem> items =
-                this.snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWith(snapshotId,
-                                                                     prefix,
-                                                                     pageable);
-
-            List<String> ids = new ArrayList<>();
-            for(SnapshotContentItem item: items){
-                ids.add(item.getContentId());
+            List<org.duracloud.snapshot.dto.SnapshotContentItem> snapshotItems =
+                new ArrayList<>();
+            for(SnapshotContentItem item : items) {
+                org.duracloud.snapshot.dto.SnapshotContentItem snapshotItem =
+                    new org.duracloud.snapshot.dto.SnapshotContentItem();
+                snapshotItem.setContentId(item.getContentId());
+                String metadata = item.getMetadata();
+                if(null != metadata) {
+                    snapshotItem.setContentProperties(
+                        PropertiesSerializer.deserialize(metadata));
+                }
+                snapshotItems.add(snapshotItem);
             }
+
+            GetSnapshotContentBridgeResult result =
+                new GetSnapshotContentBridgeResult();
+            result.setContentItems(snapshotItems);
+
             return Response.ok(null)
-                           .entity(new GetSnapshotContentBridgeResult(ids))
+                           .entity(result)
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);

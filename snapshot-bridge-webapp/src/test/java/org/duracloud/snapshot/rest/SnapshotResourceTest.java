@@ -7,13 +7,6 @@
  */
 package org.duracloud.snapshot.rest;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.ws.rs.core.Response;
-
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.SnapshotException;
@@ -40,6 +33,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
+
+import javax.ws.rs.core.Response;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Daniel Bernstein 
@@ -231,29 +230,40 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String prefix = "prefix";
         int page = 1;
         int pageSize = 5;
+        String metaName = "metadata-name";
+        String metaValue = "metadata-value";
  
         Capture<PageRequest> pageRequestCapture = new Capture<>();
         
         SnapshotContentItem item = new SnapshotContentItem();
         item.setContentId("test");
-        List<SnapshotContentItem> contentIds = Arrays.asList(new SnapshotContentItem[]{item});
-        EasyMock.expect(snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWith(EasyMock.eq(snapshotId),
-                                                        EasyMock.eq(prefix),
-                                                        EasyMock.capture(pageRequestCapture)))
-                .andReturn(contentIds);
+        item.setMetadata("{\""+metaName+"\" : \""+metaValue+"\"}");
 
+        List<SnapshotContentItem> contentIds =
+            Arrays.asList(new SnapshotContentItem[]{item});
+        EasyMock.expect(snapshotContentItemRepo
+            .findBySnapshotNameAndContentIdStartingWith(EasyMock.eq(snapshotId),
+                                                        EasyMock.eq(prefix),
+                                                        EasyMock.capture(
+                                                            pageRequestCapture)))
+                .andReturn(contentIds);
 
         replayAll();
         
-        Response response = resource.getContent(snapshotId, page, pageSize, prefix);
-        GetSnapshotContentBridgeResult result = (GetSnapshotContentBridgeResult)response.getEntity();
+        Response response =
+            resource.getContent(snapshotId, page, pageSize, prefix);
+        GetSnapshotContentBridgeResult result =
+            (GetSnapshotContentBridgeResult)response.getEntity();
 
         PageRequest pageRequest = pageRequestCapture.getValue();
-        
         Assert.assertEquals(page, pageRequest.getPageNumber());
         Assert.assertEquals(pageSize, pageRequest.getPageSize());
-        
-        Assert.assertEquals("test", result.getContentIds().get(0));
 
+        org.duracloud.snapshot.dto.SnapshotContentItem resultItem =
+            result.getContentItems().get(0);
+        Assert.assertEquals("test", resultItem.getContentId());
+        Assert.assertEquals(metaValue,
+                            resultItem.getContentProperties().get(metaName));
     }
+
 }

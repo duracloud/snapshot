@@ -25,6 +25,7 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
 import org.slf4j.Logger;
@@ -188,7 +189,13 @@ public class SnapshotResource {
             source.setSpaceId(params.getSpaceId());
             source.setStoreId(params.getStoreId());
             Snapshot snapshot = new Snapshot();
-            snapshot.setModified(new Date());
+            Date now = new Date();
+            snapshot.setModified(now);
+            snapshot.setStartDate(now);
+            Date snapshotDate =
+                new Date(SnapshotIdentifier.parseSnapshotId(snapshotId)
+                                           .getTimestamp());
+            snapshot.setSnapshotDate(snapshotDate);
             snapshot.setName(snapshotId);
             snapshot.setSource(source);
             snapshot.setDescription(params.getDescription());
@@ -221,6 +228,7 @@ public class SnapshotResource {
             }
 
             snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
+            snapshot.setEndDate(new Date());
             this.snapshotRepo.saveAndFlush(snapshot);
             String message = "Snapshot complete: " + snapshotId;
             List<String> recipients =
@@ -266,8 +274,7 @@ public class SnapshotResource {
             
             PageRequest pageable = new PageRequest(page, pageSize);
             List<SnapshotContentItem> items = this.snapshotContentItemRepo
-                .findBySnapshotNameAndContentIdStartingWith(snapshotId,
-                                                            prefix,
+                .findBySnapshotNameAndContentIdStartingWith(snapshotId, prefix,
                                                             pageable);
 
             List<org.duracloud.snapshot.dto.SnapshotContentItem> snapshotItems =

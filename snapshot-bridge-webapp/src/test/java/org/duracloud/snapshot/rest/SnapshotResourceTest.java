@@ -24,6 +24,7 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -122,7 +123,9 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String port = "444";
         String storeId = "storeId";
         String spaceId = "spaceId";
-        String snapshotId = "snapshot-name";
+        String snapshotId =
+            new SnapshotIdentifier("account-name", storeId, spaceId,
+                                   System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
 
@@ -162,6 +165,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshotRepo.findByName(snapshotId))
                 .andReturn(snapshot);
         snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
+        EasyMock.expectLastCall();
+        snapshot.setEndDate(EasyMock.isA(Date.class));
         EasyMock.expectLastCall();
         String adminEmail = "admin-email";
         String userEmail = "email";

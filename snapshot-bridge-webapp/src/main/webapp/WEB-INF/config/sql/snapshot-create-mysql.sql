@@ -39,7 +39,7 @@ CREATE TABLE `restoration` (
   PRIMARY KEY (`id`),
   KEY `FK_ejb7a5btov5hyhb0pyvo3yeb7` (`snapshot_id`),
   CONSTRAINT `FK_ejb7a5btov5hyhb0pyvo3yeb7` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -65,7 +65,7 @@ CREATE TABLE `snapshot` (
   `status_text` longtext,
   `user_email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -85,7 +85,7 @@ CREATE TABLE `snapshot_content_item` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_30tots9ry24rjg42xn08egdrl` (`snapshot_id`,`content_id_hash`),
   CONSTRAINT `FK_bif6fhum5u975ks9uo9xufbjh` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

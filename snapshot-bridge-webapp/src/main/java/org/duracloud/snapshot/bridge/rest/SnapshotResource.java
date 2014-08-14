@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -273,9 +274,8 @@ public class SnapshotResource {
             }
             
             PageRequest pageable = new PageRequest(page, pageSize);
-            List<SnapshotContentItem> items = this.snapshotContentItemRepo
-                .findBySnapshotNameAndContentIdStartingWith(snapshotId, prefix,
-                                                            pageable);
+            List<SnapshotContentItem> items =
+                this.snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(snapshotId, prefix, pageable);
 
             List<org.duracloud.snapshot.dto.SnapshotContentItem> snapshotItems =
                 new ArrayList<>();

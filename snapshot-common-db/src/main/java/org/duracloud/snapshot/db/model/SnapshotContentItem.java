@@ -13,6 +13,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -22,7 +23,6 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table (name="snapshot_content_item", uniqueConstraints=@UniqueConstraint(columnNames={"snapshot_id","content_id_hash" }))
-
 public class SnapshotContentItem extends BaseEntity implements Comparator<SnapshotContentItem> {
 
     @Column(name="content_id", nullable=false, length = 1024)

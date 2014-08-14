@@ -34,7 +34,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 
+import javax.persistence.criteria.Order;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Date;
@@ -247,7 +250,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         List<SnapshotContentItem> contentIds =
             Arrays.asList(new SnapshotContentItem[]{item});
         EasyMock.expect(snapshotContentItemRepo
-            .findBySnapshotNameAndContentIdStartingWith(EasyMock.eq(snapshotId),
+            .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(EasyMock.eq(snapshotId),
                                                         EasyMock.eq(prefix),
                                                         EasyMock.capture(
                                                             pageRequestCapture)))

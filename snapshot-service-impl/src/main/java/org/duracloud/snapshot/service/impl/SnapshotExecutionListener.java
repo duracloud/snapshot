@@ -252,6 +252,9 @@ public class SnapshotExecutionListener implements JobExecutionListener {
                                       RestoreStatus status, String msg) {
         restoration.setStatus(status);
         restoration.setStatusText(msg);
+        if(status.equals(RestoreStatus.RESTORATION_COMPLETE)) {
+            restoration.setEndDate(new Date());
+        }
         restoreRepo.save(restoration);
     }
 

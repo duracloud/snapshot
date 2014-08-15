@@ -105,9 +105,12 @@ public class RestoreManagerImpl  implements RestoreManager{
                                                  "completed snapshot.");
         }
 
-        Restoration restoration = createRestoration(snapshot, destination, userEmail);
+        Restoration restoration =
+            createRestoration(snapshot, destination, userEmail);
             
-        transitionRestoreStatus(restoration, RestoreStatus.WAITING_FOR_DPN, "restoration request issued");
+        transitionRestoreStatus(restoration,
+                                RestoreStatus.WAITING_FOR_DPN,
+                                "restoration request issued");
 
         restoration =  save(restoration);
 
@@ -161,6 +164,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         restoration.setDestination(destination);
         restoration.setSnapshot(snapshot);
         restoration.setUserEmail(userEmail);
+        restoration.setStartDate(new Date());
         return restoration;
     }
 

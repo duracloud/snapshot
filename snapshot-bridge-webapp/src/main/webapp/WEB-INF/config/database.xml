@@ -24,9 +24,9 @@
   
   <!-- connect to database -->
   <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"  >
-    <property name="url" value="jdbc:mysql://localhost/snapshot"/>
-    <property name="username" value="snapshot"/>
-    <property name="password" value="snapshot"/>
+    <property name="url" value="jdbc:mysql://localhost/test"/>
+    <property name="username" value="username"/>
+    <property name="password" value="password"/>
     <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
   </bean>
   

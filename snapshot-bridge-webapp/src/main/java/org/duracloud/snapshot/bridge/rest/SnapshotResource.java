@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
@@ -153,6 +152,8 @@ public class SnapshotResource {
             result.setSourceSpaceId(source.getSpaceId());
             result.setSourceStoreId(source.getStoreId());
             result.setStatus(snapshot.getStatus());
+            result.setContentItemCount(
+                snapshotContentItemRepo.countBySnapshotName(snapshotId));
             
             return Response.ok()
                            .entity(result)

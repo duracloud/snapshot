@@ -34,10 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
 
-import javax.persistence.criteria.Order;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
 import java.util.Date;
@@ -92,10 +89,13 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetSuccess() throws SnapshotException {
+    public void testGetSnapshot() throws SnapshotException {
 
         EasyMock.expect(snapshotRepo.findByName("snapshotId"))
                 .andReturn(snapshot);
+        EasyMock.expect(snapshotContentItemRepo
+                            .countBySnapshotName("snapshotId"))
+                .andReturn(300l);
         EasyMock.expect(snapshot.getStatus())
                 .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
 
@@ -107,7 +107,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getDescription()).andReturn("description");
         EasyMock.expect(snapshot.getSnapshotDate()).andReturn(new Date());
         EasyMock.expect(snapshot.getName()).andReturn("snapshotId");
-       
         
         replayAll();
         resource.getSnapshot("snapshotId");

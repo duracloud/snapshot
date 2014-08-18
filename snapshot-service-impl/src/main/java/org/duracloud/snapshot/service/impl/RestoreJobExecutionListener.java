@@ -7,11 +7,14 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -82,7 +85,6 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         Restoration restoration = restoreRepo.findOne(objectId);
         String restorationPath = ContentDirUtils.getSourcePath(restoration.getId(), config.getContentRoot());
         log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
-        log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
 
         Snapshot snapshot = restoration.getSnapshot();
         String snapshotId = snapshot.getName();
@@ -107,6 +109,15 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
             message += "Destination Port: " + destination.getPort() + "\n";
             message += "Destination StoreId: " + destination.getStoreId() + "\n";
             message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
+            
+            log.info("deleting restoration path " + restorationPath);
+            
+            try {
+                FileUtils.deleteDirectory(new File(restorationPath));
+            } catch (IOException e) {
+                log.error("failed to delete restoration path = "
+                    + restorationPath + ": " + e.getMessage(), e);
+            }
             
             List<String> emailAddresses =
                 new ArrayList<>(Arrays.asList(config.getDuracloudEmailAddresses()));

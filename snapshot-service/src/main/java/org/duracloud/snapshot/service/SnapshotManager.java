@@ -37,9 +37,9 @@ public interface SnapshotManager {
 
     
     /**
-     * Notifies the bridge that the clean up of the snapshot is complete.
-     * @param snapshotId
-     * @throws SnapshotManagerException
+     * This method runs through any snapshots with a status of CLEANING_UP and checks if the 
+     * corresponding space is empty. If so, the state is updated to complete and notification is 
+     * sent out to the user.
      */
-    public Snapshot cleanupComplete(String snapshotId)  throws SnapshotException;
+    public void finalizeSnapshots();
 }

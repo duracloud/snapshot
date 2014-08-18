@@ -10,9 +10,8 @@ package org.duracloud.snapshot.service.impl;
 import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.client.task.SnapshotTaskClientImpl;
-import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
-import org.duracloud.sync.util.StoreClientUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,15 +20,18 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SnapshotTaskClientHelper {
-    public SnapshotTaskClient create(DuracloudEndPointConfig config, String username, String password ){
-        StoreClientUtil clientUtil = new StoreClientUtil();
+    private StoreClientHelper storeClientHelper;
+
+    @Autowired
+    public SnapshotTaskClientHelper(StoreClientHelper storeClientHelper){
+        this.storeClientHelper= storeClientHelper;
+    }
+    
+    public SnapshotTaskClient create(DuracloudEndPointConfig config,
+                                     String username,
+                                     String password) {
         ContentStore contentStore =
-            clientUtil.createContentStore(config.getHost(),
-                                          config.getPort(),
-                                          SnapshotServiceConstants.DURASTORE_CONTEXT,
-                                          username,
-                                          password,
-                                          config.getStoreId());
+            storeClientHelper.create(config, username, password);
         return new SnapshotTaskClientImpl(contentStore);
     }
 }

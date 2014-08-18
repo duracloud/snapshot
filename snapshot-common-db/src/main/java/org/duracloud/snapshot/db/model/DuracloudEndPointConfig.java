@@ -9,12 +9,19 @@ package org.duracloud.snapshot.db.model;
 
 import javax.persistence.Embeddable;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * @author Daniel Bernstein
  *         Date: Jul 21, 2014
  */
 @Embeddable
 public class DuracloudEndPointConfig {
+    private String host;
+    private int port;
+    private String storeId;
+    private String spaceId;
+
     /**
      * @return the host
      */
@@ -63,9 +70,12 @@ public class DuracloudEndPointConfig {
     public void setSpaceId(String spaceId) {
         this.spaceId = spaceId;
     }
-    private String host;
-    private int port;
-    private String storeId;
-    private String spaceId;
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this).build();
+    }
 }

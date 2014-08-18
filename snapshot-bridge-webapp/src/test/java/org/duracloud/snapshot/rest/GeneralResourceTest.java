@@ -26,6 +26,7 @@ import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
+import org.duracloud.snapshot.service.SnapshotFinalizer;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
@@ -85,7 +86,10 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
     @Mock
     private NotificationManager notificationManager;
-    
+
+    @Mock
+    private SnapshotFinalizer snapshotFinalizer;
+
     @Mock
     private BridgeConfiguration bridgeConfiguration;
     
@@ -102,6 +106,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 snapshotJobListener,
                                 restoreJobListener,
                                 notificationManager,
+                                snapshotFinalizer,
                                 bridgeConfiguration);
     }
     
@@ -116,6 +121,9 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
 
         restoreJobListener.init(EasyMock.capture(notifyConfigCapture));
+        EasyMock.expectLastCall();
+
+        snapshotFinalizer.initialize();
         EasyMock.expectLastCall();
 
         Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();

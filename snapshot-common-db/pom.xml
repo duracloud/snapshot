@@ -55,6 +55,5 @@
       <version>${duracloud.version}</version>
     </dependency>
     
-
   </dependencies>
 </project>

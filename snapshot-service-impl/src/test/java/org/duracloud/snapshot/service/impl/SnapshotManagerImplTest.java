@@ -9,11 +9,15 @@ package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
@@ -70,6 +74,9 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     @Mock
     private SnapshotTaskClient snapshotTaskClient;
 
+    @Mock
+    private StoreClientHelper storeClientHelper;
+
     /**
      * @throws java.lang.Exception
      */
@@ -84,6 +91,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         manager.setSnapshotContentItemRepo(snapshotContentItemRepo);
         manager.setSnapshotRepo(snapshotRepo);
         manager.setSnapshotTaskClientHelper(snapshotTaskClientHelper);
+        manager.setStoreClientHelper(storeClientHelper);
     }
 
     /**
@@ -138,11 +146,10 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         dir.mkdirs();
         Assert.assertTrue(dir.exists());
 
-        EasyMock.expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username");
-        EasyMock.expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password");
+        setupEndpoint();
+
         EasyMock.expect(this.bridgeConfig.getContentRootDir()).andReturn(root);
 
-        EasyMock.expect(snapshot.getSource()).andReturn(endPointConfig);
         EasyMock.expect(snapshotTaskClientHelper.create(EasyMock.eq(endPointConfig),
                                                         EasyMock.isA(String.class),
                                                         EasyMock.isA(String.class)))
@@ -167,14 +174,48 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         }
     }
 
-    @Test
-    public void testCleanupComplete() throws SnapshotException {
-        String snapshotId = "snapshot-name";
+    /**
+     * 
+     */
+    private void setupEndpoint() {
+        EasyMock.expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username");
+        EasyMock.expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password");
+        EasyMock.expect(snapshot.getSource()).andReturn(endPointConfig);
+    }
 
-        EasyMock.expect(snapshotRepo.findByName(snapshotId))
-                .andReturn(snapshot);
+    @Test
+    public void testFinalizeSnapshots() throws SnapshotException, ContentStoreException {
+        
+        List<Snapshot> snapshots = new ArrayList<>();
+        snapshots.add(snapshot);
+        EasyMock.expect(this.snapshotRepo.findByStatus(EasyMock.eq(SnapshotStatus.CLEANING_UP)))
+                .andReturn(snapshots);
+        
+        ContentStore contentStore = createMock(ContentStore.class);
+        
+        EasyMock.expect(storeClientHelper.create(EasyMock.isA(DuracloudEndPointConfig.class),
+                                                 EasyMock.isA(String.class),
+                                                 EasyMock.isA(String.class))).andReturn(contentStore);
+
+        Iterator<String> it = new ArrayList<String>().iterator();
+        
+        EasyMock.expect(contentStore.getSpaceContents(EasyMock.isA(String.class))).andReturn(it);
+
+        contentStore.deleteSpace(EasyMock.isA(String.class));
+        EasyMock.expectLastCall();
+        
+        setupEndpoint();
+        
+        EasyMock.expect(this.endPointConfig.getSpaceId()).andReturn("space-id");
+        
+        
+        String snapshotId = "snapshot-name";
+        EasyMock.expect(snapshot.getName()).andReturn(snapshotId);
         snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
         EasyMock.expectLastCall();
+        snapshot.setStatusText(EasyMock.isA(String.class));
+        EasyMock.expectLastCall();
+
         snapshot.setEndDate(EasyMock.isA(Date.class));
         EasyMock.expectLastCall();
         String adminEmail = "admin-email";
@@ -198,8 +239,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         replayAll();
 
-        Snapshot snapshot = this.manager.cleanupComplete(snapshotId);
-        Assert.assertNotNull(snapshot);
+        this.manager.finalizeSnapshots();
 
     }
 

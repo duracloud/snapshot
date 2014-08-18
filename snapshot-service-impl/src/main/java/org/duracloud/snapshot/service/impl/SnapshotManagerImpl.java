@@ -11,10 +11,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
@@ -56,6 +58,9 @@ public class SnapshotManagerImpl implements SnapshotManager {
     private NotificationManager notificationManager;
     @Autowired
     private SnapshotTaskClientHelper snapshotTaskClientHelper;
+    
+    @Autowired 
+    private StoreClientHelper storeClientHelper;
     
     private ChecksumUtil checksumUtil;
     @Autowired
@@ -176,18 +181,14 @@ public class SnapshotManagerImpl implements SnapshotManager {
         return snapshot;
     }
     
-    
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotManager#cleanupComplete(java.lang.String)
-     */
-    @Override
-    @Transactional
-    public Snapshot cleanupComplete(String snapshotId)
+
+    private Snapshot cleanupComplete(Snapshot snapshot)
         throws SnapshotException {
-        Snapshot snapshot = getSnapshot(snapshotId);
         snapshot.setEndDate(new Date());
         snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
+        snapshot.setStatusText("");
         snapshot = snapshotRepo.saveAndFlush(snapshot);
+        String snapshotId = snapshot.getName();
         String message = "Snapshot complete: " + snapshotId;
         List<String> recipients =
             new ArrayList<>(Arrays.asList(this.bridgeConfig.getDuracloudEmailAddresses()));
@@ -204,6 +205,41 @@ public class SnapshotManagerImpl implements SnapshotManager {
         }
         
         return snapshot;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.SnapshotManager#finalizeSnapshots()
+     */
+    @Override
+    @Transactional
+    public void finalizeSnapshots() {
+        log.debug("running finalizeSnapshots()");
+        List<Snapshot> snapshots = this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
+        for(Snapshot snapshot : snapshots){
+            DuracloudEndPointConfig source = snapshot.getSource();
+            ContentStore store =
+                storeClientHelper.create(source,
+                                         this.bridgeConfig.getDuracloudUsername(),
+                                         this.bridgeConfig.getDuracloudPassword());
+            try {
+                String spaceId = source.getSpaceId();
+                Iterator<String> it  = store.getSpaceContents(spaceId);
+                if(!it.hasNext()) {
+                    store.deleteSpace(spaceId);
+                    cleanupComplete(snapshot);
+                }
+            } catch (Exception e) {
+                log.error("failed to cleanup " + source);
+            }
+        }
+    }
+
+
+    /**
+     * @param storeClientHelper the storeClientHelper to set
+     */
+    public void setStoreClientHelper(StoreClientHelper storeClientHelper) {
+        this.storeClientHelper = storeClientHelper;
     }
 
 }

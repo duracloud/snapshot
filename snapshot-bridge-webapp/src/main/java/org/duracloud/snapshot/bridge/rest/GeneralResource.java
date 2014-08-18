@@ -33,6 +33,7 @@ import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.SnapshotFinalizer;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -73,6 +74,7 @@ public class GeneralResource {
     private RestoreManager restorationManager;
     private NotificationManager notificationManager;
     private BridgeConfiguration bridgeConfiguration;
+    private SnapshotFinalizer snapshotFinalizer;
     
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
@@ -81,6 +83,7 @@ public class GeneralResource {
                             SnapshotJobExecutionListener snapshotJobListener,
                             RestoreJobExecutionListener restoreListener,
                             NotificationManager notificationManager, 
+                            SnapshotFinalizer snapshotFinalizer,
                             BridgeConfiguration bridgeConfiguration) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
@@ -88,6 +91,7 @@ public class GeneralResource {
         this.snapshotJobListener = snapshotJobListener;
         this.restoreJobListener = restoreListener;
         this.notificationManager = notificationManager;
+        this.snapshotFinalizer = snapshotFinalizer;
         this.bridgeConfiguration = bridgeConfiguration;
     }    
     
@@ -104,6 +108,7 @@ public class GeneralResource {
             initJobManager(initParams);
             initRestorationResource(initParams);
             initNotificationManager(initParams);
+            this.snapshotFinalizer.initialize();
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()

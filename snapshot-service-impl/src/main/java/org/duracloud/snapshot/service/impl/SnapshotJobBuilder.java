@@ -116,7 +116,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             ItemReader<ContentItem> itemReader =
                 new SpaceItemReader(retrievalSource);
 
-            File contentDir = new File(ContentDirUtils.getDestinationPath(snapshot, config.getContentRootDir()));
+            File contentDir = new File(ContentDirUtils.getDestinationPath(snapshot.getName(), config.getContentRootDir()));
             if(!contentDir.exists()){
                 contentDir.mkdirs();
             }

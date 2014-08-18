@@ -119,6 +119,7 @@ public class GeneralResource {
         this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         this.bridgeConfiguration.setDuracloudUsername(initParams.getDuracloudUsername());
         this.bridgeConfiguration.setDuracloudPassword(initParams.getDuracloudPassword());
+        this.bridgeConfiguration.setContentRootDir(new File(initParams.getContentDirRoot()));
 
     }
 

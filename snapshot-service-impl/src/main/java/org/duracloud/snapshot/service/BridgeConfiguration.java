@@ -7,6 +7,8 @@
  */
 package org.duracloud.snapshot.service;
 
+import java.io.File;
+
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,6 +20,7 @@ public class BridgeConfiguration {
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;
+    private File contentRootDir;
     /**
      * @return the duracloudUsername
      */
@@ -58,6 +61,20 @@ public class BridgeConfiguration {
      */
     public void setDuracloudEmailAddresses(String[] duracloudAdminEmails) {
         this.duracloudEmailAddresses = duracloudAdminEmails;
+    }
+
+    /**
+     * @return the contentRootDir
+     */
+    public File getContentRootDir() {
+        return contentRootDir;
+    }
+
+    /**
+     * @param contentRootDir the contentRootDir to set
+     */
+    public void setContentRootDir(File contentRootDir) {
+        this.contentRootDir = contentRootDir;
     }
     
     

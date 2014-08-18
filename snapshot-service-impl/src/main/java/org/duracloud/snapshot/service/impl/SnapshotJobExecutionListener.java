@@ -86,7 +86,9 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
        
         Snapshot snapshot = snapshotRepo.getOne(objectId);
         String snapshotName = snapshot.getName();
-        String snapshotPath = ContentDirUtils.getDestinationPath(snapshot, config.getContentRoot());
+        String snapshotPath =
+            ContentDirUtils.getDestinationPath(snapshot.getName(),
+                                               config.getContentRoot());
         log.debug("Completed snapshot: {} with status: {}", snapshotName, status);
        
         if(BatchStatus.COMPLETED.equals(status)) {

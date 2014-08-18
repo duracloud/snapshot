@@ -7,17 +7,20 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.duracloud.client.task.SnapshotTaskClient;
-import org.duracloud.client.task.SnapshotTaskClientManager;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
+import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
@@ -121,8 +124,23 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         snapshot.setStatus(SnapshotStatus.CLEANING_UP);
         EasyMock.expectLastCall();
 
+
+        EasyMock.expect(snapshot.getName())
+        .andReturn(snapshotId);
+
+        
+        File root = new File(System.getProperty("java.io.tmpdir")
+                             + File.separator
+                             + System.currentTimeMillis());
+        File dir =
+            new File(ContentDirUtils.getDestinationPath(snapshotId,
+                                                        root));
+        dir.mkdirs();
+        Assert.assertTrue(dir.exists());
+
         EasyMock.expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username");
         EasyMock.expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password");
+        EasyMock.expect(this.bridgeConfig.getContentRootDir()).andReturn(root);
 
         EasyMock.expect(snapshot.getSource()).andReturn(endPointConfig);
         EasyMock.expect(snapshotTaskClientHelper.create(EasyMock.eq(endPointConfig),
@@ -139,7 +157,14 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         Snapshot snapshot = this.manager.transferToDpnNodeComplete(snapshotId);
         Assert.assertNotNull(snapshot);
+        Assert.assertFalse(new File(dir.getAbsolutePath()).exists());
 
+        try {
+            FileUtils.deleteDirectory(root);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     @Test

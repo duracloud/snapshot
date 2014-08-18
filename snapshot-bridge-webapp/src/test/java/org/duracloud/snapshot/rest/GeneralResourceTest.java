@@ -136,6 +136,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         bridgeConfiguration.setDuracloudEmailAddresses(duracloudEmailAddresses);
         EasyMock.expectLastCall();
+        bridgeConfiguration.setContentRootDir(EasyMock.eq(this.contentDirRoot));
+        EasyMock.expectLastCall();
         
 
         replayAll();

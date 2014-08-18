@@ -7,14 +7,15 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.duracloud.client.task.SnapshotTaskClient;
-import org.duracloud.client.task.SnapshotTaskClientManager;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.ChecksumUtil;
@@ -22,6 +23,7 @@ import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
@@ -138,7 +140,10 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
             snapshot.setStatus(SnapshotStatus.CLEANING_UP);
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
-            
+
+            File snapshotDir = new File(ContentDirUtils.getDestinationPath(snapshot.getName(), bridgeConfig.getContentRootDir()));
+            FileUtils.deleteDirectory(snapshotDir);
+
             DuracloudEndPointConfig source = snapshot.getSource();
 
             SnapshotTaskClient client =
@@ -150,7 +155,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
                 + snapshotId);
             
             return snapshot;
-        } catch (ContentStoreException e) {
+        } catch (Exception e) {
             String message = "failed to initiate snapshot clean up: " + e.getMessage();
             log.error(message, e);
             throw new SnapshotManagerException(e.getMessage());

@@ -14,13 +14,13 @@ import java.util.List;
 
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
-import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;

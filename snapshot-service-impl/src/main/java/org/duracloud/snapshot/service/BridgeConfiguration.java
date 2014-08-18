@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.bridge.service;
+package org.duracloud.snapshot.service;
 
 import org.springframework.stereotype.Component;
 
@@ -16,6 +16,35 @@ import org.springframework.stereotype.Component;
 @Component
 public class BridgeConfiguration {
     private String[] duracloudEmailAddresses;
+    private String duracloudUsername;
+    private String duracloudPassword;
+    /**
+     * @return the duracloudUsername
+     */
+    public String getDuracloudUsername() {
+        return duracloudUsername;
+    }
+
+    /**
+     * @param duracloudUsername the duracloudUsername to set
+     */
+    public void setDuracloudUsername(String duracloudUsername) {
+        this.duracloudUsername = duracloudUsername;
+    }
+
+    /**
+     * @return the duracloudPassword
+     */
+    public String getDuracloudPassword() {
+        return duracloudPassword;
+    }
+
+    /**
+     * @param duracloudPassword the duracloudPassword to set
+     */
+    public void setDuracloudPassword(String duracloudPassword) {
+        this.duracloudPassword = duracloudPassword;
+    }
 
     /**
      * @return the duracloudAdminEmails

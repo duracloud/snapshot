@@ -7,11 +7,16 @@
  */
 package org.duracloud.snapshot.rest;
 
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
+
 import org.duracloud.common.notification.NotificationManager;
-import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.bridge.rest.SnapshotResource;
-import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -20,12 +25,15 @@ import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -35,12 +43,6 @@ import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
 
-import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * @author Daniel Bernstein 
  *         Date: Feb 4, 2014
@@ -49,8 +51,11 @@ import java.util.List;
 public class SnapshotResourceTest extends SnapshotTestBase {
 
     @Mock
-    private SnapshotJobManager manager;
+    private SnapshotJobManager jobManager;
 
+    @Mock
+    private SnapshotManager snapshotManager;
+    
     @Mock
     private SnapshotRepo snapshotRepo;
     
@@ -81,11 +86,10 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     public void setup() {
         super.setup();
         resource =
-            new SnapshotResource(manager,
+            new SnapshotResource(jobManager,
+                                 snapshotManager,
                                  snapshotRepo,
-                                 snapshotContentItemRepo,
-                                 notificationManager,
-                                 bridgeConfiguration);
+                                 snapshotContentItemRepo);
     }
 
     @Test
@@ -131,7 +135,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String description = "description";
         String email = "email";
 
-        EasyMock.expect(manager.executeSnapshot(snapshotId))
+        EasyMock.expect(jobManager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
 
         EasyMock.expect(snapshotRepo.findByName(snapshotId)).andReturn(null);
@@ -160,41 +164,19 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
     }
 
+
+
     @Test
     public void testComplete() throws SnapshotException {
         String snapshotId = "snapshot-name";
 
-        EasyMock.expect(snapshotRepo.findByName(snapshotId))
-                .andReturn(snapshot);
-        snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
-        EasyMock.expectLastCall();
-        snapshot.setEndDate(EasyMock.isA(Date.class));
-        EasyMock.expectLastCall();
-        String adminEmail = "admin-email";
-        String userEmail = "email";
-
-        EasyMock.expect(snapshot.getUserEmail()).andReturn(userEmail);
-        EasyMock.expect(snapshot.getStatus())
-                .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
-        EasyMock.expect(snapshot.getStatusText()).andReturn("status");
-
-        String[] stringArray = new String[] { adminEmail };
-        EasyMock.expect(bridgeConfiguration.getDuracloudEmailAddresses())
-                .andReturn(stringArray);
-
-        EasyMock.expect(snapshotRepo.saveAndFlush(EasyMock.isA(Snapshot.class)))
-                .andReturn(snapshot);
-
-        notificationManager.sendNotification(EasyMock.isA(NotificationType.class),
-                                             EasyMock.isA(String.class),
-                                             EasyMock.isA(String.class),
-                                             EasyMock.eq(adminEmail),
-                                             EasyMock.eq(userEmail));
+        EasyMock.expect(this.snapshotManager.transferToDpnNodeComplete(snapshotId)).andReturn(snapshot);
+        EasyMock.expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
+        EasyMock.expect(snapshot.getStatusText()).andReturn("ok");
         EasyMock.expectLastCall();
         replayAll();
-
-        resource.complete(snapshotId);
-
+        Response response = resource.complete(snapshotId);
+        Assert.assertTrue(response.getEntity() instanceof CompleteSnapshotBridgeResult);
     }
 
     @Test

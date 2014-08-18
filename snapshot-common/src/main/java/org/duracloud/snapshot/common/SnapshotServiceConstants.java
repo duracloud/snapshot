@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.service;
+package org.duracloud.snapshot.common;
 
 /**
  * @author Erik Paulsson

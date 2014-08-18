@@ -18,12 +18,12 @@ import java.util.Map;
 
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
-import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
 import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.easymock.Capture;

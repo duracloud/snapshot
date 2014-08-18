@@ -30,9 +30,9 @@ import org.apache.commons.lang.StringUtils;
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
-import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -117,6 +117,9 @@ public class GeneralResource {
      */
     private void initBridgeConfiguration(InitParams initParams) {
         this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
+        this.bridgeConfiguration.setDuracloudUsername(initParams.getDuracloudUsername());
+        this.bridgeConfiguration.setDuracloudPassword(initParams.getDuracloudPassword());
+
     }
 
     /**

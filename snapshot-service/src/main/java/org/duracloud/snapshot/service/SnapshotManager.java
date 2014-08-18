@@ -9,8 +9,8 @@ package org.duracloud.snapshot.service;
 
 import java.util.Map;
 
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.model.Snapshot;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Daniel Bernstein
@@ -25,6 +25,21 @@ public interface SnapshotManager {
      */
     public void addContentItem(Snapshot snapshot,
                                String contentId,
-                               Map<String, String> props) throws SnapshotManagerException; 
+                               Map<String, String> props) throws SnapshotException; 
+ 
+    /**
+     * Notifies the bridge that the snapshot's transfer to DPN node is complete.  This call is initiated
+     * by the DPN node via the bridge REST API.
+     * @param snapshotId
+     * @throws SnapshotManagerException
+     */
+    public Snapshot transferToDpnNodeComplete(String snapshotId) throws SnapshotException;
 
+    
+    /**
+     * Notifies the bridge that the clean up of the snapshot is complete.
+     * @param snapshotId
+     * @throws SnapshotManagerException
+     */
+    public Snapshot cleanupComplete(String snapshotId)  throws SnapshotException;
 }

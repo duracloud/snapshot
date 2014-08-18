@@ -20,10 +20,10 @@ import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.bridge.rest.GeneralResource;
 import org.duracloud.snapshot.bridge.rest.InitParams;
-import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -130,7 +130,11 @@ public class GeneralResourceTest extends SnapshotTestBase {
         this.notificationManager.initializeNotifiers(EasyMock.isA(collection.getClass()));
         EasyMock.expectLastCall();
         
-        bridgeConfiguration.setDuracloudEmailAddresses(EasyMock.isA(new String[0].getClass()));
+        bridgeConfiguration.setDuracloudUsername(duracloudUsername);
+        EasyMock.expectLastCall();
+        bridgeConfiguration.setDuracloudPassword(duracloudPassword);
+        EasyMock.expectLastCall();
+        bridgeConfiguration.setDuracloudEmailAddresses(duracloudEmailAddresses);
         EasyMock.expectLastCall();
         
 

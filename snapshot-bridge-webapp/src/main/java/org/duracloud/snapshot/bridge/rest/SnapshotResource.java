@@ -7,32 +7,9 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import org.apache.commons.httpclient.HttpStatus;
-import org.duracloud.common.notification.NotificationManager;
-import org.duracloud.common.notification.NotificationType;
-import org.duracloud.snapshot.SnapshotNotFoundException;
-import org.duracloud.snapshot.bridge.service.BridgeConfiguration;
-import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
-import org.duracloud.snapshot.db.model.Snapshot;
-import org.duracloud.snapshot.db.model.SnapshotContentItem;
-import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
-import org.duracloud.snapshot.db.repo.SnapshotRepo;
-import org.duracloud.snapshot.dto.SnapshotStatus;
-import org.duracloud.snapshot.dto.SnapshotSummary;
-import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
-import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
-import org.duracloud.snapshot.id.SnapshotIdentifier;
-import org.duracloud.snapshot.service.SnapshotJobManager;
-import org.duracloud.snapshot.service.impl.PropertiesSerializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Component;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -48,10 +25,33 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+
+import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
+import org.duracloud.snapshot.db.model.Snapshot;
+import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
+import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.id.SnapshotIdentifier;
+import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotManager;
+import org.duracloud.snapshot.service.impl.PropertiesSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Component;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -75,24 +75,22 @@ public class SnapshotResource {
     UriInfo uriInfo;
 
     private SnapshotJobManager jobManager;
+    private SnapshotManager snapshotManager;
 
     private SnapshotContentItemRepo snapshotContentItemRepo;
     private SnapshotRepo snapshotRepo;
 
-    private NotificationManager notificationManager;
-
-    private BridgeConfiguration config;
 
     @Autowired
     public SnapshotResource(
-        SnapshotJobManager jobManager, SnapshotRepo snapshotRepo,
-        SnapshotContentItemRepo snapshotContentItemRepo,
-        NotificationManager notificationManager, BridgeConfiguration config) {
+        SnapshotJobManager jobManager, 
+        SnapshotManager snapshotManager,
+        SnapshotRepo snapshotRepo,
+        SnapshotContentItemRepo snapshotContentItemRepo) {
         this.jobManager = jobManager;
+        this.snapshotManager = snapshotManager;
         this.snapshotRepo = snapshotRepo;
         this.snapshotContentItemRepo = snapshotContentItemRepo;
-        this.notificationManager = notificationManager;
-        this.config = config;
     }
 
     /**
@@ -217,36 +215,19 @@ public class SnapshotResource {
         }
     }
 
+    /**
+     * Notifies the bridge that the snapshot transfer from the bridge storage to the DPN node 
+     * is complete.
+     * @param snapshotId
+     * @return
+     */
     @Path("{snapshotId}/complete")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response complete(@PathParam("snapshotId") String snapshotId) {
 
         try {
-            Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
-            if (snapshot == null) {
-                throw new SnapshotAlreadyExistsException("A snapshot with id "
-                    + snapshotId + " does not exist.");
-            }
-
-            snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
-            snapshot.setEndDate(new Date());
-            this.snapshotRepo.saveAndFlush(snapshot);
-            String message = "Snapshot complete: " + snapshotId;
-            List<String> recipients =
-                new ArrayList<>(Arrays.asList(this.config.getDuracloudEmailAddresses()));
-            String userEmail = snapshot.getUserEmail();
-            if (userEmail != null) {
-                recipients.add(userEmail);
-            }
-
-            if (recipients.size() > 0) {
-                this.notificationManager.sendNotification(NotificationType.EMAIL,
-                                                          message,
-                                                          message,
-                                                          recipients.toArray(new String[0]));
-            }
-
+            Snapshot snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
                                                                     snapshot.getStatusText()))

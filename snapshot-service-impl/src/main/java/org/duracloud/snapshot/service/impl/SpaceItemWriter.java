@@ -21,9 +21,9 @@ import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
-import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -125,7 +125,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                                         Map<String, String> props) throws IOException{
         try {
             this.snapshotManager.addContentItem(snapshot, contentItem.getContentId(), props);
-        } catch (SnapshotManagerException e) {
+        } catch (SnapshotException e) {
             log.error("failed to add snapshot content item: "
                 + contentItem + ": " + e.getMessage(), e);
             throw new IOException(e);

@@ -19,13 +19,13 @@ import java.util.Map;
 
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
-import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;

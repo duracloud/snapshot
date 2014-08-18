@@ -8,12 +8,12 @@
 package org.duracloud.snapshot.service.impl;
 
 import org.duracloud.snapshot.SnapshotException;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
-import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.slf4j.Logger;

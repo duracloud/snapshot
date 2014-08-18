@@ -224,14 +224,19 @@ public class RestoreManagerImpl  implements RestoreManager{
         RestoreStatus status = restoration.getStatus();
         
         if(status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)){
-            log.warn("restoration " + restorationId + " already completed. Ignoring...");
+            log.warn("restoration " + restorationId +
+                     " already completed. Ignoring...");
             return restoration;
         } else if(status.equals(RestoreStatus.WAITING_FOR_DPN)){
-            log.info("caller has indicated that restoration request " + restorationId + " is complete.");
-            transitionRestoreStatus(restorationId, RestoreStatus.DPN_TRANSFER_COMPLETE, "completed");
+            log.info("caller has indicated that restoration request " +
+                     restorationId + " is complete.");
+            Restoration updatedRestoration =
+                transitionRestoreStatus(restorationId,
+                                        RestoreStatus.DPN_TRANSFER_COMPLETE,
+                                        "completed");
             this.jobManager.executeRestoration(restorationId);
             
-            return restoration;
+            return updatedRestoration;
         } else{
             String message =
                 "restore status type "

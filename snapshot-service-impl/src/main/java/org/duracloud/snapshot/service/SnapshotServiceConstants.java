@@ -5,17 +5,15 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot;
+package org.duracloud.snapshot.service;
 
 /**
  * @author Erik Paulsson
  *         Date: 2/14/14
  */
-public class SnapshotConstants {
+public class SnapshotServiceConstants {
     public static final String OBJECT_ID = "object-id";
     public static final String SNAPSHOT_JOB_NAME = "snapshot";
     public static final String RESTORE_JOB_NAME = "restore";
     public static final String DURASTORE_CONTEXT = "durastore";
-
-
 }

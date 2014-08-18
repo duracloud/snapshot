@@ -13,19 +13,18 @@ import java.util.Map;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
+import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.duracloud.sync.endpoint.DuraStoreSyncEndpoint;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
@@ -48,7 +47,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     private static Logger log = LoggerFactory.getLogger(RestoreJobBuilder.class);
 
-    private JobExecutionListener jobListener;
+    private RestoreJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
@@ -56,7 +55,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     private RestoreManager restoreManager;
     
     @Autowired
-    public RestoreJobBuilder(JobExecutionListener jobListener, 
+    public RestoreJobBuilder(RestoreJobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
                               TaskExecutor taskExecutor,
@@ -84,7 +83,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             ContentStore contentStore =
                 clientUtil.createContentStore(destination.getHost(),
                                               destination.getPort(),
-                                              SnapshotConstants.DURASTORE_CONTEXT,
+                                              SnapshotServiceConstants.DURASTORE_CONTEXT,
                                               jobManagerConfig.getDuracloudUsername(),
                                               jobManagerConfig.getDuracloudPassword(),
                                               destination.getStoreId());
@@ -131,7 +130,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotConstants.RESTORE_JOB_NAME);
+            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.RESTORE_JOB_NAME);
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
@@ -149,7 +148,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     @Override
     public JobParameters buildIdentifyingJobParameters(Restoration restoration) {
             Map<String, JobParameter> map = new HashMap<>();
-            map.put(SnapshotConstants.OBJECT_ID, new JobParameter(restoration.getId(), true));
+            map.put(SnapshotServiceConstants.OBJECT_ID, new JobParameter(restoration.getId(), true));
             return new JobParameters(map);
     }
     

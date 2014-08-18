@@ -26,17 +26,16 @@ import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.SnapshotManager;
+import org.duracloud.snapshot.service.SnapshotServiceConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
@@ -65,14 +64,14 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     private static final String CONTENT_PROPERTIES_JSON_FILENAME =
         "content-properties.json";
 
-    private JobExecutionListener jobListener;
+    private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
     private SnapshotManager snapshotManager;
     
     @Autowired
-    public SnapshotJobBuilder(JobExecutionListener jobListener, 
+    public SnapshotJobBuilder(SnapshotJobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
                               TaskExecutor taskExecutor,
@@ -101,7 +100,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             ContentStore contentStore =
                 clientUtil.createContentStore(source.getHost(),
                                               source.getPort(),
-                                              SnapshotConstants.DURASTORE_CONTEXT,
+                                              SnapshotServiceConstants.DURASTORE_CONTEXT,
                                               config.getDuracloudUsername(),
                                               config.getDuracloudPassword(),
                                               source.getStoreId());
@@ -156,7 +155,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
 
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotConstants.SNAPSHOT_JOB_NAME);
+            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
 
@@ -190,7 +189,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
 
     private Map<String,JobParameter> createIdentifyingJobParameters(Snapshot snapshot) {
         Map<String, JobParameter> map = new HashMap<>();
-        map.put(SnapshotConstants.OBJECT_ID, new JobParameter(snapshot.getId(), true));
+        map.put(SnapshotServiceConstants.OBJECT_ID, new JobParameter(snapshot.getId(), true));
         return map;
     }
 

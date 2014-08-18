@@ -29,7 +29,8 @@ import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
-import org.duracloud.snapshot.service.impl.SnapshotExecutionListener;
+import org.duracloud.snapshot.service.impl.RestoreJobExecutionListener;
+import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -78,7 +79,10 @@ public class GeneralResourceTest extends SnapshotTestBase {
     @Mock
     private DatabaseInitializer initializer;
     @Mock
-    private SnapshotExecutionListener executionListener;
+    private SnapshotJobExecutionListener snapshotJobListener;
+    @Mock
+    private RestoreJobExecutionListener restoreJobListener;
+
     @Mock
     private NotificationManager notificationManager;
     
@@ -95,7 +99,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
             new GeneralResource(manager,
                                 restorationManager,
                                 initializer,
-                                executionListener,
+                                snapshotJobListener,
+                                restoreJobListener,
                                 notificationManager,
                                 bridgeConfiguration);
     }
@@ -107,7 +112,10 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
 
         Capture<ExecutionListenerConfig> notifyConfigCapture = new Capture<>();
-        executionListener.init(EasyMock.capture(notifyConfigCapture));
+        snapshotJobListener.init(EasyMock.capture(notifyConfigCapture));
+        EasyMock.expectLastCall();
+
+        restoreJobListener.init(EasyMock.capture(notifyConfigCapture));
         EasyMock.expectLastCall();
 
         Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
@@ -216,7 +224,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         initializer.init(EasyMock.isA(DatabaseConfig.class));
         EasyMock.expectLastCall();
 
-        executionListener.init(EasyMock.isA(ExecutionListenerConfig.class));
+        snapshotJobListener.init(EasyMock.isA(ExecutionListenerConfig.class));
         EasyMock.expectLastCall();
 
         manager.init(EasyMock.isA(SnapshotJobManagerConfig.class));

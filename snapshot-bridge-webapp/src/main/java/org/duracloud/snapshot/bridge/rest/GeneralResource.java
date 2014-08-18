@@ -38,7 +38,8 @@ import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
-import org.duracloud.snapshot.service.impl.SnapshotExecutionListener;
+import org.duracloud.snapshot.service.impl.RestoreJobExecutionListener;
+import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,7 +68,8 @@ public class GeneralResource {
    
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
-    private SnapshotExecutionListener jobListener;
+    private SnapshotJobExecutionListener snapshotJobListener;
+    private RestoreJobExecutionListener restoreJobListener;
     private RestoreManager restorationManager;
     private NotificationManager notificationManager;
     private BridgeConfiguration bridgeConfiguration;
@@ -76,13 +78,15 @@ public class GeneralResource {
     public GeneralResource(SnapshotJobManager jobManager, 
                             RestoreManager restorationManager,
                             DatabaseInitializer databaseInitializer,
-                            SnapshotExecutionListener jobListener,
+                            SnapshotJobExecutionListener snapshotJobListener,
+                            RestoreJobExecutionListener restoreListener,
                             NotificationManager notificationManager, 
                             BridgeConfiguration bridgeConfiguration) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
         this.databaseInitializer = databaseInitializer;
-        this.jobListener = jobListener;
+        this.snapshotJobListener = snapshotJobListener;
+        this.restoreJobListener = restoreListener;
         this.notificationManager = notificationManager;
         this.bridgeConfiguration = bridgeConfiguration;
     }    
@@ -174,7 +178,8 @@ public class GeneralResource {
         notifyConfig.setOriginatorEmailAddress(
             initParams.getOriginatorEmailAddress());
         notifyConfig.setContentRoot(new File(initParams.getContentDirRoot()));
-        this.jobListener.init(notifyConfig);
+        this.snapshotJobListener.init(notifyConfig);
+        this.restoreJobListener.init(notifyConfig);
 
     }
 

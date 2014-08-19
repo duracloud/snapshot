@@ -32,6 +32,7 @@ import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.SnapshotManagerException;
@@ -213,19 +214,32 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Override
     @Transactional
     public void finalizeSnapshots() {
+        String username =  this.bridgeConfig.getDuracloudUsername();
+        String password = this.bridgeConfig.getDuracloudPassword();
         log.debug("running finalizeSnapshots()");
         List<Snapshot> snapshots = this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();
             ContentStore store =
                 storeClientHelper.create(source,
-                                         this.bridgeConfig.getDuracloudUsername(),
-                                         this.bridgeConfig.getDuracloudPassword());
+                                         username,
+                                         password);
             try {
                 String spaceId = source.getSpaceId();
                 Iterator<String> it  = store.getSpaceContents(spaceId);
                 if(!it.hasNext()) {
-                    store.deleteSpace(spaceId);
+                    //call complete on task
+                    SnapshotTaskClient client =
+                        this.snapshotTaskClientHelper.create(source,
+                                                             username,
+                                                             password);
+
+                    log.debug("notifying task provider that snapshot is complete for space " + spaceId );
+                    CompleteSnapshotTaskResult result = client.completeSnapshot(spaceId);
+                    log.info("snapshot complete call to task provider performed for space "
+                        + spaceId + ": result = " + result.getResult());
+
+                    //update snapshot status and notify users
                     cleanupComplete(snapshot);
                 }
             } catch (Exception e) {

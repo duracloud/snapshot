@@ -32,6 +32,7 @@ import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CleanupSnapshotTaskResult;
+import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.easymock.Capture;
@@ -150,10 +151,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         EasyMock.expect(this.bridgeConfig.getContentRootDir()).andReturn(root);
 
-        EasyMock.expect(snapshotTaskClientHelper.create(EasyMock.eq(endPointConfig),
-                                                        EasyMock.isA(String.class),
-                                                        EasyMock.isA(String.class)))
-                .andReturn(snapshotTaskClient);
+        setupTaskClientHelper();
         EasyMock.expect(snapshotTaskClient.cleanupSnapshot(snapshotId))
                 .andReturn(new CleanupSnapshotTaskResult());
         EasyMock.expect(snapshotRepo.saveAndFlush(EasyMock.isA(Snapshot.class)))
@@ -172,6 +170,16 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 
+     */
+    private void setupTaskClientHelper() {
+        EasyMock.expect(snapshotTaskClientHelper.create(EasyMock.eq(endPointConfig),
+                                                        EasyMock.isA(String.class),
+                                                        EasyMock.isA(String.class)))
+                .andReturn(snapshotTaskClient);
     }
 
     /**
@@ -201,12 +209,10 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         
         EasyMock.expect(contentStore.getSpaceContents(EasyMock.isA(String.class))).andReturn(it);
 
-        contentStore.deleteSpace(EasyMock.isA(String.class));
-        EasyMock.expectLastCall();
-        
         setupEndpoint();
         
-        EasyMock.expect(this.endPointConfig.getSpaceId()).andReturn("space-id");
+        String spaceId = "space-id";
+        EasyMock.expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);
         
         
         String snapshotId = "snapshot-name";
@@ -237,6 +243,12 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
                                              EasyMock.eq(userEmail));
         EasyMock.expectLastCall();
 
+        setupTaskClientHelper();
+        
+        CompleteSnapshotTaskResult result = EasyMock.createMock(CompleteSnapshotTaskResult.class);
+        EasyMock.expect(result.getResult()).andReturn("success");
+        EasyMock.expect(this.snapshotTaskClient.completeSnapshot(spaceId))
+                .andReturn(result);
         replayAll();
 
         this.manager.finalizeSnapshots();

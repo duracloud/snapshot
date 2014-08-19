@@ -127,7 +127,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         throws SnapshotException,
             ContentStoreException {
         String snapshotId = "snapshot-name";
-
+        String spaceId  = "space-id";
         EasyMock.expect(snapshotRepo.findByName(snapshotId))
                 .andReturn(snapshot);
         snapshot.setStatus(SnapshotStatus.CLEANING_UP);
@@ -152,7 +152,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         EasyMock.expect(this.bridgeConfig.getContentRootDir()).andReturn(root);
 
         setupTaskClientHelper();
-        EasyMock.expect(snapshotTaskClient.cleanupSnapshot(snapshotId))
+        EasyMock.expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);
+        EasyMock.expect(snapshotTaskClient.cleanupSnapshot(spaceId))
                 .andReturn(new CleanupSnapshotTaskResult());
         EasyMock.expect(snapshotRepo.saveAndFlush(EasyMock.isA(Snapshot.class)))
                 .andReturn(snapshot);

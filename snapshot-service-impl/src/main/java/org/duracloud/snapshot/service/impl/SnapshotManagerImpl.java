@@ -152,13 +152,14 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
             DuracloudEndPointConfig source = snapshot.getSource();
 
+            String spaceId = source.getSpaceId();
             SnapshotTaskClient client =
                 this.snapshotTaskClientHelper.create(source,
                                                      bridgeConfig.getDuracloudUsername(),
                                                      bridgeConfig.getDuracloudPassword());
-            client.cleanupSnapshot(snapshotId);
+            client.cleanupSnapshot(spaceId);
             log.info("successfully initiated snapshot cleanup on DuraCloud for snapshotId = "
-                + snapshotId);
+                + snapshotId + "; spaceId = " + spaceId);
             
             return snapshot;
         } catch (Exception e) {

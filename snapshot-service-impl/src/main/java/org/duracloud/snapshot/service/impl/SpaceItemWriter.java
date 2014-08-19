@@ -7,13 +7,6 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -31,6 +24,13 @@ import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Erik Paulsson
@@ -76,9 +76,10 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     @Override
     public void write(List<? extends ContentItem> items) throws IOException {
         for(ContentItem contentItem: items) {
-            log.debug("writing: {}", contentItem.getContentId());
+            String contentId = contentItem.getContentId();
+            log.debug("writing: {}", contentId);
 
-            if(! contentItem.getContentId().equals(Constants.SNAPSHOT_ID)) {
+            if(! contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                 File dataDir = new File(contentDir, "data");
                 retrieveFile(contentItem, dataDir);
             } else {
@@ -185,7 +186,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             }
         } else {
             log.error("No snapshot properties file found. (" +
-                             Constants.SNAPSHOT_ID + ")");
+                             Constants.SNAPSHOT_PROPS_FILENAME + ")");
         }
     }
 

@@ -37,12 +37,13 @@ public class SnapshotFinalizerImpl implements SnapshotFinalizer {
         this.snapshotManager = snapshotManager;
     }
     
+
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.CleanupManager#init()
+     * @see org.duracloud.snapshot.service.SnapshotFinalizer#initialize(java.lang.Integer)
      */
     @Override
-    public void initialize() {
-        if(timer == null){
+    public void initialize(Integer pollingPeriodMs) {
+         if(timer == null){
             timer = new Timer();
             TimerTask task = new TimerTask(){
                 /* (non-Javadoc)
@@ -51,17 +52,23 @@ public class SnapshotFinalizerImpl implements SnapshotFinalizer {
                 @Override
                 public void run() {
                     try{
-                        log.debug("launching periodic snapshot finalization...");
+                        log.info("launching periodic snapshot finalization...");
                         snapshotManager.finalizeSnapshots();
                     }catch(Exception ex){
                         ex.printStackTrace();
                     }
                 }
             };
-            
-            long period = 5*60*1000;
-            timer.schedule(task, new Date(), period);
-        }
+
+            if(pollingPeriodMs  == null ||  pollingPeriodMs <  1){
+                pollingPeriodMs = DEFAULT_POLLING_PERIOD_MS;
+            }
+
+            timer.schedule(task, new Date(), pollingPeriodMs);
+            log.info("snapshot finalization scheduled to run every "
+                + pollingPeriodMs + " milliseconds.");
+
+         }
         
     }
 

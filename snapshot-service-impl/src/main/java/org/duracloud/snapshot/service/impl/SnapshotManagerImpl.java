@@ -216,7 +216,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     public void finalizeSnapshots() {
         String username =  this.bridgeConfig.getDuracloudUsername();
         String password = this.bridgeConfig.getDuracloudPassword();
-        log.debug("running finalizeSnapshots()");
+        log.debug("running...");
         List<Snapshot> snapshots = this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();

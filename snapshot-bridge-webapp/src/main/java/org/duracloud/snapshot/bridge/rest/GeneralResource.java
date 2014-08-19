@@ -108,7 +108,7 @@ public class GeneralResource {
             initJobManager(initParams);
             initRestorationResource(initParams);
             initNotificationManager(initParams);
-            this.snapshotFinalizer.initialize();
+            this.snapshotFinalizer.initialize(initParams.getSnapshotFinalizerPeriodMs());
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()

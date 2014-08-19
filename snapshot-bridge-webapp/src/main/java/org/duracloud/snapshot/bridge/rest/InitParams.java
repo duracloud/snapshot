@@ -31,6 +31,7 @@ public class InitParams {
     private String contentDirRoot;
     private String duracloudUsername;
     private String duracloudPassword;
+    private Integer snapshotFinalizerPeriodMs;
     
     /**
      * @return the workDir
@@ -204,5 +205,19 @@ public class InitParams {
      */
     public void setDuracloudPassword(String duracloudPassword) {
         this.duracloudPassword = duracloudPassword;
+    }
+
+    /**
+     * @return the snapshotFinalizerPeriodMs
+     */
+    public Integer getSnapshotFinalizerPeriodMs() {
+        return snapshotFinalizerPeriodMs;
+    }
+
+    /**
+     * @param snapshotFinalizerPeriodMs the snapshotFinalizerPeriodMs to set
+     */
+    public void setSnapshotFinalizerPeriodMs(Integer snapshotFinalizerPeriodMs) {
+        this.snapshotFinalizerPeriodMs = snapshotFinalizerPeriodMs;
     }
 }

@@ -11,6 +11,8 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.annotation.PreDestroy;
+
 import org.duracloud.snapshot.service.SnapshotFinalizer;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
@@ -76,6 +78,7 @@ public class SnapshotFinalizerImpl implements SnapshotFinalizer {
      * @see org.duracloud.snapshot.service.CleanupManager#destroy()
      */
     @Override
+    @PreDestroy
     public void destroy() {
         if(timer != null){
             timer.cancel();

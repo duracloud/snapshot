@@ -135,7 +135,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param restoration
      */
     private Restoration save(Restoration restoration) {
-        return restoreRepo.save(restoration);
+        return restoreRepo.saveAndFlush(restoration);
     }
 
     /**

@@ -92,7 +92,7 @@ public class RestorationManagerImplTest  extends SnapshotTestBase {
         EasyMock.expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
         EasyMock.expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
 
-        EasyMock.expect(restoreRepo.save(EasyMock.isA(Restoration.class))).andReturn(restoration);
+        EasyMock.expect(restoreRepo.saveAndFlush(EasyMock.isA(Restoration.class))).andReturn(restoration);
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
                                              isA(String.class),
@@ -146,7 +146,7 @@ public class RestorationManagerImplTest  extends SnapshotTestBase {
     @Test
     public void testRestoreComplete() throws SnapshotException{
 
-        EasyMock.expect(restoreRepo.save(EasyMock.isA(Restoration.class))).andReturn(restoration);
+        EasyMock.expect(restoreRepo.saveAndFlush(EasyMock.isA(Restoration.class))).andReturn(restoration);
 
         EasyMock.expect(this.jobManager.executeRestoration(EasyMock.isA(Long.class)))
                 .andReturn(BatchStatus.UNKNOWN);

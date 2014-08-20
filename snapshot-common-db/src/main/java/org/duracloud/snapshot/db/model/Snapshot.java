@@ -42,6 +42,7 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     @Column(nullable=true, length = 512)
     private String statusText;
     private String userEmail;
+    private Long totalSizeInBytes = 0l;
        
     /**
      * @return the snapshotName
@@ -159,6 +160,18 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
      */
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+    /**
+     * @return the totalSizeInBytes
+     */
+    public Long getTotalSizeInBytes() {
+        return totalSizeInBytes;
+    }
+    /**
+     * @param totalSizeInBytes the totalSizeInBytes to set
+     */
+    public void setTotalSizeInBytes(Long totalSizeInBytes) {
+        this.totalSizeInBytes = totalSizeInBytes;
     }
 
     

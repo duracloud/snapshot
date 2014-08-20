@@ -7,6 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -92,6 +95,8 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         log.debug("Completed snapshot: {} with status: {}", snapshotName, status);
        
         if(BatchStatus.COMPLETED.equals(status)) {
+            File snapshotDir = new File(snapshotPath);
+            snapshot.setTotalSizeInBytes(FileUtils.sizeOfDirectory(snapshotDir));
             // Job success. Email Chronopolis/DPN AND DuraSpace teams about
             // snapshot ready for transfer into preservation storage.
             String subject =

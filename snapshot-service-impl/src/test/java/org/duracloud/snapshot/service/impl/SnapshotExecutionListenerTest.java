@@ -13,13 +13,16 @@ import static org.easymock.EasyMock.isA;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
+import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
@@ -111,14 +114,26 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
 
         
         snapshot.setStatus(SnapshotStatus.WAITING_FOR_DPN);
+        snapshot.setTotalSizeInBytes(0l);
+
         expectLastCall();
         replayAll();
 
+        File contentDirFile = new File(contentDir);
+        
+        new File(ContentDirUtils.getDestinationPath(snapshotName,
+                                               contentDirFile)).mkdirs();
         executionListener.afterJob(jobExecution);
         String message = messageCapture.getValue();
         assertTrue(message.contains(snapshotName));
         assertTrue(message.contains(contentDir));
         assertTrue(message.contains("preservation"));
+        
+        try {
+            FileUtils.deleteDirectory(contentDirFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**

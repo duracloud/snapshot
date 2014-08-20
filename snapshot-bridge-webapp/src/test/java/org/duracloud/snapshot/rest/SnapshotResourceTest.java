@@ -111,6 +111,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getDescription()).andReturn("description");
         EasyMock.expect(snapshot.getSnapshotDate()).andReturn(new Date());
         EasyMock.expect(snapshot.getName()).andReturn("snapshotId");
+        EasyMock.expect(snapshot.getTotalSizeInBytes()).andReturn(1000l);
         
         replayAll();
         resource.getSnapshot("snapshotId");

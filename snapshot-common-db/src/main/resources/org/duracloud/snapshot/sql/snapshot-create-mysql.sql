@@ -37,6 +37,8 @@ CREATE TABLE `snapshot` (
   `status` varchar(255) DEFAULT NULL,
   `status_text` longtext,
   `user_email` varchar(255) DEFAULT NULL,
+  `total_size_in_bytes` bigint(20) NOT NULL,
+
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

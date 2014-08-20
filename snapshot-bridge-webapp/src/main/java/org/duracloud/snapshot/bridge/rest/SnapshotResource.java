@@ -150,6 +150,7 @@ public class SnapshotResource {
             result.setSourceSpaceId(source.getSpaceId());
             result.setSourceStoreId(source.getStoreId());
             result.setStatus(snapshot.getStatus());
+            result.setTotalSizeInBytes(snapshot.getTotalSizeInBytes());
             result.setContentItemCount(
                 snapshotContentItemRepo.countBySnapshotName(snapshotId));
             

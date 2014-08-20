@@ -175,20 +175,22 @@ public class SnapshotResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(@PathParam("snapshotId") String snapshotId,
                            CreateSnapshotBridgeParameters params) {
-
+        log.debug("creating snapshot " + snapshotId + "; params = " + params);
+        Snapshot snapshot = null;
+        
         try {
             if (this.snapshotRepo.findByName(snapshotId) != null) {
                 throw new SnapshotAlreadyExistsException("A snapshot with id "
                     + snapshotId
                     + " already exists - please use a different name");
             }
-
+            snapshot = new Snapshot();
+            
             DuracloudEndPointConfig source = new DuracloudEndPointConfig();
             source.setHost(params.getHost());
             source.setPort(Integer.valueOf(params.getPort()));
             source.setSpaceId(params.getSpaceId());
             source.setStoreId(params.getStoreId());
-            Snapshot snapshot = new Snapshot();
             Date now = new Date();
             snapshot.setModified(now);
             snapshot.setStartDate(now);
@@ -209,6 +211,17 @@ public class SnapshotResource {
             return Response.created(null).entity(result).build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
+            
+            if(snapshot != null && snapshot.getId() != null){
+                log.info("cleaning up post exception...");
+                try{
+                    log.debug("deleting newly created snapshot...");
+                    snapshotRepo.delete(snapshot.getId());
+                }catch(Exception e){
+                    log.error("failed to cleanup snapshot " + snapshotId + ": " + e.getMessage(), e);
+                }
+                log.info("cleaning up complete");
+            }
             return Response.serverError()
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();

@@ -12,6 +12,8 @@ import java.util.Map;
 
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BatchJobBuilderManager  {
+    
+    private static Logger log = LoggerFactory.getLogger(BatchJobBuilderManager.class);
     
     @SuppressWarnings("rawtypes")
     private Map<Class,BatchJobBuilder> builders = new HashMap<>();
@@ -33,9 +37,12 @@ public class BatchJobBuilderManager  {
     
     public BatchJobBuilder getBuilder(Object entity)  {
         BatchJobBuilder builder = this.builders.get(entity.getClass());
+        if (builder == null) {
+            throw new RuntimeException("No builder registered for "
+                + entity.getClass());
+        }
         
-        if(builder == null) throw new RuntimeException("No builder registered for " + entity.getClass());
-        
+        log.debug("found {} for {}", builder, entity);
         return builder;
     }
 }

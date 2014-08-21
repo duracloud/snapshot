@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -168,5 +169,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                                              subject,
                                              msg.toString(),
                                              destinations);
+        
+        log.info("sent email with subject=\""
+            + subject + "\" to " + StringUtils.join(destinations, ","));
     }
 }

@@ -10,6 +10,7 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -67,21 +68,25 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
     @Transactional
     public void beforeJob(JobExecution jobExecution) {
+        log.debug("entering beforeJob()");
         JobParameters jobParams = jobExecution.getJobParameters();
 
         Long objectId = jobParams.getLong(SnapshotServiceConstants.OBJECT_ID);
         String jobName = jobExecution.getJobInstance().getJobName();
        
         if(jobName.equals(SnapshotServiceConstants.SNAPSHOT_JOB_NAME)){
-            
+            SnapshotStatus status = SnapshotStatus.TRANSFERRING_FROM_DURACLOUD;
+            log.debug("updating snapshot status to "
+                + status + " for snapshot.id=" + objectId
+                + "; jobParameters = " + jobParams);
             Snapshot snapshot =  snapshotRepo.getOne(objectId);
-            snapshot.setStatus(SnapshotStatus.TRANSFERRING_FROM_DURACLOUD);
-            snapshotRepo.save(snapshot);
+            changeSnapshotStatus(snapshot, status, "");
         }
     }
 
     @Transactional
     public void afterJob(JobExecution jobExecution) {
+        log.debug("entering afterJob()...");
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
 
@@ -140,6 +145,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         snapshot.setStatus(status);
         snapshot.setStatusText(msg);
         snapshotRepo.save(snapshot);
+        log.debug("updated status of " + snapshot + " to " + status);
     }
 
 
@@ -148,5 +154,8 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
                                              subject,
                                              msg.toString(),
                                              destinations);
+        log.info("sent email with subject=\""
+            + subject + "\" to " + StringUtils.join(destinations, ","));
+
     }
 }

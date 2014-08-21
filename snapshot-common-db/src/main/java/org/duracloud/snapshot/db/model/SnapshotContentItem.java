@@ -17,6 +17,8 @@ import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * @author Daniel Bernstein
  *         Date: Jul 21, 2014
@@ -102,4 +104,13 @@ public class SnapshotContentItem extends BaseEntity implements Comparator<Snapsh
     public void setContentIdHash(String contentIdHash) {
         this.contentIdHash = contentIdHash;
     }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
+
 }

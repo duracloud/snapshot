@@ -68,7 +68,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     @Test
     public void testSnapshotRestorationComplete() throws SnapshotException {
         long restorationId = 1000;
-        EasyMock.expect(manager.restorationCompleted(restorationId))
+        EasyMock.expect(manager.restoreCompleted(restorationId))
                 .andReturn(EasyMock.createMock(Restoration.class));
         replayAll();
         resource.restoreComplete(restorationId);

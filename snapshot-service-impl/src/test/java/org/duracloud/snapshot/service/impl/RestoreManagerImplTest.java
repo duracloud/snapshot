@@ -39,7 +39,7 @@ import org.springframework.batch.core.BatchStatus;
  * @author Daniel Bernstein
  *         Date: Jul 16, 2014
  */
-public class RestorationManagerImplTest  extends SnapshotTestBase {
+public class RestoreManagerImplTest  extends SnapshotTestBase {
 
     @Mock
     private SnapshotJobManager jobManager;
@@ -141,7 +141,7 @@ public class RestorationManagerImplTest  extends SnapshotTestBase {
     }
 
     /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restorationCompleted(java.lang.String)}.
+     * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreCompleted(java.lang.String)}.
      */
     @Test
     public void testRestoreComplete() throws SnapshotException{
@@ -162,7 +162,7 @@ public class RestorationManagerImplTest  extends SnapshotTestBase {
 
         replayAll();
         
-        restoration = manager.restorationCompleted(restorationId);
+        restoration = manager.restoreCompleted(restorationId);
         Assert.assertNotNull(restoration);
         
     }

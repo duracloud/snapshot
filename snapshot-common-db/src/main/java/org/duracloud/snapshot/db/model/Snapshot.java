@@ -18,6 +18,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 
 /**
@@ -172,6 +173,14 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
      */
     public void setTotalSizeInBytes(Long totalSizeInBytes) {
         this.totalSizeInBytes = totalSizeInBytes;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 
     

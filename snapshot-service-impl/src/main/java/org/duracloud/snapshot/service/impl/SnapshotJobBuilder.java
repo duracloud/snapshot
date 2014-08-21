@@ -160,6 +160,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             simpleJobBuilder.listener(jobListener);
 
             job = simpleJobBuilder.build();
+            log.debug("build job {}", job);
 
         } catch (Exception e) {
             log.error("Error creating job: {}", e.getMessage(), e);

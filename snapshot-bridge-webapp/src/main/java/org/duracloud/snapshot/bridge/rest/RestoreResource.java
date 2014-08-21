@@ -78,6 +78,9 @@ public class RestoreResource {
             Restoration result =
                 this.restorationManager.restoreSnapshot(params.getSnapshotId(),
                                                         destination, params.getUserEmail());
+            
+            log.info("executed restore snapshot:  params=" + params + ", result = " + result);
+
             return Response.created(null)
                            .entity(new CreateRestoreBridgeResult(result.getId(),
                                                                  result.getStatus()))
@@ -179,7 +182,9 @@ public class RestoreResource {
 
         try {
             Restoration restoration =
-                this.restorationManager.restorationCompleted(restorationId);
+                this.restorationManager.restoreCompleted(restorationId);
+            
+            log.info("executed restoreComplete for {}", restoration);
             return Response.ok()
                            .entity(new CompleteRestoreBridgeResult(restoration.getStatus(),
                                                                    restoration.getStatusText()))

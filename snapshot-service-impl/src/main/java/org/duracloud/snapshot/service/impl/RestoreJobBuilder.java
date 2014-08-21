@@ -134,7 +134,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
-            
+            log.debug("build job {}", job);
        } catch (Exception e) {
             log.error("Error creating job: {}", e.getMessage(), e);
             throw new SnapshotException(e.getMessage(), e);

@@ -17,8 +17,6 @@ import org.duracloud.domain.Space;
 import org.duracloud.error.ContentStoreException;
 import org.duracloud.error.NotFoundException;
 import org.duracloud.snapshot.dto.RestoreStatus;
-import org.duracloud.snapshot.service.InvalidStateTransitionException;
-import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.sync.endpoint.MonitoredFile;
 import org.duracloud.sync.endpoint.SyncEndpoint;
@@ -33,7 +31,8 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
 /**
- * @author Daniel Bernstein Date: Jul 17, 2014
+ * @author Daniel Bernstein 
+ *         Date: Jul 17, 2014
  */
 public class SyncWriter
     implements ItemWriter<File>, StepExecutionListener, ItemWriteListener<File> {
@@ -119,7 +118,7 @@ public class SyncWriter
      */
     @Override
     public void write(List<? extends File> items) throws Exception {
-        log.info("starting to write " + items.size() + " file(s) to duracloud");
+        log.info("starting to write {} file(s) to duracloud", items.size());
         for(final File file : items){
             new Retrier().execute(new Retriable() {
                 
@@ -135,7 +134,9 @@ public class SyncWriter
                         throw new Exception(message);
                     }
                     
-                    log.info("successfully uploaded " + file.getAbsolutePath() + ": result = " + result);
+                    log.info("successfully uploaded {}: result = {}",
+                             file.getAbsolutePath(),
+                             result);
                     
                     return result;
                 }

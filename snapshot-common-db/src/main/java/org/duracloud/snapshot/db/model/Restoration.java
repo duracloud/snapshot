@@ -17,6 +17,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.duracloud.snapshot.dto.RestoreStatus;
 
 /**
@@ -129,5 +130,11 @@ public class Restoration extends BaseEntity {
         this.userEmail = userEmail;
     }
   
-
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 }

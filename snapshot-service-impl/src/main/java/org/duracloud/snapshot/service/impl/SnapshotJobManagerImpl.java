@@ -25,7 +25,6 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import com.amazonaws.services.elasticache.model.SnapshotNotFoundException;
@@ -34,7 +33,8 @@ import com.amazonaws.services.elasticache.model.SnapshotNotFoundException;
  * The default implementation of the <code>SnapshotJobManager</code> interface.
  * Uses spring-batch componentry.
  * 
- * @author Daniel Bernstein Date: Feb 11, 2014
+ * @author Daniel Bernstein 
+ *         Date: Feb 11, 2014
  */
 @Component
 public class SnapshotJobManagerImpl
@@ -45,7 +45,6 @@ public class SnapshotJobManagerImpl
     private JobLauncher jobLauncher;
     private JobRepository jobRepository;
 
-    private ApplicationContext context;
     private SnapshotRepo snapshotRepo;
     private RestoreRepo restoreRepo;
     private SnapshotJobManagerConfig config;
@@ -83,6 +82,8 @@ public class SnapshotJobManagerImpl
         }
 
         this.config = config;
+        
+        log.debug("initialized " + getClass().getSimpleName());
     }
 
     /**
@@ -105,13 +106,21 @@ public class SnapshotJobManagerImpl
      @SuppressWarnings("unchecked")
     private BatchStatus executeJob(Object entity)
         throws SnapshotException {
+         
+         log.debug("executing job for {}",entity);
          try {         
             @SuppressWarnings("rawtypes")
             BatchJobBuilder builder = this.builderManager.getBuilder(entity);   
             Job job = builder.buildJob(entity, config);
             JobParameters params = builder.buildJobParameters(entity);
             JobExecution execution = jobLauncher.run(job, params);
-            return execution.getStatus();
+            BatchStatus status =  execution.getStatus();
+            log.info("executed  {} using parameters {}: jobexecution={}, execution status={}",
+                     job,
+                     params,
+                     execution,
+                     status);
+            return status;
         } catch (Exception e) {
             String message =
                 "Error running job based on " + entity + ": " + e.getMessage();

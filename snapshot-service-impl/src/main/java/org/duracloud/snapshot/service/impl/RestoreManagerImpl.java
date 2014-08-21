@@ -135,7 +135,9 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param restoration
      */
     private Restoration save(Restoration restoration) {
-        return restoreRepo.saveAndFlush(restoration);
+        Restoration saved =  restoreRepo.saveAndFlush(restoration);
+        log.debug("saved {}", saved);
+        return saved;
     }
 
     /**
@@ -210,10 +212,10 @@ public class RestoreManagerImpl  implements RestoreManager{
 
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#restorationCompleted(java.lang.String)
+     * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#restoreCompleted(java.lang.String)
      */
     @Override
-    public Restoration restorationCompleted(Long restorationId)
+    public Restoration restoreCompleted(Long restorationId)
         throws SnapshotNotFoundException,
             SnapshotInProcessException,
             NoRestorationInProcessException,
@@ -224,12 +226,10 @@ public class RestoreManagerImpl  implements RestoreManager{
         RestoreStatus status = restoration.getStatus();
         
         if(status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)){
-            log.warn("restoration " + restorationId +
-                     " already completed. Ignoring...");
+            log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
         } else if(status.equals(RestoreStatus.WAITING_FOR_DPN)){
-            log.info("caller has indicated that restoration request " +
-                     restorationId + " is complete.");
+            log.info("caller has indicated that restoration request {} is complete.", restoration);
             Restoration updatedRestoration =
                 transitionRestoreStatus(restorationId,
                                         RestoreStatus.DPN_TRANSFER_COMPLETE,
@@ -279,9 +279,11 @@ public class RestoreManagerImpl  implements RestoreManager{
         throws RestorationNotFoundException {
         Restoration restoration =  this.restoreRepo.findOne(restorationId);
         if(restoration == null){
+            log.debug("Restoration returned null for {}. Throwing exception...", restorationId);
             throw new RestorationNotFoundException(restorationId);
         }
         
+        log.debug("got restoration {}", restoration);
         return restoration;
     }
     
@@ -293,6 +295,7 @@ public class RestoreManagerImpl  implements RestoreManager{
     public Restoration getBySnapshotId(String snapshotId) throws RestorationNotFoundException {
         List<Restoration> restorations =  this.restoreRepo.findBySnapshotNameOrderByModifiedDesc(snapshotId);
         if(CollectionUtils.isEmpty(restorations)){
+            log.debug("Restoration returned null for snapshot id {}. Throwing exception...", snapshotId);
             throw new RestorationNotFoundException("No restorations associated with snapshot " + snapshotId);
         }
         
@@ -318,6 +321,8 @@ public class RestoreManagerImpl  implements RestoreManager{
         Restoration restoration = getRestoration(restorationId);
         transitionRestoreStatus(restoration, status, message);
         restoration = save(restoration);
+        
+        log.debug("transitioned restore status to {} for {}", status, restoration);
         return restoration;
     }
 

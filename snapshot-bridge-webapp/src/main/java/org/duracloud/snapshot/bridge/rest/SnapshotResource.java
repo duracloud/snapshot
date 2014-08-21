@@ -111,7 +111,8 @@ public class SnapshotResource {
                                                   snapshot.getStatus(),
                                                   snapshot.getDescription()));
             }
-
+            
+            log.debug("returning {}", snapshots);
             return Response.ok()
                            .entity(new GetSnapshotListBridgeResult(summaries))
                            .build();
@@ -152,6 +153,7 @@ public class SnapshotResource {
             result.setContentItemCount(
                 snapshotContentItemRepo.countBySnapshotName(snapshotId));
             
+            log.debug("got snapshot:" + result);
             return Response.ok()
                            .entity(result)
                            .build();
@@ -207,6 +209,8 @@ public class SnapshotResource {
             this.jobManager.executeSnapshot(snapshotId);
             CreateSnapshotBridgeResult result =
                 new CreateSnapshotBridgeResult(snapshotId, snapshot.getStatus());
+            
+            log.info("successfully created snapshot: {}", result);
             return Response.created(null).entity(result).build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -240,6 +244,9 @@ public class SnapshotResource {
 
         try {
             Snapshot snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
+
+            log.info("successfully processed snapshot complete notification from DPN: {}", snapshot);
+
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
                                                                     snapshot.getStatusText()))
@@ -289,7 +296,8 @@ public class SnapshotResource {
                 new GetSnapshotContentBridgeResult();
             result.setContentItems(snapshotItems);
             result.setTotalCount(snapshotContentItemRepo.countBySnapshotName(snapshotId));
-
+            
+            log.debug("returning results: {}", result);
             return Response.ok(null)
                            .entity(result)
                            .build();

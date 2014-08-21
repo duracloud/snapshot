@@ -56,7 +56,7 @@ public interface RestoreManager {
      * @throws NoRestorationInProcessException
      * @throws SnapshotException
      */
-    Restoration restorationCompleted(Long restorationId)
+    Restoration restoreCompleted(Long restorationId)
         throws SnapshotNotFoundException,
             SnapshotInProcessException,
             NoRestorationInProcessException,

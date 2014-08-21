@@ -109,6 +109,9 @@ public class GeneralResource {
             initRestorationResource(initParams);
             initNotificationManager(initParams);
             this.snapshotFinalizer.initialize(initParams.getSnapshotFinalizerPeriodMs());
+            
+            log.info("successfully initialized bridge application.");
+
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
             return Response.serverError()

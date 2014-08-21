@@ -27,7 +27,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
-import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -43,7 +42,6 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
-import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
@@ -286,10 +284,11 @@ public class SnapshotResource {
                 }
                 snapshotItems.add(snapshotItem);
             }
-
+            
             GetSnapshotContentBridgeResult result =
                 new GetSnapshotContentBridgeResult();
             result.setContentItems(snapshotItems);
+            result.setTotalCount(snapshotContentItemRepo.countBySnapshotName(snapshotId));
 
             return Response.ok(null)
                            .entity(result)

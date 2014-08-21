@@ -222,7 +222,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         int pageSize = 5;
         String metaName = "metadata-name";
         String metaValue = "metadata-value";
- 
+        Long count = 1000l;
+        
         Capture<PageRequest> pageRequestCapture = new Capture<>();
         
         SnapshotContentItem item = new SnapshotContentItem();
@@ -237,6 +238,10 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                                         EasyMock.capture(
                                                             pageRequestCapture)))
                 .andReturn(contentIds);
+
+        EasyMock.expect(snapshotContentItemRepo
+                        .countBySnapshotName(EasyMock.eq(snapshotId)))
+                            .andReturn(count);
 
         replayAll();
         
@@ -254,6 +259,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         Assert.assertEquals("test", resultItem.getContentId());
         Assert.assertEquals(metaValue,
                             resultItem.getContentProperties().get(metaName));
+        Assert.assertEquals(count, result.getTotalCount());
+
     }
 
 }

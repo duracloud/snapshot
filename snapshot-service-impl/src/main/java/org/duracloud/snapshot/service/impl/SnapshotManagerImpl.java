@@ -7,14 +7,6 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
@@ -22,7 +14,6 @@ import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
-import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -41,6 +32,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Daniel Bernstein Date: Jul 31, 2014
@@ -124,11 +123,16 @@ public class SnapshotManagerImpl implements SnapshotManager {
         SnapshotContentItem item = new SnapshotContentItem();
         item.setContentId(contentId);
         item.setSnapshot(snapshot);
-        item.setContentIdHash(checksumUtil.generateChecksum(contentId));
+        item.setContentIdHash(getIdChecksum(contentId));
 
         String propString = PropertiesSerializer.serialize(props);
         item.setMetadata(propString);
         this.snapshotContentItemRepo.save(item);
+    }
+
+    // Allows use of the non-thread-safe ChecksumUtil in a threaded environment
+    private synchronized String getIdChecksum(String contentId) {
+        return checksumUtil.generateChecksum(contentId);
     }
     
     

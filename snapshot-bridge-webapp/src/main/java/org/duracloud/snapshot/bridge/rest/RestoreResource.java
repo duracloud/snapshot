@@ -152,7 +152,6 @@ public class RestoreResource {
     }
 
     /**
-     * @param restorationId
      * @param restoration
      * @return
      */
@@ -160,7 +159,7 @@ public class RestoreResource {
         toGetRestoreBridgeResult(Restoration restoration) {
         DuracloudEndPointConfig destination = restoration.getDestination();
         GetRestoreBridgeResult result = new GetRestoreBridgeResult();
-        result.setId(restoration.getId());
+        result.setRestoreId(restoration.getId());
         result.setSnapshotId(restoration.getSnapshot().getName());
         result.setStartDate(restoration.getStartDate());
         result.setEndDate(restoration.getEndDate());

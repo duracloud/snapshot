@@ -61,9 +61,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     private static final String MANIFEST_SHA256_TXT_FILE_NAME =
         "manifest-sha256.txt";
     private static final String MANIFEST_MD5_TXT_FILE_NAME = "manifest-md5.txt";
-    private static final String CONTENT_PROPERTIES_JSON_FILENAME =
-        "content-properties.json";
-
     private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
@@ -125,7 +122,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
 
             BufferedWriter propsWriter =
-                createWriter(contentDir, CONTENT_PROPERTIES_JSON_FILENAME);
+                createWriter(contentDir, SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
             BufferedWriter md5Writer =
                 createWriter(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
             BufferedWriter sha256Writer =
@@ -215,9 +212,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
      * @return
      */
     private Path getPath(File contentDir, String filename) {
-        Path path =
-            FileSystems.getDefault().getPath(contentDir.getAbsolutePath(),
-                                             filename);
-        return path;
+        return ContentDirUtils.getPath(contentDir, filename);
     }
 }

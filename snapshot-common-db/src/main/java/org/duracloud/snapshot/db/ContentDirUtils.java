@@ -8,6 +8,8 @@
 package org.duracloud.snapshot.db;
 
 import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
 /**
  * @author Daniel Bernstein
@@ -25,6 +27,18 @@ public class ContentDirUtils {
         return rootDir.getAbsolutePath()
             + File.separator + "restorations" + File.separator
             + restorationId;
+    }
+    
+    /**
+     * @param contentDir
+     * @param filename
+     * @return
+     */
+    public static Path getPath(File dir, String filename) {
+        Path path =
+            FileSystems.getDefault().getPath(dir.getAbsolutePath(),
+                                             filename);
+        return path;
     }
 
 }

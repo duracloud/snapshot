@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -30,6 +31,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepListener;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.xml.SimpleFlowFactoryBean;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -76,10 +78,13 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         throws SnapshotException {
          Job job;
         
-        DuracloudEndPointConfig destination = restoration.getDestination();
         try {
-            StoreClientUtil clientUtil = new StoreClientUtil();
 
+            DuracloudEndPointConfig destination = restoration.getDestination();
+            String destinationSpaceId = destination.getSpaceId();
+            Long restoreId = restoration.getId();
+            
+            StoreClientUtil clientUtil = new StoreClientUtil();
             ContentStore contentStore =
                 clientUtil.createContentStore(destination.getHost(),
                                               destination.getPort(),
@@ -88,50 +93,23 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                               jobManagerConfig.getDuracloudPassword(),
                                               destination.getStoreId());
 
-            SyncEndpoint endpoint =
-                new DuraStoreSyncEndpoint(contentStore,
-                                          jobManagerConfig.getDuracloudUsername(),
-                                          destination.getSpaceId(),
-                                          false);
-            
-            File watchDir =
-                new File(ContentDirUtils.getSourcePath(restoration.getId(),
-                                                       jobManagerConfig.getContentRootDir())
-                    + File.separator + "data");
+            Step restoreContentStep =
+                buildRestoreContentStep(restoreId,
+                                        destinationSpaceId,
+                                        contentStore,
+                                        jobManagerConfig);
+            Step restorePropertiesStep =
+                buildRestoreContentPropertiesStep(restoreId, 
+                                                  destinationSpaceId,
+                                                  contentStore,
+                                                  jobManagerConfig);
 
-            if (!watchDir.exists()) {
-                throw new RuntimeException("The content directory for the restored snapshot " +
-                		                   "does not exist in bridge storage: missing watchDir: " + 
-                		                   watchDir.getAbsolutePath());
-            }
-            
-            FileSystemReader reader =
-                new FileSystemReader(watchDir);
-
-            SyncWriter writer =
-                new SyncWriter(restoration.getId(), watchDir,
-                               endpoint,
-                               contentStore,
-                               destination.getSpaceId(),
-                               restoreManager);
-
-            SimpleStepFactoryBean<File, File> stepFactory =
-                new SimpleStepFactoryBean<>();
-            stepFactory.setJobRepository(jobRepository);
-            stepFactory.setTransactionManager(transactionManager);
-            stepFactory.setBeanName("step1");
-            stepFactory.setItemReader(reader);
-            stepFactory.setItemWriter(writer);
-            stepFactory.setCommitInterval(1);
-            stepFactory.setThrottleLimit(20);
-            stepFactory.setTaskExecutor(taskExecutor);
-            stepFactory.setListeners(new StepListener[]{writer});
-            Step step = (Step) stepFactory.getObject();
-            
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.RESTORE_JOB_NAME);
-            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
+            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(restoreContentStep)
+                                                          .next(restorePropertiesStep);
+            
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
             log.debug("build job {}", job);
@@ -140,6 +118,106 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             throw new SnapshotException(e.getMessage(), e);
         }
         return job;
+    }
+
+    /**
+     * @param jobManagerConfig 
+     * @param restoration 
+     * @return
+     */
+    private Step
+        buildRestoreContentPropertiesStep(Long restorationId,
+                                          String destinationSpaceId,
+                                          ContentStore contentStore,
+                                          SnapshotJobManagerConfig jobManagerConfig)
+                      throws Exception {    
+        
+        File contentPropertiesJsonFile = new File(ContentDirUtils.getSourcePath(restorationId,
+                                                   jobManagerConfig.getContentRootDir()), 
+                                   SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
+
+        if (!contentPropertiesJsonFile.exists()) {
+            throw new RuntimeException("The restored content properties file is missing : " + 
+                                       contentPropertiesJsonFile.getAbsolutePath());
+        }
+        
+        
+        ContentPropertiesFileReader reader =
+            new ContentPropertiesFileReader(contentPropertiesJsonFile);
+
+         ContentPropertiesWriter writer = new ContentPropertiesWriter(contentStore, destinationSpaceId);
+
+        
+        SimpleStepFactoryBean<ContentProperties,ContentProperties> stepFactory =
+            new SimpleStepFactoryBean<ContentProperties,ContentProperties>();
+        stepFactory.setJobRepository(jobRepository);
+        stepFactory.setTransactionManager(transactionManager);
+        stepFactory.setBeanName("restoreContentPropertiesStep");
+        stepFactory.setItemReader(reader);
+        stepFactory.setItemWriter(writer);
+        stepFactory.setCommitInterval(1);
+        stepFactory.setThrottleLimit(20);
+        stepFactory.setTaskExecutor(taskExecutor);
+        stepFactory.setListeners(new StepListener[]{writer});
+        return stepFactory.getObject();   
+    }
+
+    /**
+     * @param restoration 
+     * @param jobManagerConfig 
+     * @param reader
+     * @param writer
+     * @return
+     * @throws Exception
+     */
+    private Step
+        buildRestoreContentStep(Long restorationId,
+                                String destinationSpaceId,
+                                ContentStore contentStore,
+                                SnapshotJobManagerConfig jobManagerConfig)
+            throws Exception {        
+
+        SyncEndpoint endpoint =
+            new DuraStoreSyncEndpoint(contentStore,
+                                      jobManagerConfig.getDuracloudUsername(),
+                                      destinationSpaceId,
+                                      false);
+        
+        File watchDir =
+            new File(ContentDirUtils.getSourcePath(restorationId,
+                                                   jobManagerConfig.getContentRootDir())
+                + File.separator + "data");
+
+        if (!watchDir.exists()) {
+            throw new RuntimeException("The content directory for the restored snapshot " +
+                                       "does not exist in bridge storage: missing watchDir: " + 
+                                       watchDir.getAbsolutePath());
+        }
+        
+        
+        FileSystemReader reader =
+            new FileSystemReader(watchDir);
+
+        SyncWriter writer =
+            new SyncWriter(restorationId, watchDir,
+                           endpoint,
+                           contentStore,
+                           destinationSpaceId,
+                           restoreManager);
+
+        
+        SimpleStepFactoryBean<File, File> stepFactory =
+            new SimpleStepFactoryBean<>();
+        stepFactory.setJobRepository(jobRepository);
+        stepFactory.setTransactionManager(transactionManager);
+        stepFactory.setBeanName("restoreContentStep");
+        stepFactory.setItemReader(reader);
+        stepFactory.setItemWriter(writer);
+        stepFactory.setCommitInterval(1);
+        stepFactory.setThrottleLimit(20);
+        stepFactory.setTaskExecutor(taskExecutor);
+        stepFactory.setListeners(new StepListener[]{writer});
+        return stepFactory.getObject();
     }
     
     /* (non-Javadoc)

@@ -16,4 +16,6 @@ public class SnapshotServiceConstants {
     public static final String SNAPSHOT_JOB_NAME = "snapshot";
     public static final String RESTORE_JOB_NAME = "restore";
     public static final String DURASTORE_CONTEXT = "durastore";
+    public static final String CONTENT_PROPERTIES_JSON_FILENAME =
+        "content-properties.json";
 }

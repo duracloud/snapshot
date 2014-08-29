@@ -271,7 +271,7 @@ public class SnapshotResource {
                 page = 0;
             }
             if(pageSize == null || pageSize < 1 || pageSize > 1000){
-                page = 1000;
+                pageSize = 1000;
             }
             
             PageRequest pageable = new PageRequest(page, pageSize);

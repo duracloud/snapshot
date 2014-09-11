@@ -34,14 +34,14 @@
     <constructor-arg name="dataSource" ref="dataSource"/>
     <constructor-arg name="dropSchemas">
       <list>
-        <value>classpath:org/springframework/batch/core/schema-drop-mysql.sql</value>
         <value>classpath:org/duracloud/snapshot/sql/snapshot-drop-mysql.sql</value>
+        <value>classpath:org/springframework/batch/core/schema-drop-mysql.sql</value>
       </list>
     </constructor-arg>
     <constructor-arg name="schemas">
       <list>
-        <value>classpath:org/springframework/batch/core/schema-mysql.sql</value>
         <value>classpath:org/duracloud/snapshot/sql/snapshot-create-mysql.sql</value>
+        <value>classpath:org/springframework/batch/core/schema-mysql.sql</value>
       </list>
     </constructor-arg>
   </bean>

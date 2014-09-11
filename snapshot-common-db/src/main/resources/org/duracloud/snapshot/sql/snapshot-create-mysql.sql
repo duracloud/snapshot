@@ -15,14 +15,7 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 SET FOREIGN_KEY_CHECKS=0;
---
--- Table structure for table `snapshot`
---
-
-DROP TABLE IF EXISTS `snapshot`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `snapshot` (
+CREATE TABLE IF NOT EXISTS `snapshot` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime NOT NULL,
   `description` longtext,
@@ -45,11 +38,7 @@ CREATE TABLE `snapshot` (
 --
 -- Table structure for table `restoration`
 --
-
-DROP TABLE IF EXISTS `restoration`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `restoration` (
+CREATE TABLE IF NOT EXISTS `restoration` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime NOT NULL,
   `host` varchar(255) NOT NULL,
@@ -72,10 +61,7 @@ CREATE TABLE `restoration` (
 -- Table structure for table `snapshot_content_item`
 --
 
-DROP TABLE IF EXISTS `snapshot_content_item`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `snapshot_content_item` (
+CREATE TABLE IF NOT EXISTS `snapshot_content_item` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime NOT NULL,
   `content_id` longtext COLLATE utf8_bin NOT NULL,

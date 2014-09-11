@@ -35,6 +35,7 @@
     <constructor-arg name="dropSchemas">
       <list>
         <value>classpath:org/springframework/batch/core/schema-drop-mysql.sql</value>
+        <value>classpath:org/duracloud/snapshot/sql/snapshot-drop-mysql.sql</value>
       </list>
     </constructor-arg>
     <constructor-arg name="schemas">

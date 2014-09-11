@@ -1,0 +1,6 @@
+
+SET FOREIGN_KEY_CHECKS=0;
+DROP TABLE IF EXISTS `snapshot`;
+DROP TABLE IF EXISTS `restoration`;
+DROP TABLE IF EXISTS `snapshot_content_item`;
+SET FOREIGN_KEY_CHECKS=1;

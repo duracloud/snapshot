@@ -7,9 +7,8 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.util.List;
-
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -17,6 +16,8 @@ import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
+
+import java.util.List;
 
 /**
  * @author Daniel Bernstein 
@@ -120,15 +121,16 @@ public class ContentPropertiesWriter
     @Override
     public void write(List<? extends ContentProperties> items) throws Exception {
         for(ContentProperties props : items){
-            this.contentStore.setContentProperties(destinationSpaceId,
-                                                   props.getContentId(),
-                                                   props.getProperties());
-            log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
-                      props,
-                      destinationSpaceId,
-                      storeId,
-                      storageProviderType);
-
+            if(!Constants.SNAPSHOT_PROPS_FILENAME.equals(props.getContentId())) {
+                this.contentStore.setContentProperties(destinationSpaceId,
+                                                       props.getContentId(),
+                                                       props.getProperties());
+                log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
+                          props,
+                          destinationSpaceId,
+                          storeId,
+                          storageProviderType);
+            }
         }
     }
 

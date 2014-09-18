@@ -7,8 +7,6 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.File;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,6 +15,8 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.util.CollectionUtils;
+
+import java.io.File;
 
 /**
  * @author Daniel Bernstein
@@ -47,9 +47,10 @@ public class ContentPropertiesFileReaderTest {
      */
     @Test
     public void testRead() throws Exception {
+        String testJsonFile =
+            getClass().getResource("/content-properties.json").getFile();
         ContentPropertiesFileReader reader =
-            new ContentPropertiesFileReader(new File(getClass().getResource("/content-properties.json")
-                                                        .getFile()));
+            new ContentPropertiesFileReader(new File(testJsonFile));
         ContentProperties props = null;
         int count = 0;
         while((props = reader.read()) !=null){
@@ -67,6 +68,10 @@ public class ContentPropertiesFileReaderTest {
         Assert.assertNotNull(props.getContentId());
         Assert.assertTrue(!CollectionUtils.isEmpty(props.getProperties()));
 
+        // Verify that the property names do not match their values
+        for(String key : props.getProperties().keySet()) {
+            Assert.assertNotEquals(key, props.getProperties().get(key));
+        }
     }
 
 }

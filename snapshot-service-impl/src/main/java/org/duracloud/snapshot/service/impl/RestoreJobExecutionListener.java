@@ -7,13 +7,6 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.duracloud.common.notification.NotificationManager;
@@ -34,6 +27,13 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Erik Paulsson
@@ -101,7 +101,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
             String subject =
                 "DuraCloud snapshot " + snapshotId + " has been restored! Restore ID = " + restoreId;
             String message =
-                "A DuraCloud snapshot restore  has completed successfully:\n\n";
+                "A DuraCloud snapshot restore has completed successfully:\n\n";
             
             DuracloudEndPointConfig destination = restoration.getDestination();
             message += "SnapshotId: " + snapshotId + "\n";
@@ -137,7 +137,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 "DuraCloud snapshot "+ snapshotId + " restoration failed to complete";
             String message =
                 "A DuraCloud snapshot restoration has failed to complete.\n" +
-                "\nrrestore-id=" + restoreId +
+                "\nrestore-id=" + restoreId +
                 "\nsnapshot-id=" + snapshotId +
                 "\nrestore-path=" + restorationPath;
                 // TODO: Add details of failure in message

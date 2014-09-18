@@ -7,22 +7,27 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Daniel Bernstein Date: Jul 16, 2014
  */
 public class ContentPropertiesFileReader implements ItemReader<ContentProperties> {
+    private final Logger log =
+        LoggerFactory.getLogger(ContentPropertiesFileReader.class);
+
     private File propertiesFile;
 
     private JsonParser jParser;
@@ -37,7 +42,7 @@ public class ContentPropertiesFileReader implements ItemReader<ContentProperties
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public ContentProperties read()
+    public synchronized ContentProperties read()
         throws Exception,
             UnexpectedInputException,
             ParseException,
@@ -47,40 +52,39 @@ public class ContentPropertiesFileReader implements ItemReader<ContentProperties
             JsonFactory jfactory = new JsonFactory();
             jParser = jfactory.createJsonParser(this.propertiesFile);
             jParser.nextToken(); //skips the first [
-
         }
 
         try {
-
-            while (jParser.nextToken() != JsonToken.END_ARRAY) {
+            while (jParser.nextToken() != JsonToken.END_ARRAY &&
+                   jParser.getText() != null) {
                 return parseNext(jParser);
             }
+        } catch(Exception e) {
+            log.error("Error parsing content properties file: " +
+                      e.getMessage(), e);
+        }
 
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-        } 
-        
         jParser.close();
         return null;
     }
 
     /**
-     * @param jParser2
+     * @param jParser
      * @return
      */
-    private ContentProperties parseNext(JsonParser jParser) throws Exception {
+    private synchronized ContentProperties parseNext(JsonParser jParser)
+        throws Exception {
         String contentId = null;
         Map<String,String> properties = new HashMap<>();
-        while (jParser.nextToken() != JsonToken.END_OBJECT) {
+        while (jParser.nextToken() != JsonToken.END_OBJECT &&
+               jParser.getText() != null) {
 
             contentId =jParser.getCurrentName();
             jParser.nextToken();  // :
             jParser.nextToken();  // {
 
-            while (jParser.nextToken() != JsonToken.END_OBJECT) {
+            while (jParser.nextToken() != JsonToken.END_OBJECT &&
+                   jParser.getText() != null) {
                 String key = jParser.getCurrentName();
                 String value = jParser.getText();
                 properties.put(key, value);

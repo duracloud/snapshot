@@ -32,8 +32,9 @@ public class SpaceItemReader implements ItemReader<ContentItem> {
     }
 
     @Override
-    public ContentItem read() throws Exception, UnexpectedInputException, ParseException,
-                                     NonTransientResourceException {
+    public synchronized ContentItem read()
+        throws Exception, UnexpectedInputException, ParseException,
+               NonTransientResourceException {
         ContentItem contentItem = retrievalSource.getNextContentItem();
         if(contentItem != null) {
             LOGGER.debug("contentItem: {}", contentItem.getContentId());

@@ -10,7 +10,7 @@ package org.duracloud.snapshot.service.impl;
 import org.duracloud.client.ContentStore;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
-import org.duracloud.sync.util.StoreClientUtil;
+import org.duracloud.client.util.StoreClientUtil;
 import org.springframework.stereotype.Component;
 
 /**

@@ -126,7 +126,17 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     }
 
     @Test
-    public void test() throws IOException, SnapshotException {
+    public void testSingleThreaded() throws IOException, SnapshotException {
+        test(1);
+    }
+
+    @Test
+    public void testMultiThreaded() throws IOException, SnapshotException {
+        test(10);
+    }
+
+    
+    private void test(int threads) throws IOException, SnapshotException {
         outputWriter = new CSVFileOutputWriter(workDir);
         BufferedWriter propsWriter =
             createWriter(contentDir, "properties.json");
@@ -178,7 +188,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 snapshotManager);
 
         writer.beforeStep(stepExecution);
-        writeItems(items, 10);
+        writeItems(items, threads);
         writer.afterStep(stepExecution);
 
         List<String> md5Lines = getLines(MD5_MANIFEST_TXT_FILE_NAME);

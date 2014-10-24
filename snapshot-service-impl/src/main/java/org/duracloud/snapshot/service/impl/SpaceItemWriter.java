@@ -105,6 +105,11 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         File localFile = retrievalWorker.getLocalFile();
 
         String md5Checksum = props.get(ContentStore.CONTENT_CHECKSUM);
+        log.info("Retrieved item {} from space {} with MD5 checksum {}",
+                 contentItem.getContentId(),
+                 contentItem.getSpaceId(),
+                 md5Checksum);
+
         if(localFile.exists() && md5Checksum != null) {
             if(writeChecksums) {
                 writeMD5Checksum(contentItem, md5Checksum);
@@ -113,8 +118,20 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             writeContentProperties(contentItem, props, lastItem);
             writeToSnapshotManager(contentItem, props);
         } else {
-            // TODO: throw Exception???
-
+            // There was a problem! Throw a meaningful exception:
+            String baseError =
+                String.format("Retrieved item {} from space {} could not " +
+                              "be processed due to: ",
+                              contentItem.getContentId(),
+                              contentItem.getSpaceId());
+            if(!localFile.exists()) {
+                throw new IOException(baseError + "The local file at path " +
+                                      localFile.getAbsolutePath()+
+                                      " could not be found.");
+            } else {
+                throw new IOException(baseError + "MD5 checksum for " +
+                                      "retrieved file was null");
+            }
         }
     }
 
@@ -141,14 +158,11 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         }
     }
 
-    protected void writeSHA256Checksum(ContentItem contentItem,
+    protected synchronized void writeSHA256Checksum(ContentItem contentItem,
                                        File localFile) throws IOException {
-        String sha256Checksum =
-            sha256ChecksumUtil.generateChecksum(localFile);
-        synchronized (sha256Writer) {
-            sha256Writer.write(sha256Checksum + "  data/" +
-                                   contentItem.getContentId() + "\n");
-        }
+        String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
+        sha256Writer.write(sha256Checksum + "  data/" +
+                           contentItem.getContentId() + "\n");
     }
 
     protected void writeContentProperties(ContentItem contentItem,

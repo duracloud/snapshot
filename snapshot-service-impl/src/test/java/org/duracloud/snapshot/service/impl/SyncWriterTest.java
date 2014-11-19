@@ -58,7 +58,7 @@ public class SyncWriterTest extends SnapshotTestBase{
     @Mock
     private Restoration restoration;
     
-    private Long restorationId = 1000l;
+    private String restorationId = "restoration-id";
     
 
     /* (non-Javadoc)

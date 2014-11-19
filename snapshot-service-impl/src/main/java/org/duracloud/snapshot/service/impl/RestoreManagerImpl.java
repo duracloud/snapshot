@@ -9,6 +9,7 @@ package org.duracloud.snapshot.service.impl;
 
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotInProcessException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
@@ -114,7 +115,7 @@ public class RestoreManagerImpl  implements RestoreManager{
 
         restoration =  save(restoration);
 
-        File restoreDir = getRestoreDir(restoration.getId());
+        File restoreDir = getRestoreDir(restoration.getRestorationId());
         restoreDir.mkdirs();
 
         //send email to DPN
@@ -167,6 +168,15 @@ public class RestoreManagerImpl  implements RestoreManager{
         restoration.setSnapshot(snapshot);
         restoration.setUserEmail(userEmail);
         restoration.setStartDate(new Date());
+        
+        String restoreStartDate =
+            DateUtil.convertToStringPlain(restoration.getStartDate().getTime());
+        DuracloudEndPointConfig source = snapshot.getSource();
+        String restorationId =
+            source.getHost()
+                + "_" + source.getStoreId() + "_" + source.getSpaceId() + "_"
+                + restoreStartDate;
+        restoration.setRestorationId(restorationId);
         return restoration;
     }
 
@@ -189,9 +199,9 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @return
      */
 
-    public Restoration getRestoration(Long restorationId)
+    public Restoration getRestoration(String restorationId)
         throws RestorationNotFoundException {
-        Restoration restoration =  this.restoreRepo.findOne(restorationId);
+        Restoration restoration =  this.restoreRepo.findByRestorationId(restorationId);
         if(restoration == null){
             throw new RestorationNotFoundException(restorationId);
         }
@@ -204,7 +214,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param restorationId
      * @return
      */
-    private File getRestoreDir(Long restorationId) {
+    private File getRestoreDir(String restorationId) {
         File restoreDir = new File(getRestorationContentDir(restorationId));
         return restoreDir;
     }
@@ -215,7 +225,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#restoreCompleted(java.lang.String)
      */
     @Override
-    public Restoration restoreCompleted(Long restorationId)
+    public Restoration restoreCompleted(String restorationId)
         throws SnapshotNotFoundException,
             SnapshotInProcessException,
             NoRestorationInProcessException,
@@ -267,7 +277,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         this.jobManager = jobManager;
     }
     
-    private String getRestorationContentDir(Long restorationId) {
+    private String getRestorationContentDir(String restorationId) {
         return ContentDirUtils.getSourcePath(restorationId, new File(this.config.getRestorationRootDir()));
     }
     
@@ -275,9 +285,9 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @see org.duracloud.snapshot.bridge.service.RestorationManager#getStatus(java.lang.String)
      */
     @Override
-    public Restoration get(Long restorationId)
+    public Restoration get(String restorationId)
         throws RestorationNotFoundException {
-        Restoration restoration =  this.restoreRepo.findOne(restorationId);
+        Restoration restoration =  this.restoreRepo.findByRestorationId(restorationId);
         if(restoration == null){
             log.debug("Restoration returned null for {}. Throwing exception...", restorationId);
             throw new RestorationNotFoundException(restorationId);
@@ -313,7 +323,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      */
     @Override
     @Transactional
-    public Restoration transitionRestoreStatus(Long restorationId,
+    public Restoration transitionRestoreStatus(String restorationId,
                                                RestoreStatus status,
                                                String message)
         throws  InvalidStateTransitionException, RestorationNotFoundException {

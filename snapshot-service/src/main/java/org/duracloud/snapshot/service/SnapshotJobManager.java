@@ -54,9 +54,12 @@ public interface SnapshotJobManager  {
 
 
     /**
-     * @param snapshotConfig
+     * 
+     * @param restorationId
+     * @return
+     * @throws SnapshotException
      */
-    public BatchStatus executeRestoration(Long restorationId)
+    public BatchStatus executeRestoration(String restorationId)
         throws SnapshotException;
     
 }

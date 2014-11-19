@@ -68,7 +68,6 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
     @TestSubject
     private SnapshotJobExecutionListener executionListener = new SnapshotJobExecutionListener();
 
-    private long snapshotID = 10101l;
     private String snapshotName = "snapshot-name";
     private String contentDir = "content-dir";
     private JobParameters jobParams;
@@ -79,8 +78,8 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
         super.setup();
         
         Map<String, JobParameter> jobParamMap = new HashMap<>();
-        jobParamMap.put(SnapshotServiceConstants.OBJECT_ID,
-                        new JobParameter(snapshotID));
+        jobParamMap.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
+                        new JobParameter(snapshotName));
         jobParams = new JobParameters(jobParamMap);
     }
 
@@ -143,7 +142,7 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
         
         executionListener.init(executionConfig);
 
-        expect(snapshotRepo.getOne(snapshotID)).andReturn(snapshot);
+        expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
 
         expect(jobExecution.getJobParameters())
                 .andReturn(jobParams);

@@ -7,7 +7,7 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.*;
 
 import java.io.File;
 
@@ -27,8 +27,6 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
-import org.duracloud.snapshot.service.impl.RestoreManagerImpl;
-import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
@@ -67,7 +65,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
 
     private String snapshotName = "snapshot-name";
 
-    private Long restorationId = 1000l;
+    private String restorationId = "restoration-id";
 
     private String userEmail = "user-email";
 
@@ -89,18 +87,23 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      */
     @Test
     public void testRestoreSnapshot() throws SnapshotNotFoundException, SnapshotInProcessException, SnapshotException {
-        EasyMock.expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
-        EasyMock.expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
+        expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
+        expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
+        DuracloudEndPointConfig source = createMock(DuracloudEndPointConfig.class);
+        expect(source.getHost()).andReturn("host");
+        expect(source.getStoreId()).andReturn("store-id");
+        expect(source.getSpaceId()).andReturn("space-id");
+        expect(snapshot.getSource()).andReturn(source);
 
-        EasyMock.expect(restoreRepo.saveAndFlush(EasyMock.isA(Restoration.class))).andReturn(restoration);
+        expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
                                              isA(String.class),
-                                             EasyMock.isA(String.class),
-                                             EasyMock.isA(String.class));
-        EasyMock.expectLastCall();
+                                             isA(String.class),
+                                             isA(String.class));
+        expectLastCall();
         
-        EasyMock.expect(restoration.getId()).andReturn(restorationId);
+        expect(restoration.getRestorationId()).andReturn(restorationId);
         replayAll();
         Restoration restoration = manager.restoreSnapshot(snapshotName, destination, userEmail );
         Assert.assertNotNull(restoration);
@@ -114,7 +117,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      */
     @Test
     public void testGetRestoreStatus() throws SnapshotException {
-        EasyMock.expect(restoreRepo.findOne(EasyMock.isA(Long.class))).andReturn(null);
+        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(null);
         replayAll();
 
         try { 
@@ -146,19 +149,19 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     @Test
     public void testRestoreComplete() throws SnapshotException{
 
-        EasyMock.expect(restoreRepo.saveAndFlush(EasyMock.isA(Restoration.class))).andReturn(restoration);
+        expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
 
-        EasyMock.expect(this.jobManager.executeRestoration(EasyMock.isA(Long.class)))
+        expect(this.jobManager.executeRestoration(isA(String.class)))
                 .andReturn(BatchStatus.UNKNOWN);
         
         setupGetRestoreStatus();
-        EasyMock.expect(restoration.getStatus()).andReturn(RestoreStatus.INITIALIZED);
+        expect(restoration.getStatus()).andReturn(RestoreStatus.INITIALIZED);
 
-        restoration.setStatusText(EasyMock.isA(String.class));
-        EasyMock.expectLastCall();
+        restoration.setStatusText(isA(String.class));
+        expectLastCall();
         restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
-        EasyMock.expectLastCall();
-        EasyMock.expect(restoreRepo.findOne(restorationId)).andReturn(restoration);
+        expectLastCall();
+        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
 
         replayAll();
         
@@ -170,18 +173,18 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      * 
      */
     private void setupGetRestoreStatus() {
-        EasyMock.expect(this.restoreRepo.findOne(restorationId)).andReturn(restoration);
-        EasyMock.expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN);
+        expect(this.restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
+        expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN);
     }
     
     @Test
     public void testGet() throws Exception{
         
         Restoration restoration = createMock(Restoration.class);
-        EasyMock.expect(restoreRepo.findOne(EasyMock.anyLong())).andReturn(restoration);
+        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
         replayAll();
         
-        Restoration output = this.manager.get(1000l);
+        Restoration output = this.manager.get(restorationId);
         
         Assert.assertNotNull(output);
         

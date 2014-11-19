@@ -56,7 +56,7 @@ public interface RestoreManager {
      * @throws NoRestorationInProcessException
      * @throws SnapshotException
      */
-    Restoration restoreCompleted(Long restorationId)
+    Restoration restoreCompleted(String restorationId)
         throws SnapshotNotFoundException,
             SnapshotInProcessException,
             NoRestorationInProcessException,
@@ -66,7 +66,7 @@ public interface RestoreManager {
      * @param restorationId
      * @return
      */
-    Restoration get(Long restorationId) throws RestorationNotFoundException;
+    Restoration get(String restorationId) throws RestorationNotFoundException;
 
     /**
      * 
@@ -75,7 +75,7 @@ public interface RestoreManager {
      * @param message
      * @return
      */
-    public Restoration transitionRestoreStatus(Long restorationId,
+    public Restoration transitionRestoreStatus(String restorationId,
                                                RestoreStatus status,
                                                String message)
         throws InvalidStateTransitionException, RestorationNotFoundException;

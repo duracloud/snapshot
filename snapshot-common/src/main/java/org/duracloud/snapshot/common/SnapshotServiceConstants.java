@@ -12,7 +12,7 @@ package org.duracloud.snapshot.common;
  *         Date: 2/14/14
  */
 public class SnapshotServiceConstants {
-    public static final String OBJECT_ID = "object-id";
+    public static final String SPRING_BATCH_UNIQUE_ID = "spring-batch-unique-id";
     public static final String SNAPSHOT_JOB_NAME = "snapshot";
     public static final String RESTORE_JOB_NAME = "restore";
     public static final String DURASTORE_CONTEXT = "durastore";

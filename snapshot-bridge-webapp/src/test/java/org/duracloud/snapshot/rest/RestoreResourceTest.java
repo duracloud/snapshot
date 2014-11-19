@@ -67,7 +67,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
 
     @Test
     public void testSnapshotRestorationComplete() throws SnapshotException {
-        long restorationId = 1000;
+        String restorationId = "restoration-id";
         EasyMock.expect(manager.restoreCompleted(restorationId))
                 .andReturn(EasyMock.createMock(Restoration.class));
         replayAll();
@@ -77,7 +77,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
 
     @Test
     public void testGetRestore() throws SnapshotException, JSONException {
-        long restorationId = 1000;
+        String restorationId = "restoration-id";
         Restoration restoration = setupRestoration();
         EasyMock.expect(manager.get(restorationId)).andReturn(restoration);
         replayAll();
@@ -92,7 +92,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         Restoration restoration = setupRestoration();
         EasyMock.expect(manager.getBySnapshotId(snapshotId)).andReturn(restoration);
         replayAll();
-        Response response = resource.get(snapshotId);
+        Response response = resource.getBySnapshot(snapshotId);
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getEntity());
     }
@@ -102,7 +102,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
      */
     private Restoration setupRestoration() {
         Restoration r = createMock(Restoration.class);
-        EasyMock.expect(r.getId()).andReturn(1000l);
+        EasyMock.expect(r.getRestorationId()).andReturn("restore-id");
         EasyMock.expect(r.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
         Snapshot snapshot = createMock(Snapshot.class);
         EasyMock.expect(r.getSnapshot()).andReturn(snapshot);

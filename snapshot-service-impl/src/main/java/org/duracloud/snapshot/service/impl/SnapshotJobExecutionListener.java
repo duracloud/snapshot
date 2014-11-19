@@ -46,7 +46,9 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     
     private ExecutionListenerConfig config;
     
-    
+    private SnapshotJobParameterMarshaller parameterMarshaller =
+        new SnapshotJobParameterMarshaller();
+
     /**
      * @param notificationManager the notificationManager to set
      */
@@ -69,17 +71,18 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     @Transactional
     public void beforeJob(JobExecution jobExecution) {
         log.debug("entering beforeJob()");
+        
         JobParameters jobParams = jobExecution.getJobParameters();
-
-        Long objectId = jobParams.getLong(SnapshotServiceConstants.OBJECT_ID);
+        
+        String snapshotId = this.parameterMarshaller.unmarshal(jobParams);
         String jobName = jobExecution.getJobInstance().getJobName();
        
         if(jobName.equals(SnapshotServiceConstants.SNAPSHOT_JOB_NAME)){
             SnapshotStatus status = SnapshotStatus.TRANSFERRING_FROM_DURACLOUD;
             log.debug("updating snapshot status to "
-                + status + " for snapshot.id=" + objectId
+                + status + " for snapshot.name = " + snapshotId
                 + "; jobParameters = " + jobParams);
-            Snapshot snapshot =  snapshotRepo.getOne(objectId);
+            Snapshot snapshot =  snapshotRepo.findByName(snapshotId);
             changeSnapshotStatus(snapshot, status, "");
         }
     }
@@ -90,10 +93,9 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
 
-        Long objectId = jobParams.getLong(SnapshotServiceConstants.OBJECT_ID);
-       
-        Snapshot snapshot = snapshotRepo.getOne(objectId);
-        String snapshotName = snapshot.getName();
+        String snapshotName = this.parameterMarshaller.unmarshal(jobParams);
+
+        Snapshot snapshot = snapshotRepo.findByName(snapshotName);
         String snapshotPath =
             ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                config.getContentRoot());
@@ -110,7 +112,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
                 "A DuraCloud content snapshot has been transferred from " +
                 "DuraCloud to bridge storage and ready to move into " +
                 "preservation storage.\n" +
-                "\nsnapshot-id=" + snapshot.getName() +
+                "\nsnapshot-id=" + snapshotName +
                 "\nsnapshot-path=" + snapshotPath;
             sendEmail(subject, message,
                       config.getAllEmailAddresses());

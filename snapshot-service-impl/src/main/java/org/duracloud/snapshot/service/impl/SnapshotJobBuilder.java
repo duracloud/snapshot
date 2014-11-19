@@ -185,9 +185,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     }
 
     private Map<String,JobParameter> createIdentifyingJobParameters(Snapshot snapshot) {
-        Map<String, JobParameter> map = new HashMap<>();
-        map.put(SnapshotServiceConstants.OBJECT_ID, new JobParameter(snapshot.getId(), true));
-        return map;
+        return SnapshotJobParameterMarshaller.marshal(snapshot);
     }
 
     

@@ -42,6 +42,8 @@ public class Restoration extends BaseEntity {
     private String statusText;
     
     private String userEmail;
+    @Column(length=512, unique=true )
+    private String restorationId;
 
     
     /**
@@ -136,5 +138,19 @@ public class Restoration extends BaseEntity {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
+    }
+
+    /**
+     * @return the restorationId
+     */
+    public String getRestorationId() {
+        return restorationId;
+    }
+    
+    /**
+     * @param restorationId the restorationId to set
+     */
+    public void setRestorationId(String restorationId) {
+        this.restorationId = restorationId;
     }
 }

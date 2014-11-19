@@ -82,7 +82,7 @@ public class RestoreResource {
             log.info("executed restore snapshot:  params=" + params + ", result = " + result);
 
             return Response.created(null)
-                           .entity(new CreateRestoreBridgeResult(result.getId(),
+                           .entity(new CreateRestoreBridgeResult(result.getRestorationId(),
                                                                  result.getStatus()))
                            .build();
         } catch (Exception ex) {
@@ -101,7 +101,7 @@ public class RestoreResource {
      * @param snapshotId
      * @return
      */
-    public Response get(@PathParam("restorationId") Long restorationId) {
+    public Response get(@PathParam("restorationId") String restorationId) {
         try {
             Restoration restoration =
                 this.restorationManager.get(restorationId);
@@ -130,7 +130,7 @@ public class RestoreResource {
      * @param snapshotId
      * @return
      */
-    public Response get(@PathParam("snapshotId") String snapshotId) {
+    public Response getBySnapshot(@PathParam("snapshotId") String snapshotId) {
         try {
             Restoration restoration =
                 this.restorationManager.getBySnapshotId(snapshotId);
@@ -159,7 +159,7 @@ public class RestoreResource {
         toGetRestoreBridgeResult(Restoration restoration) {
         DuracloudEndPointConfig destination = restoration.getDestination();
         GetRestoreBridgeResult result = new GetRestoreBridgeResult();
-        result.setRestoreId(restoration.getId());
+        result.setRestoreId(restoration.getRestorationId());
         result.setSnapshotId(restoration.getSnapshot().getName());
         result.setStartDate(restoration.getStartDate());
         result.setEndDate(restoration.getEndDate());
@@ -177,7 +177,7 @@ public class RestoreResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response
-        restoreComplete(@PathParam("restorationId") Long restorationId) {
+        restoreComplete(@PathParam("restorationId") String restorationId) {
 
         try {
             Restoration restoration =

@@ -82,14 +82,14 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
     public void afterJob(JobExecution jobExecution) {
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
-        Long objectId = jobParams.getLong(SnapshotServiceConstants.OBJECT_ID);
-        Restoration restoration = restoreRepo.findOne(objectId);
-        String restorationPath = ContentDirUtils.getSourcePath(restoration.getId(), config.getContentRoot());
-        log.debug("Completed restoration: {} with status: {}", restoration.getId(), status);
+        String restorationId = RestoreJobParameterMarshaller.unmarshal(jobParams);
+        Restoration restoration = restoreRepo.findByRestorationId(restorationId);
+        String restorationPath = ContentDirUtils.getSourcePath(restoration.getRestorationId(), config.getContentRoot());
+        log.debug("Completed restoration: {} with status: {}", restoration.getRestorationId(), status);
 
         Snapshot snapshot = restoration.getSnapshot();
         String snapshotId = snapshot.getName();
-        Long restoreId = restoration.getId();
+        String restoreId = restoration.getRestorationId();
 
         if(BatchStatus.COMPLETED.equals(status)) {
             // Job success. Email duracloud team as well as restoration requestor

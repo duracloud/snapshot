@@ -64,7 +64,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     @TestSubject
     private  RestoreJobExecutionListener executionListener = new  RestoreJobExecutionListener();
 
-    private long restorationId = 10101l;
+    private String restorationId = "restorationId";
     private String snapshotName = "snapshot-name";
     private String contentDir = "content-dir";
     private JobParameters jobParams;
@@ -75,7 +75,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         super.setup();
         
         Map<String, JobParameter> jobParamMap = new HashMap<>();
-        jobParamMap.put(SnapshotServiceConstants.OBJECT_ID,
+        jobParamMap.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
                         new JobParameter(restorationId));
         jobParams = new JobParameters(jobParamMap);
     }
@@ -129,11 +129,11 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(jobExecution.getJobParameters())
                 .andReturn(jobParams);
         expect(executionConfig.getContentRoot()).andReturn(new File(contentDir));
-        expect(restoration.getId()).andReturn(restorationId).atLeastOnce();
+        expect(restoration.getRestorationId()).andReturn(restorationId).atLeastOnce();
         restoration.setStatusText(isA(String.class));
         expectLastCall();
         
-        expect(restoreRepo.findOne(restorationId)).andReturn(restoration);
+        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
         expect(restoration.getSnapshot()).andReturn(snapshot);
         expect(snapshot.getName()).andReturn(snapshotName);
         expect(restoreRepo.save(restoration)).andReturn(restoration);

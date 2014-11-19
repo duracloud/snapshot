@@ -131,10 +131,10 @@ public class SnapshotJobManagerImpl
     
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.manager.SnapshotJobManager#executeRestoration(java.lang.Long)
+     * @see org.duracloud.snapshot.manager.SnapshotJobManager#executeRestoration(java.lang.String)
      */
     @Override
-    public BatchStatus executeRestoration(Long restorationId)
+    public BatchStatus executeRestoration(String restorationId)
         throws SnapshotException {
         return executeJob(getRestoration(restorationId));
     }
@@ -144,8 +144,8 @@ public class SnapshotJobManagerImpl
      * @param restorationId
      * @return
      */
-    private Restoration getRestoration(Long restorationId)  throws RestorationNotFoundException {
-        Restoration restoration = this.restoreRepo.findOne(restorationId);
+    private Restoration getRestoration(String restorationId)  throws RestorationNotFoundException {
+        Restoration restoration = this.restoreRepo.findByRestorationId(restorationId);
         if(restoration == null){
             throw new RestorationNotFoundException(restorationId);
         }

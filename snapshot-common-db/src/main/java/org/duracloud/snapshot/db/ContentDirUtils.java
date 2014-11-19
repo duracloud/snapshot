@@ -23,7 +23,7 @@ public class ContentDirUtils {
             + snapshotId;
     }
 
-    public static String getSourcePath(Long restorationId, File rootDir) {
+    public static String getSourcePath(String restorationId, File rootDir) {
         return rootDir.getAbsolutePath()
             + File.separator + "restorations" + File.separator
             + restorationId;

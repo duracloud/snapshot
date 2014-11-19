@@ -82,7 +82,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
             DuracloudEndPointConfig destination = restoration.getDestination();
             String destinationSpaceId = destination.getSpaceId();
-            Long restoreId = restoration.getId();
+            String restoreId = restoration.getRestorationId();
             
             StoreClientUtil clientUtil = new StoreClientUtil();
             ContentStore contentStore =
@@ -126,7 +126,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @return
      */
     private Step
-        buildRestoreContentPropertiesStep(Long restorationId,
+        buildRestoreContentPropertiesStep(String restorationId,
                                           String destinationSpaceId,
                                           ContentStore contentStore,
                                           SnapshotJobManagerConfig jobManagerConfig)
@@ -171,7 +171,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @throws Exception
      */
     private Step
-        buildRestoreContentStep(Long restorationId,
+        buildRestoreContentStep(String restorationId,
                                 String destinationSpaceId,
                                 ContentStore contentStore,
                                 SnapshotJobManagerConfig jobManagerConfig)
@@ -181,6 +181,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             new DuraStoreSyncEndpoint(contentStore,
                                       jobManagerConfig.getDuracloudUsername(),
                                       destinationSpaceId,
+                                      false,
                                       false);
         
         File watchDir =
@@ -225,9 +226,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      */
     @Override
     public JobParameters buildIdentifyingJobParameters(Restoration restoration) {
-            Map<String, JobParameter> map = new HashMap<>();
-            map.put(SnapshotServiceConstants.OBJECT_ID, new JobParameter(restoration.getId(), true));
-            return new JobParameters(map);
+        return new JobParameters(RestoreJobParameterMarshaller.marshal(restoration));
     }
     
     /* (non-Javadoc)

@@ -43,7 +43,7 @@ public class SyncWriter
     private ContentStore contentStore;
     private String destinationSpaceId;
     private RestoreManager restoreManager;
-    private Long restorationId;
+    private String restorationId;
     
     /**
      * @param endpoint
@@ -52,7 +52,7 @@ public class SyncWriter
      * @param restoreRepo 
      * @param string 
      */
-    public SyncWriter(Long restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore, String destinationSpaceId, RestoreManager restoreManager) {
+    public SyncWriter(String restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore, String destinationSpaceId, RestoreManager restoreManager) {
         super();
         this.endpoint = endpoint;
         this.watchDir = watchDir;

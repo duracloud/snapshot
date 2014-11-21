@@ -30,7 +30,7 @@
 
   
   <properties>
-    <slf4j.version>1.7.5</slf4j.version>
+    <slf4j.version>1.7.6</slf4j.version>
     <springframework.version>4.0.5.RELEASE</springframework.version>
     <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
     <spring.batch.version>3.0.1.RELEASE</spring.batch.version>
@@ -280,7 +280,7 @@
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
-        <version>1.0.1</version>
+        <version>1.1.2</version>
       </dependency>
 
       <dependency>

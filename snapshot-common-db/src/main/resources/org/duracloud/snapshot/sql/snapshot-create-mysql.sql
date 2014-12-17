@@ -51,7 +51,9 @@ CREATE TABLE IF NOT EXISTS `restoration` (
   `status_text` longtext,
   `user_email` varchar(255) NOT NULL,
   `snapshot_id` bigint(20) NOT NULL,
+  `restoration_id` varchar(512) NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_RESTORATION_ID` (`restoration_id`),
   KEY `FK_ejb7a5btov5hyhb0pyvo3yeb7` (`snapshot_id`),
   CONSTRAINT `FK_ejb7a5btov5hyhb0pyvo3yeb7` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;

@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.service;
 
+import java.util.List;
 import java.util.Map;
 
 import org.duracloud.snapshot.SnapshotException;
@@ -28,6 +29,14 @@ public interface SnapshotManager {
                                Map<String, String> props) throws SnapshotException; 
  
     /**
+     * Sets a snapshot's alternate Id's. To map DPN Bag Id's to Duracloud Snapshot Id's
+     * @param snapshot
+     * @param alternateId
+     * @throws SnapshotException
+     */
+    public void setAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds);
+
+    /**
      * Notifies the bridge that the snapshot's transfer to DPN node is complete.  This call is initiated
      * by the DPN node via the bridge REST API.
      * @param snapshotId
@@ -42,4 +51,12 @@ public interface SnapshotManager {
      * sent out to the user.
      */
     public void finalizeSnapshots();
+
+    /**
+     * Updates a snapshot's DPN metadata
+     * @param snapshot
+     * @param metadata
+     * @return the altered snapshot
+     */
+	public Snapshot updateMetadata(Snapshot snapshot, String metadata);
 }

@@ -42,4 +42,9 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
     public List<Snapshot> findByStatus(SnapshotStatus status);
     
 
+    /**
+     * @param alternateId
+     * @return
+     */
+    public Snapshot findBySnapshotAlternateIds(String alternateId);
 }

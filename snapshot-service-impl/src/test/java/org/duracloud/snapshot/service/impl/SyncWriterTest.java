@@ -77,8 +77,8 @@ public class SyncWriterTest extends SnapshotTestBase{
      * @see org.duracloud.snapshot.common.test.SnapshotTestBase#teartDown()
      */
     @Override
-    public void teartDown() {
-        super.teartDown();
+    public void tearDown() {
+        super.tearDown();
         for(File file: watchDir.listFiles()) {
             file.delete();
         }

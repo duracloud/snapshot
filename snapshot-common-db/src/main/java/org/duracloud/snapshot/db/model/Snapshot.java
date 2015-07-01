@@ -7,14 +7,23 @@
  */
 package org.duracloud.snapshot.db.model;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -44,7 +53,18 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     private String statusText;
     private String userEmail;
     private Long totalSizeInBytes = 0l;
-       
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+          name="snapshot_alternate_ids",
+          joinColumns=@JoinColumn(name="snapshot_id", columnDefinition="bigint(20)", nullable=false)
+    )
+    @Column(name="snapshot_alternate_id")
+    private List<String> snapshotAlternateIds;
+
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "snapshot")
+    @OrderBy("metadataDate DESC")
+    private List<SnapshotMetadata> snapshotMetadata;
+
     /**
      * @return the snapshotName
      */
@@ -130,7 +150,47 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     public void setStatus(SnapshotStatus status) {
         this.status = status;
     }
-    
+
+    /**
+     * @return list of metadata entries for a snapshot
+     */
+    public List<SnapshotMetadata> getSnapshotMetadata() {
+		return snapshotMetadata;
+	}
+
+    /**
+     * @param snapshotMetadata - list of metadata entries for a snapshot
+     */
+    public void setSnapshotMetadata(List<SnapshotMetadata> snapshotMetadata) {
+		this.snapshotMetadata = snapshotMetadata;
+	}
+
+    /**
+     * @return list of alternate id's for a snapshot
+     */
+    public List<String> getSnapshotAlternateIds() {
+		return snapshotAlternateIds;
+	}
+
+    /**
+     * @param snapshotAlternateIds
+     * @throws JSONException
+     */
+    public void setSnapshotAlternateIds(List<String> snapshotAlternateIds) {
+        if(snapshotAlternateIds != null) {
+            // sanity check
+            if(snapshotAlternateIds.size() > 0) {
+                if(this.snapshotAlternateIds == null) {
+                    this.snapshotAlternateIds = new ArrayList<String>();
+                }
+            }
+            // copy all the items from JSONArray to ArrayList
+            for (String snapshotAlternateId : snapshotAlternateIds) {
+                this.snapshotAlternateIds.add(snapshotAlternateId);
+            }
+        }
+    }
+
     /* (non-Javadoc)
      * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
      */
@@ -182,6 +242,4 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
-
-    
 }

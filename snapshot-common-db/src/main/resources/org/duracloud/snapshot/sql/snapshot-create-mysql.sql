@@ -74,6 +74,32 @@ CREATE TABLE IF NOT EXISTS `snapshot_content_item` (
   UNIQUE KEY `UK_30tots9ry24rjg42xn08egdrl` (`snapshot_id`,`content_id_hash`),
   CONSTRAINT `FK_bif6fhum5u975ks9uo9xufbjh` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `snapshot_alternate_ids`
+--
+CREATE TABLE `snapshot_alternate_ids` (
+  `snapshot_id` bigint(20) NOT NULL,
+  `snapshot_alternate_id` varchar(255) DEFAULT NULL,
+  KEY `FK_q9se3kgdc5eebpwxqq4843bu3` (`snapshot_id`),
+  CONSTRAINT `FK_q9se3kgdc5eebpwxqq4843bu3` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `snapshot_metadata`
+--
+CREATE TABLE `snapshot_metadata` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `modified` datetime DEFAULT NULL,
+  `metadata` varchar(1024) DEFAULT NULL,
+  `metadata_date` datetime DEFAULT NULL,
+  `snapshot_id` bigint(20) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_dhmi2bicby06kc40uedw71v49` (`snapshot_id`,`metadata_date`),
+  CONSTRAINT `FK_ff91lsj23rrrs3nuovf3hofwl` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 SET FOREIGN_KEY_CHECKS=1;
 /*!40101 SET character_set_client = @saved_cs_client */;

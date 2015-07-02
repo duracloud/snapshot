@@ -31,7 +31,7 @@ import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
-import org.duracloud.snapshot.db.model.SnapshotMetadata;
+import org.duracloud.snapshot.db.model.SnapshotHistory;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
@@ -42,8 +42,8 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotMetadataBridgeResult;
-import org.duracloud.snapshot.dto.bridge.UpdateSnapshotMetadataBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
+import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
@@ -252,8 +252,8 @@ public class SnapshotResource {
 
             // sanity check input from alternateIds since they are optional
             if(alternateIds != null) {
-                // set alternate id's
-                this.snapshotManager.setAlternateSnapshotIds(snapshot, alternateIds.getAlternateIds());
+                // add alternate id's
+                this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds.getAlternateIds());
             }
 
             snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
@@ -322,10 +322,10 @@ public class SnapshotResource {
         }
     }
 
-    @Path("{snapshotId}/metadata")
+    @Path("{snapshotId}/history")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getMetadata(@PathParam("snapshotId") String snapshotId,
+    public Response getHistory(@PathParam("snapshotId") String snapshotId,
                                @QueryParam(value="page") Integer page,
                                @QueryParam(value="pageSize") Integer pageSize) {
         try {
@@ -337,7 +337,7 @@ public class SnapshotResource {
             }
 
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
-            List<SnapshotMetadata> allItems = snapshot.getSnapshotMetadata();
+            List<SnapshotHistory> allItems = snapshot.getSnapshotHistory();
             int fromIndex = (page * pageSize);
             int toIndex = ((page * pageSize)+pageSize);
             // !(toIndex > size)
@@ -345,22 +345,22 @@ public class SnapshotResource {
             // !(fromIndex < 0 || fromIndex > toIndex)
             fromIndex = (fromIndex < 0 ? 0 : fromIndex > toIndex ? ((toIndex - pageSize) > 0 ? (toIndex - pageSize) : 0) : fromIndex);
 
-            List<SnapshotMetadata> items = allItems.subList(fromIndex, toIndex);
+            List<SnapshotHistory> items = allItems.subList(fromIndex, toIndex);
 
-            List<org.duracloud.snapshot.dto.SnapshotMetadataItem> metadataItems =
+            List<org.duracloud.snapshot.dto.SnapshotHistoryItem> historyItems =
                 new ArrayList<>();
-            for(SnapshotMetadata item : items) {
-                org.duracloud.snapshot.dto.SnapshotMetadataItem metadataItem =
-                    new org.duracloud.snapshot.dto.SnapshotMetadataItem();
-                metadataItem.setMetadata((item.getMetadata()));
-                metadataItem.setMetadataDate(item.getMetadataDate());
-                metadataItems.add(metadataItem);
+            for(SnapshotHistory item : items) {
+                org.duracloud.snapshot.dto.SnapshotHistoryItem historyItem =
+                    new org.duracloud.snapshot.dto.SnapshotHistoryItem();
+                historyItem.setHistory((item.getHistory()));
+                historyItem.setHistoryDate(item.getHistoryDate());
+                historyItems.add(historyItem);
             }
 
-            GetSnapshotMetadataBridgeResult result =
-                new GetSnapshotMetadataBridgeResult();
-            result.setMetadataItems(metadataItems);
-            result.setTotalCount((long) metadataItems.size());
+            GetSnapshotHistoryBridgeResult result =
+                new GetSnapshotHistoryBridgeResult();
+            result.setHistoryItems(historyItems);
+            result.setTotalCount((long) historyItems.size());
 
             log.debug("returning results: {}", result);
             return Response.ok(null)
@@ -375,38 +375,38 @@ public class SnapshotResource {
     }
 
     /**
-     * Updates a snapshot's DPN metadata
+     * Updates a snapshot's DPN history
      * @param snapshotId - a snapshot's ID or it's alternate ID
-     * @param metadataUpdateParam - JSON object that contains the metadata String and a Boolean of whether this request is using a snapshot's ID or its alternate ID
+     * @param historyUpdateParam - JSON object that contains the history String and a Boolean of whether this request is using a snapshot's ID or its alternate ID
      * @return
      */
-    @Path("{snapshotId}/metadata/update")
+    @Path("{snapshotId}/history/update")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateMetadata(@PathParam("snapshotId") String snapshotId, UpdateMetadataJSONParam metadataUpdateParam) {
+    public Response updateHistory(@PathParam("snapshotId") String snapshotId, UpdateHistoryJSONParam historyUpdateParam) {
         try {
-            if(metadataUpdateParam.getIsAlternate() == null) {
+            if(historyUpdateParam.isAlternate() == null) {
                 return Response.serverError()
                         .entity(new ResponseDetails("Incorrect parameters submitted!"))
                         .build();
             }
-            Snapshot snapshot = (metadataUpdateParam.getIsAlternate() ? this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) : this.snapshotRepo.findByName(snapshotId));
+            Snapshot snapshot = (historyUpdateParam.isAlternate() ? this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) : this.snapshotRepo.findByName(snapshotId));
 
             // sanity check to make sure snapshot exists
             if(snapshot != null) {
-                // sanity check input from metadata
-                if(metadataUpdateParam.getMetadata() != null && metadataUpdateParam.getMetadata().length() > 0) {
-                    // set metadata, and refresh our variable from the DB
-                    snapshot = this.snapshotManager.updateMetadata(snapshot, metadataUpdateParam.getMetadata());
-                    log.info("successfully processed snapshot metadata update from DPN: {}", snapshot);
+                // sanity check input from history
+                if(historyUpdateParam.getHistory() != null && historyUpdateParam.getHistory().length() > 0) {
+                    // set history, and refresh our variable from the DB
+                    snapshot = this.snapshotManager.updateHistory(snapshot, historyUpdateParam.getHistory());
+                    log.info("successfully processed snapshot history update from DPN: {}", snapshot);
                 } else {
-                    log.info("did not process empty or null snapshot metadata update from DPN: {}", snapshot);
+                    log.info("did not process empty or null snapshot history update from DPN: {}", snapshot);
                 }
                 SnapshotSummary snapSummary = new SnapshotSummary(snapshot.getName(), snapshot.getStatus(), snapshot.getDescription());
-                List<SnapshotMetadata> snapMeta = snapshot.getSnapshotMetadata();
-                String metadata = (( snapMeta != null && snapMeta.size() > 0) ? snapMeta.get(0).getMetadata() : "");
-                UpdateSnapshotMetadataBridgeResult result = new UpdateSnapshotMetadataBridgeResult(snapSummary, metadata);
+                List<SnapshotHistory> snapMeta = snapshot.getSnapshotHistory();
+                String history = (( snapMeta != null && snapMeta.size() > 0) ? snapMeta.get(0).getHistory() : "");
+                UpdateSnapshotHistoryBridgeResult result = new UpdateSnapshotHistoryBridgeResult(snapSummary, history);
 
                 log.debug("returning results: {}", result);
 
@@ -415,7 +415,7 @@ public class SnapshotResource {
 	                           .build();
 	        } else {
 	            return Response.serverError()
-	                    .entity(new ResponseDetails("Snapshot with "+(metadataUpdateParam.getIsAlternate() ? "alternate " : "")+"id [" + snapshotId + "] not found!"))
+	                    .entity(new ResponseDetails("Snapshot with "+(historyUpdateParam.isAlternate() ? "alternate " : "")+"id [" + snapshotId + "] not found!"))
 	                    .build();
 	        }
         } catch (Exception ex) {

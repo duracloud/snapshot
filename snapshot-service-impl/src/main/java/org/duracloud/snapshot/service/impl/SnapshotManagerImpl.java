@@ -28,7 +28,7 @@ import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
-import org.duracloud.snapshot.db.model.SnapshotMetadata;
+import org.duracloud.snapshot.db.model.SnapshotHistory;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
@@ -133,8 +133,8 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     @Override
     @Transactional
-    public void setAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) {
-        snapshot.setSnapshotAlternateIds(alternateIds);
+    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) {
+        snapshot.addSnapshotAlternateIds(alternateIds);
         this.snapshotRepo.save(snapshot);
     }
 
@@ -262,15 +262,15 @@ public class SnapshotManagerImpl implements SnapshotManager {
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotManager#updateMetadata()
+     * @see org.duracloud.snapshot.service.SnapshotManager#updateHistory()
      */
     @Override
     @Transactional
-    public Snapshot updateMetadata(Snapshot snapshot, String metadata) {
-        SnapshotMetadata newMeta = new SnapshotMetadata();
-        newMeta.setMetadata(metadata);
-        newMeta.setSnapshot(snapshot);
-        snapshot.getSnapshotMetadata().add(newMeta);
+    public Snapshot updateHistory(Snapshot snapshot, String history) {
+        SnapshotHistory newHistory = new SnapshotHistory();
+        newHistory.setHistory(history);
+        newHistory.setSnapshot(snapshot);
+        snapshot.getSnapshotHistory().add(newHistory);
         return this.snapshotRepo.save(snapshot);
     }
 

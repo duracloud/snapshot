@@ -29,12 +29,12 @@ public interface SnapshotManager {
                                Map<String, String> props) throws SnapshotException; 
  
     /**
-     * Sets a snapshot's alternate Id's. To map DPN Bag Id's to Duracloud Snapshot Id's
+     * Adds a list of snapshot alternate Id's to a snapshot. To map DPN Bag Id's to Duracloud Snapshot Id's
      * @param snapshot
      * @param alternateId
      * @throws SnapshotException
      */
-    public void setAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds);
+    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds);
 
     /**
      * Notifies the bridge that the snapshot's transfer to DPN node is complete.  This call is initiated
@@ -53,10 +53,10 @@ public interface SnapshotManager {
     public void finalizeSnapshots();
 
     /**
-     * Updates a snapshot's DPN metadata
+     * Updates a snapshot's DPN history
      * @param snapshot
-     * @param metadata
+     * @param history
      * @return the altered snapshot
      */
-	public Snapshot updateMetadata(Snapshot snapshot, String metadata);
+	public Snapshot updateHistory(Snapshot snapshot, String history);
 }

@@ -62,8 +62,8 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     private List<String> snapshotAlternateIds;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "snapshot")
-    @OrderBy("metadataDate DESC")
-    private List<SnapshotMetadata> snapshotMetadata;
+    @OrderBy("historyDate DESC")
+    private List<SnapshotHistory> snapshotHistory;
 
     /**
      * @return the snapshotName
@@ -152,17 +152,17 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     }
 
     /**
-     * @return list of metadata entries for a snapshot
+     * @return list of history entries for a snapshot
      */
-    public List<SnapshotMetadata> getSnapshotMetadata() {
-		return snapshotMetadata;
+    public List<SnapshotHistory> getSnapshotHistory() {
+		return snapshotHistory;
 	}
 
     /**
-     * @param snapshotMetadata - list of metadata entries for a snapshot
+     * @param snapshotHistory - list of history entries for a snapshot
      */
-    public void setSnapshotMetadata(List<SnapshotMetadata> snapshotMetadata) {
-		this.snapshotMetadata = snapshotMetadata;
+    public void setSnapshotHistory(List<SnapshotHistory> snapshotHistory) {
+		this.snapshotHistory = snapshotHistory;
 	}
 
     /**
@@ -176,7 +176,7 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
      * @param snapshotAlternateIds
      * @throws JSONException
      */
-    public void setSnapshotAlternateIds(List<String> snapshotAlternateIds) {
+    public void addSnapshotAlternateIds(List<String> snapshotAlternateIds) {
         if(snapshotAlternateIds != null) {
             // sanity check
             if(snapshotAlternateIds.size() > 0) {

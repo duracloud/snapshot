@@ -24,30 +24,30 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  *         Date: May 19, 2015
  */
 @Entity
-@Table (name="snapshot_metadata", uniqueConstraints=@UniqueConstraint(columnNames={"snapshot_id","metadataDate" }))
-public class SnapshotMetadata extends BaseEntity implements Comparator<SnapshotMetadata> {
+@Table (name="snapshot_history", uniqueConstraints=@UniqueConstraint(columnNames={"snapshot_id","historyDate" }))
+public class SnapshotHistory extends BaseEntity implements Comparator<SnapshotHistory> {
     
-	private Date metadataDate = new Date();
+	private Date historyDate = new Date();
 	
     @ManyToOne(optional=false,targetEntity=Snapshot.class)
     @JoinColumn(name="snapshot_id", columnDefinition = "bigint(20)", nullable=false)
     private Snapshot snapshot;
     
     @Column(length=1024)
-    private String metadata;
+    private String history;
     
     /**
-     * @return the metadataDate
+     * @return the historyDate
      */
-    public Date getMetadataDate() {
-        return metadataDate;
+    public Date getHistoryDate() {
+        return historyDate;
     }
     
     /**
-     * @param metadataDate - the metadataDate to set
+     * @param historyDate - the historyDate to set
      */
-    public void setMetadataDate(Date metadataDate) {
-        this.metadataDate = metadataDate;
+    public void setHistoryDate(Date historyDate) {
+        this.historyDate = historyDate;
     }
     
     /**
@@ -65,25 +65,25 @@ public class SnapshotMetadata extends BaseEntity implements Comparator<SnapshotM
     }
 
     /**
-     * @return the metadata
+     * @return the history
      */
-    public String getMetadata() {
-        return metadata;
+    public String getHistory() {
+        return history;
     }
 
     /**
-     * @param metadata the metadata to set
+     * @param history the history to set
      */
-    public void setMetadata(String metadata) {
-        this.metadata = metadata;
+    public void setHistory(String history) {
+        this.history = history;
     }
     
     /* (non-Javadoc)
      * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
      */
     @Override
-    public int compare(SnapshotMetadata o1, SnapshotMetadata o2) {
-        return o1.metadata.compareTo(o2.metadata);
+    public int compare(SnapshotHistory o1, SnapshotHistory o2) {
+        return o1.history.compareTo(o2.history);
     }
         
     /* (non-Javadoc)

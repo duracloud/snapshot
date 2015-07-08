@@ -386,12 +386,12 @@ public class SnapshotResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateHistory(@PathParam("snapshotId") String snapshotId, UpdateHistoryJSONParam historyUpdateParam) {
         try {
-            if(historyUpdateParam.isAlternate() == null) {
+            if(historyUpdateParam.getAlternate() == null) {
                 return Response.serverError()
                         .entity(new ResponseDetails("Incorrect parameters submitted!"))
                         .build();
             }
-            Snapshot snapshot = (historyUpdateParam.isAlternate() ? this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) : this.snapshotRepo.findByName(snapshotId));
+            Snapshot snapshot = (historyUpdateParam.getAlternate() ? this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) : this.snapshotRepo.findByName(snapshotId));
 
             // sanity check to make sure snapshot exists
             if(snapshot != null) {
@@ -415,7 +415,7 @@ public class SnapshotResource {
 	                           .build();
 	        } else {
 	            return Response.serverError()
-	                    .entity(new ResponseDetails("Snapshot with "+(historyUpdateParam.isAlternate() ? "alternate " : "")+"id [" + snapshotId + "] not found!"))
+	                    .entity(new ResponseDetails("Snapshot with "+(historyUpdateParam.getAlternate() ? "alternate " : "")+"id [" + snapshotId + "] not found!"))
 	                    .build();
 	        }
         } catch (Exception ex) {

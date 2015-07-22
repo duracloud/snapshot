@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
-  <version>1.2.0-SNAPSHOT</version>
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>snapshot-parent</artifactId>
   <packaging>pom</packaging>
-  <name>DuraCloud Snapshot Parent Pom</name>
+  <version>1.2.0-SNAPSHOT</version>
+  <name>DuraCloud Snapshot</name>
+  <description>Extension of DuraCloud to support dark archival storage systems</description>
+  <url>http://duracloud.org</url>
 
   <organization>
     <name>DuraSpace</name>
@@ -18,7 +21,34 @@
   <prerequisites>
     <maven>3.0.0</maven>
   </prerequisites>
-  
+
+  <developers>
+    <developer>
+      <name>Branan, Bill</name>
+      <email>bbranan@duraspace.org</email>
+      <organization>DuraSpace</organization>
+    </developer>
+
+    <developer>
+      <name>Bernstein, Danny</name>
+      <email>dbernstein@duraspace.org</email>
+      <organization>DuraSpace</organization>
+    </developer>
+  </developers>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:duracloud/snapshot.git</connection>
+    <url>scm:git:git@github.com:duracloud/snapshot.git</url>
+    <developerConnection>scm:git:git@github.com:duracloud/snapshot.git</developerConnection>
+  </scm>
+
   <modules>
     <module>snapshot-common-test</module>
     <module>snapshot-common</module>
@@ -28,75 +58,152 @@
     <module>snapshot-bridge-webapp</module>
   </modules>
 
-  
+  <profiles>
+
+    <profile>
+      <id>profile-dev</id>
+      <activation>
+        <property>
+          <name>!skipDeploy</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.tomcat.maven</groupId>
+            <artifactId>tomcat7-maven-plugin</artifactId>
+            <version>2.2</version>
+            <executions>
+              <execution>
+                <id>tomcat-deploy</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>deploy-only</goal>
+                </goals>
+                <configuration>
+                  <server>tomcat-server</server>
+                  <url>http://localhost:${tomcat.port}/manager/text</url>
+                  <update>true</update>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>java8-disable-strict-javadoc</id>
+      <activation>
+        <jdk>[1.8,)</jdk>
+      </activation>
+      <properties>
+        <javadoc.opts>-Xdoclint:none</javadoc.opts>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>profile-generate-docs-source-signature</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>releaseBuild</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.3</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <additionalparam>${javadoc.opts}</additionalparam>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
   <properties>
-    <slf4j.version>1.7.6</slf4j.version>
-    <springframework.version>4.0.5.RELEASE</springframework.version>
-    <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
-    <spring.batch.version>3.0.1.RELEASE</spring.batch.version>
-    <duracloud.version>3.2.0-SNAPSHOT</duracloud.version>
-    <hibernate.version>4.3.5.Final</hibernate.version>
+    <tomcat.port>8080</tomcat.port>
     <unitTests>**/*Test.class</unitTests>
     <integrationTests>**/Test*.class</integrationTests>
     <instrumentedTests>**/*Test*__*.class</instrumentedTests>
     <innerClasses>**/*$*</innerClasses>
     <log.level.default>INFO</log.level.default>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <slf4j.version>1.7.6</slf4j.version>
+    <springframework.version>4.0.5.RELEASE</springframework.version>
+    <springframework.data.jpa.version>1.6.0.RELEASE</springframework.data.jpa.version>
+    <spring.batch.version>3.0.1.RELEASE</spring.batch.version>
+    <duracloud.version>3.3.0</duracloud.version>
+    <hibernate.version>4.3.5.Final</hibernate.version>
+
     <skipITs>true</skipITs>
   </properties>
 
   <distributionManagement>
 
     <repository>
-      <id>duraspace-releases</id>
-      <name>DuraSpace Release Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/releases</url>
+      <id>sonatype-releases</id>
+      <name>Sonatype Release Staging Maven Repository</name>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
     </repository>
 
     <snapshotRepository>
-      <id>duraspace-snapshots</id>
-      <name>DuraSpace Snapshots Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/snapshots</url>
+      <id>sonatype-snapshots</id>
+      <name>Sonatype Snapshots Maven Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
 
   </distributionManagement>
 
   <repositories>
-    <repository>
-      <id>duraspace-thirdparty</id>
-      <name>DuraSpace Thirdparty</name>
-      <url>https://m2.duraspace.org/content/repositories/thirdparty</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>duraspace-releases</id>
-      <name>DuraSpace Releases Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-
-    <repository>
-      <id>duraspace-snapshots</id>
-      <name>DuraSpace Snapshots Maven Repository</name>
-      <url>https://m2.duraspace.org/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
 
     <repository>
       <id>central</id>
@@ -108,15 +215,16 @@
     </repository>
 
     <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2/</url>
-      <layout>default</layout>
+      <id>sonatype-snapshots</id>
+      <name>Sonatype Snapshots Maven Repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
       <snapshots>
-        <enabled>false</enabled>
+        <enabled>true</enabled>
       </snapshots>
     </repository>
+
   </repositories>
+
   <build>
     <resources>
       <resource>
@@ -143,18 +251,27 @@
         </configuration>
       </plugin>
 
-      <!-- <plugin> <groupId>org.codehaus.mojo</groupId> <artifactId>buildnumber-maven-plugin</artifactId> 
-        <version>1.1</version> <executions> <execution> <phase>generate-resources</phase> 
-        <goals> <goal>create</goal> </goals> </execution> </executions> <configuration> 
-        <doCheck>false</doCheck> <doUpdate>false</doUpdate> <shortRevisionLength>5</shortRevisionLength> 
-        </configuration> </plugin> -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <warName>${project.artifactId}-${project.version}</warName>
+          <webResources>
+            <resource>
+              <directory>src/main/webapp</directory>
+              <filtering>true</filtering>
+            </resource>
+          </webResources>
+        </configuration>
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.16</version>
         <configuration>
-          <systemProperties />
+          <systemProperties/>
         </configuration>
         <executions>
           <execution>
@@ -165,7 +282,7 @@
             </goals>
             <configuration>
               <skip>${skipTests}</skip>
-              <systemProperties />
+              <systemProperties/>
               <excludes>
                 <exclude>${integrationTests}</exclude>
                 <exclude>${instrumentedTests}</exclude>
@@ -195,9 +312,9 @@
             </configuration>
           </execution>
           <execution>
-            <!-- This execution 'default-test' overrides the built-in default 
-              execution for the test phase. Thus unit tests aren't run when you running 
-              integration tests. It comes in handy when trying to debug a single integration 
+            <!-- This execution 'default-test' overrides the built-in default
+              execution for the test phase. Thus unit tests aren't run when you running
+              integration tests. It comes in handy when trying to debug a single integration
               test as you only need to attach your debugger once. -->
             <id>default-test</id>
             <configuration>
@@ -209,6 +326,7 @@
 
     </plugins>
   </build>
+
   <dependencyManagement>
     <dependencies>
 
@@ -269,7 +387,7 @@
         <artifactId>commons-dbcp</artifactId>
         <version>1.4</version>
       </dependency>
-      
+
 
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -336,14 +454,13 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-    
+
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
       <version>3.1</version>
     </dependency>
-    
-    
+
 
     <dependency>
       <groupId>ch.qos.logback</groupId>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <version>1.2.0-SNAPSHOT</version>
   <groupId>org.duracloud.snapshot</groupId>
@@ -16,12 +16,6 @@
   </parent>
 
   <properties>
-    <!-- Specify alternate tomcat port when running mvn tomcat:run or run-war 
-      by adding -Dmaven.tomcat.port property The tomcat plugin configuration -> 
-      port settings does not appear to work. http://stackoverflow.com/questions/646649/alternate-port-for-tomcat-not-8080-when-starting-with-maven -->
-
-    <!-- this tomcat port is for deploying on a already running tomcat server -->
-    <tomcat.port>8080</tomcat.port>
     <jersey.version>2.5.1</jersey.version>
     <snapshot.database.username>snapshot</snapshot.database.username>
     <snapshot.database.password>snapshot</snapshot.database.password>
@@ -38,23 +32,11 @@
     <snapshot.duracloud.port>8080</snapshot.duracloud.port>
     <snapshot.duracloud.spaceId>test-space</snapshot.duracloud.spaceId>
     <snapshot.duracloud.storeId>0</snapshot.duracloud.storeId>
-
-
   </properties>
 
   <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
     <testResources>
-      <testResource>
-        <directory>src/test/resources</directory>
-        <filtering>true</filtering>
-      </testResource>
-      <!-- This test resource configutation is necessary for the jersey test 
+      <!-- This test resource configutation is necessary for the jersey test
         framework to work properly. -->
       <testResource>
         <directory>src/main/webapp/WEB-INF</directory>
@@ -63,44 +45,8 @@
         </includes>
       </testResource>
     </testResources>
-  <plugins>
-    <plugin>
-      <groupId>org.apache.maven.plugins</groupId>
-      <artifactId>maven-war-plugin</artifactId>
-      <version>2.4</version>
-      <configuration>
-        <webResources>
-          <resource>
-            <directory>src/main/webapp</directory>
-            <includes>
-            </includes>
-            <filtering>true</filtering>
-          </resource>
-        </webResources>
-      </configuration>
-    </plugin>
-    <plugin>
-      <groupId>org.apache.tomcat.maven</groupId>
-      <artifactId>tomcat7-maven-plugin</artifactId>
-      <version>2.2</version>
-      <executions>
-        <execution>
-          <id>tomcat-deploy</id>
-          <phase>install</phase>
-          <goals>
-            <goal>deploy-only</goal>
-          </goals>
-          <configuration>
-            <server>tomcat-server</server>
-            <url>
-              http://localhost:${tomcat.port}/manager/text</url>
-            <update>true</update>
-          </configuration>
-        </execution>
-      </executions>
-    </plugin>
-  </plugins>
   </build>
+
   <dependencies>
 
     <dependency>
@@ -108,7 +54,7 @@
       <artifactId>snapshot-service-impl</artifactId>
       <version>${project.version}</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.duracloud.snapshot</groupId>
       <artifactId>snapshot-service</artifactId>
@@ -127,13 +73,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>snapshotdata</artifactId>
       <version>${duracloud.version}</version>
     </dependency>
-    
+
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>common-json</artifactId>
@@ -144,7 +90,6 @@
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-entitymanager</artifactId>
     </dependency>
-    
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
@@ -166,19 +111,19 @@
     </dependency>
 
     <dependency>
-        <groupId>org.springframework.data</groupId>
-        <artifactId>spring-data-jpa</artifactId>
+      <groupId>org.springframework.data</groupId>
+      <artifactId>spring-data-jpa</artifactId>
     </dependency>
 
     <dependency>
-        <groupId>commons-dbcp</groupId>
-        <artifactId>commons-dbcp</artifactId>
+      <groupId>commons-dbcp</groupId>
+      <artifactId>commons-dbcp</artifactId>
     </dependency>
 
     <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
-        <version>5.1.25</version>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>5.1.25</version>
     </dependency>
 
     <dependency>

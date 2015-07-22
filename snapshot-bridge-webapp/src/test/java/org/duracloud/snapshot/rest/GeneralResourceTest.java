@@ -191,10 +191,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
     
     @Test
     public void testVersion() throws JsonParseException, IOException {
-
         replayAll();
 
-        
         Response response = resource.version();
 
         String message = (String)response.getEntity();
@@ -205,8 +203,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         JsonNode obj = mapper.readTree(jp);
         Assert.assertNotNull(obj);
         Assert.assertNotNull(obj.get("version"));
-
-        
+        Assert.assertNotNull(obj.get("build"));
     }
 
     /**

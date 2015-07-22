@@ -259,7 +259,10 @@ public class GeneralResource {
             Properties props = new Properties();
             props.load(is);
             String version = props.get("version").toString();
-            return Response.ok().entity("{\"version\":\""+version+"\"}").build();
+            String buildNumber = props.get("buildNumber").toString();
+            return Response.ok().entity(
+                "{\"version\":\"" + version +
+                "\",\"build\":\"" + buildNumber + "\"}").build();
         } catch (IOException e) {
             //should never happen
             throw new RuntimeException(e);

@@ -21,7 +21,9 @@ import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
+import org.duracloud.sync.endpoint.DuraStoreChunkSyncEndpoint;
 import org.duracloud.sync.endpoint.DuraStoreSyncEndpoint;
+import org.duracloud.sync.endpoint.EndPointLogger;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,11 +122,6 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         return job;
     }
 
-    /**
-     * @param jobManagerConfig 
-     * @param restoration 
-     * @return
-     */
     private Step
         buildRestoreContentPropertiesStep(String restorationId,
                                           String destinationSpaceId,
@@ -149,7 +146,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
         
         SimpleStepFactoryBean<ContentProperties,ContentProperties> stepFactory =
-            new SimpleStepFactoryBean<ContentProperties,ContentProperties>();
+            new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("restoreContentPropertiesStep");
@@ -162,14 +159,6 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         return stepFactory.getObject();   
     }
 
-    /**
-     * @param restoration 
-     * @param jobManagerConfig 
-     * @param reader
-     * @param writer
-     * @return
-     * @throws Exception
-     */
     private Step
         buildRestoreContentStep(String restorationId,
                                 String destinationSpaceId,
@@ -178,11 +167,12 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             throws Exception {        
 
         SyncEndpoint endpoint =
-            new DuraStoreSyncEndpoint(contentStore,
-                                      jobManagerConfig.getDuracloudUsername(),
-                                      destinationSpaceId,
-                                      false,
-                                      false);
+            new DuraStoreChunkSyncEndpoint(contentStore,
+                                           jobManagerConfig.getDuracloudUsername(),
+                                           destinationSpaceId,
+                                           false,
+                                           true,
+                                           1073741824); // 1GiB chunk size
         
         File watchDir =
             new File(ContentDirUtils.getSourcePath(restorationId,

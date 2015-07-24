@@ -7,6 +7,14 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
@@ -20,6 +28,7 @@ import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.db.model.SnapshotHistory;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
@@ -32,14 +41,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Daniel Bernstein Date: Jul 31, 2014
@@ -128,6 +129,13 @@ public class SnapshotManagerImpl implements SnapshotManager {
         String propString = PropertiesSerializer.serialize(props);
         item.setMetadata(propString);
         this.snapshotContentItemRepo.save(item);
+    }
+
+    @Override
+    @Transactional
+    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) {
+        snapshot.addSnapshotAlternateIds(alternateIds);
+        this.snapshotRepo.save(snapshot);
     }
 
     // Allows use of the non-thread-safe ChecksumUtil in a threaded environment
@@ -253,6 +261,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.SnapshotManager#updateHistory()
+     */
+    @Override
+    @Transactional
+    public Snapshot updateHistory(Snapshot snapshot, String history) {
+        SnapshotHistory newHistory = new SnapshotHistory();
+        newHistory.setHistory(history);
+        newHistory.setSnapshot(snapshot);
+        snapshot.getSnapshotHistory().add(newHistory);
+        return this.snapshotRepo.save(snapshot);
+    }
 
     /**
      * @param storeClientHelper the storeClientHelper to set

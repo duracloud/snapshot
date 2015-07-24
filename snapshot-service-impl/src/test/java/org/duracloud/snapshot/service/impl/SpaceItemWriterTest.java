@@ -110,8 +110,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
      */
     @After
     @Override
-    public void teartDown() {
-        super.teartDown();
+    public void tearDown() {
+        super.tearDown();
         try {
             FileUtils.deleteDirectory(contentDir);
         } catch (IOException e) {

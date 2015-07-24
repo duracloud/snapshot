@@ -29,7 +29,7 @@ public class SnapshotTestBase extends EasyMockSupport{
 
     
     @After
-    public void teartDown(){
+    public void tearDown(){
         verifyAll();
     }
 

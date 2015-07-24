@@ -64,7 +64,7 @@ public class RestoreResource {
         this.restorationManager = restorationManager;
     }
 
-    @Path("/")
+    // @Path("/") <-- this throws a runtime warning because "/" is implied as an empty @Path
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

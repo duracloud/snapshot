@@ -173,6 +173,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                            false,
                                            true,
                                            1073741824); // 1GiB chunk size
+        endpoint.addEndPointListener(new EndPointLogger());
         
         File watchDir =
             new File(ContentDirUtils.getSourcePath(restorationId,

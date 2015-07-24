@@ -21,6 +21,7 @@ import java.util.Map;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
+import org.duracloud.retrieval.mgmt.LoggingOutputWriter;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
@@ -117,9 +118,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                 contentDir.mkdirs();
             }
 
-            File workDir = config.getWorkDir();
-            OutputWriter outputWriter = new CSVFileOutputWriter(workDir);
-
             BufferedWriter propsWriter =
                 createWriter(contentDir, SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
             BufferedWriter md5Writer =
@@ -131,7 +129,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                 new SpaceItemWriter(snapshot,
                                     retrievalSource,
                                     contentDir,
-                                    outputWriter,
+                                    new LoggingOutputWriter(),
                                     propsWriter,
                                     md5Writer,
                                     sha256Writer,

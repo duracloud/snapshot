@@ -99,7 +99,6 @@ public class SnapshotResource {
      * 
      * @return
      */
-    // @Path("/") <-- this throws a runtime warning because "/" is implied as an empty @Path
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response list(@QueryParam("host") String host) {
@@ -225,7 +224,8 @@ public class SnapshotResource {
                     log.debug("deleting newly created snapshot...");
                     snapshotRepo.delete(snapshot.getId());
                 }catch(Exception e){
-                    log.error("failed to cleanup snapshot " + snapshotId + ": " + e.getMessage(), e);
+                    log.error("failed to cleanup snapshot " + snapshotId + ": " +
+                              e.getMessage(), e);
                 }
                 log.info("cleaning up complete");
             }
@@ -236,8 +236,10 @@ public class SnapshotResource {
     }
 
     /**
-     * Notifies the bridge that the snapshot transfer from the bridge storage to the DPN node 
-     * is complete. Also sets a snapshot's alternate id's if they are passed in.
+     * Notifies the bridge that the snapshot transfer from the bridge storage to
+     * the DPN node is complete. Also sets a snapshot's alternate id's if they
+     * are passed in.
+     *
      * @param snapshotId
      * @param alternateIds
      * @return
@@ -246,19 +248,22 @@ public class SnapshotResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response complete(@PathParam("snapshotId") String snapshotId, AlternateIdsJSONParam alternateIds) {
+    public Response complete(@PathParam("snapshotId") String snapshotId,
+                             AlternateIdsJSONParam alternateIds) {
         try {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
 
             // sanity check input from alternateIds since they are optional
             if(alternateIds != null) {
                 // add alternate id's
-                this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds.getAlternateIds());
+                this.snapshotManager.addAlternateSnapshotIds(snapshot,
+                                                             alternateIds.getAlternateIds());
             }
 
             snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
 
-            log.info("successfully processed snapshot complete notification from DPN: {}", snapshot);
+            log.info("successfully processed snapshot complete notification from DPN: {}",
+                     snapshot);
 
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
@@ -288,8 +293,10 @@ public class SnapshotResource {
             }
             
             PageRequest pageable = new PageRequest(page, pageSize);
-            List<SnapshotContentItem> items =
-                this.snapshotContentItemRepo.findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(snapshotId, prefix, pageable);
+            List<SnapshotContentItem> items = this.snapshotContentItemRepo
+                    .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(snapshotId,
+                                                                                   prefix,
+                                                                                   pageable);
 
             List<org.duracloud.snapshot.dto.SnapshotContentItem> snapshotItems =
                 new ArrayList<>();
@@ -343,7 +350,8 @@ public class SnapshotResource {
             // !(toIndex > size)
             toIndex = (toIndex > allItems.size() ? allItems.size() : toIndex);
             // !(fromIndex < 0 || fromIndex > toIndex)
-            fromIndex = (fromIndex < 0 ? 0 : fromIndex > toIndex ? ((toIndex - pageSize) > 0 ? (toIndex - pageSize) : 0) : fromIndex);
+            fromIndex = (fromIndex < 0 ? 0 : fromIndex > toIndex ?
+                          ((toIndex - pageSize) > 0 ? (toIndex - pageSize) : 0) : fromIndex);
 
             List<SnapshotHistory> items = allItems.subList(fromIndex, toIndex);
 
@@ -384,29 +392,43 @@ public class SnapshotResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateHistory(@PathParam("snapshotId") String snapshotId, UpdateHistoryJSONParam historyUpdateParam) {
+    public Response updateHistory(@PathParam("snapshotId") String snapshotId,
+                                  UpdateHistoryJSONParam historyUpdateParam) {
         try {
             if(historyUpdateParam.getAlternate() == null) {
                 return Response.serverError()
                         .entity(new ResponseDetails("Incorrect parameters submitted!"))
                         .build();
             }
-            Snapshot snapshot = (historyUpdateParam.getAlternate() ? this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) : this.snapshotRepo.findByName(snapshotId));
+            Snapshot snapshot = (historyUpdateParam.getAlternate() ?
+                                 this.snapshotRepo.findBySnapshotAlternateIds(snapshotId) :
+                                 this.snapshotRepo.findByName(snapshotId));
 
             // sanity check to make sure snapshot exists
             if(snapshot != null) {
                 // sanity check input from history
-                if(historyUpdateParam.getHistory() != null && historyUpdateParam.getHistory().length() > 0) {
+                if(historyUpdateParam.getHistory() != null &&
+                   historyUpdateParam.getHistory().length() > 0) {
                     // set history, and refresh our variable from the DB
-                    snapshot = this.snapshotManager.updateHistory(snapshot, historyUpdateParam.getHistory());
-                    log.info("successfully processed snapshot history update from DPN: {}", snapshot);
+                    snapshot =
+                        this.snapshotManager.updateHistory(snapshot,
+                                                           historyUpdateParam.getHistory());
+                    log.info("successfully processed snapshot " +
+                             "history update from DPN: {}", snapshot);
                 } else {
-                    log.info("did not process empty or null snapshot history update from DPN: {}", snapshot);
+                    log.info("did not process empty or null snapshot " +
+                             "history update from DPN: {}", snapshot);
                 }
-                SnapshotSummary snapSummary = new SnapshotSummary(snapshot.getName(), snapshot.getStatus(), snapshot.getDescription());
+                SnapshotSummary snapSummary =
+                    new SnapshotSummary(snapshot.getName(),
+                                        snapshot.getStatus(),
+                                        snapshot.getDescription());
                 List<SnapshotHistory> snapMeta = snapshot.getSnapshotHistory();
-                String history = (( snapMeta != null && snapMeta.size() > 0) ? snapMeta.get(0).getHistory() : "");
-                UpdateSnapshotHistoryBridgeResult result = new UpdateSnapshotHistoryBridgeResult(snapSummary, history);
+                String history =
+                    (( snapMeta != null && snapMeta.size() > 0) ?
+                     snapMeta.get(0).getHistory() : "");
+                UpdateSnapshotHistoryBridgeResult result =
+                    new UpdateSnapshotHistoryBridgeResult(snapSummary, history);
 
                 log.debug("returning results: {}", result);
 
@@ -414,8 +436,11 @@ public class SnapshotResource {
 	                           .entity(result)
 	                           .build();
 	        } else {
-	            return Response.serverError()
-	                    .entity(new ResponseDetails("Snapshot with "+(historyUpdateParam.getAlternate() ? "alternate " : "")+"id [" + snapshotId + "] not found!"))
+                String error = "Snapshot with " + (historyUpdateParam.getAlternate() ?
+                                                   "alternate " :
+                                                   "") + "id [" + snapshotId + "] not found!";
+                return Response.serverError()
+	                    .entity(new ResponseDetails(error))
 	                    .build();
 	        }
         } catch (Exception ex) {

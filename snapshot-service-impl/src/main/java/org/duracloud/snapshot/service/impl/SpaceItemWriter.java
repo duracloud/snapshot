@@ -33,6 +33,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * This class is responsible for reading the contents and properties of a duracloud content item,
+ * writing it to disk,  appending its md5 and sha256 to separate text files, appending
+ * the item properties to a json file, and writing the item to the snapshot content repo.
+ * 
  * @author Erik Paulsson
  *         Date: 2/7/14
  */

@@ -133,7 +133,11 @@
       <artifactId>snapshotdata</artifactId>
       <version>${duracloud.version}</version>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.duracloud.db</groupId>
+      <artifactId>common</artifactId>
+    </dependency>
 
     <!-- Spring Core -->
     <dependency>

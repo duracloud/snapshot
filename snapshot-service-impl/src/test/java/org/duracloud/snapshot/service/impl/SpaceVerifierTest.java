@@ -1,0 +1,156 @@
+/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree and available online at
+ *
+ *     http://duracloud.org/license/
+ */
+package org.duracloud.snapshot.service.impl;
+
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.duracloud.client.ContentStore;
+import org.duracloud.error.ContentStoreException;
+import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockSupport;
+import org.easymock.IExpectationSetters;
+import org.easymock.Mock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.StepExecution;
+
+/**
+ * @author Daniel Bernstein
+ *         Date: Jul 29, 2015
+ */
+@RunWith(EasyMockRunner.class)
+public class SpaceVerifierTest extends EasyMockSupport {
+    
+    private SpaceVerifier verifier;
+    private String correctChecksum = "correct-checksum";
+    private String spaceId = "spaceId";
+    private String contentId = "contentId";
+    @Mock
+    private StepExecution stepExecution;
+    
+    @Mock
+    private ContentStore contentStore;
+    
+    /**
+     * @throws java.lang.Exception
+     */
+    @Before
+    public void setUp() throws Exception {
+    }
+
+    /**
+     * 
+     */
+    private void setupTestSubject() {
+        this.verifier = new SpaceVerifier(contentStore, spaceId);
+    }
+
+    /**
+     * @throws java.lang.Exception
+     */
+    @After
+    public void tearDown() throws Exception {
+        verifyAll();
+    }
+
+    /**
+     * Test method for {@link org.duracloud.snapshot.service.impl.SpaceVerifier#write(java.util.List)}.
+     */
+    @Test
+    public void testSuccessfulRun() throws Exception {
+        setupStepExecution();
+        setupGetContentProperties(true);
+        setupGetStoreId();
+        setupGetSpaceContents(Arrays.asList(contentId));
+        replayAll();
+        setupTestSubject();
+        simulateStepExecution(ExitStatus.COMPLETED);
+    }
+    
+    /**
+     * Test method for {@link org.duracloud.snapshot.service.impl.SpaceVerifier#write(java.util.List)}.
+     */
+    @Test
+    public void testFailedRunCountDoesNotMatch() throws Exception {
+        setupStepExecution();
+        setupGetContentProperties(true);
+        setupGetStoreId();
+        setupGetSpaceContents(Arrays.asList(contentId, "mystery-content-id"));
+        replayAll();
+        setupTestSubject();
+        simulateStepExecution(ExitStatus.FAILED);
+    }    
+
+    @Test
+    public void testFailedRunBadChecksum() throws Exception {
+        setupStepExecution();
+        setupGetContentProperties(false);
+        setupGetStoreId();
+        replayAll();
+        setupTestSubject();
+        simulateStepExecution(ExitStatus.FAILED);
+    }    
+
+    /**
+     * @param expectedStatus
+     * @throws Exception
+     */
+    private void simulateStepExecution(ExitStatus expectedStatus) throws Exception {
+        List<ManifestEntry> items = Arrays.asList(new ManifestEntry(correctChecksum, contentId));
+        verifier.beforeStep(stepExecution);
+        verifier.beforeWrite(items);
+        verifier.write(items);
+        verifier.afterWrite(items);
+        assertEquals(expectedStatus, verifier.afterStep(stepExecution));
+    }
+
+    /**
+     * @param contentIds
+     * @throws ContentStoreException
+     */
+    private void setupGetSpaceContents(List<String> contentIds) throws ContentStoreException {
+        expect(contentStore.getSpaceContents(spaceId)).andReturn(contentIds.iterator());
+    }
+
+    /**
+     * 
+     */
+    private void setupStepExecution() {
+        expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
+        expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
+    }
+
+    /**
+     * 
+     */
+    private void setupGetStoreId() {
+        expect(contentStore.getStoreId()).andReturn("store-id").atLeastOnce();
+    }
+
+    /**
+     * @throws ContentStoreException
+     */
+    private void setupGetContentProperties(boolean checksumOk) throws ContentStoreException {
+        Map<String,String> props = new HashMap<>();
+        props.put(ContentStore.CONTENT_CHECKSUM, checksumOk ?correctChecksum : "incorrect-checksum");
+        IExpectationSetters setter = expect(contentStore.getContentProperties(spaceId, contentId)).andReturn(props);
+        if(!checksumOk){
+            setter.times(4);
+        }
+    }
+
+}

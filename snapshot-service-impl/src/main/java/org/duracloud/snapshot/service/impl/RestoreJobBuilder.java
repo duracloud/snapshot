@@ -8,32 +8,29 @@
 package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.sync.endpoint.DuraStoreChunkSyncEndpoint;
-import org.duracloud.sync.endpoint.DuraStoreSyncEndpoint;
 import org.duracloud.sync.endpoint.EndPointLogger;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepListener;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.xml.SimpleFlowFactoryBean;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
@@ -57,19 +54,22 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     private TaskExecutor taskExecutor;
 
     private RestoreManager restoreManager;
+    private SnapshotContentItemRepo snapshotContentItemRepo;
     
     @Autowired
     public RestoreJobBuilder(RestoreJobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
                               TaskExecutor taskExecutor,
-                              RestoreManager restoreManager) {
+                              RestoreManager restoreManager,
+                              SnapshotContentItemRepo snapshotContentItemRepo) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
         this.restoreManager = restoreManager;
+        this.snapshotContentItemRepo = snapshotContentItemRepo;
     }
     
     /* (non-Javadoc)
@@ -95,22 +95,41 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                               jobManagerConfig.getDuracloudPassword(),
                                               destination.getStoreId());
 
+            Step verifyDpnTransferUsingDpnManifestStep = 
+                buildVerifyDpnTransferUsingDpnManifestStep(restoreId, 
+                                                           jobManagerConfig);
+
+            Step verifyDpnTransferUsingSnapshotDbStep = 
+                buildVerifyDpnTransferUsingSnapshotRepoStep(restoreId, 
+                                                          jobManagerConfig);
+            
             Step restoreContentStep =
                 buildRestoreContentStep(restoreId,
                                         destinationSpaceId,
                                         contentStore,
                                         jobManagerConfig);
+            
             Step restorePropertiesStep =
                 buildRestoreContentPropertiesStep(restoreId, 
                                                   destinationSpaceId,
                                                   contentStore,
                                                   jobManagerConfig);
 
+            Step verifyDuraCloudTransferStep =
+                buildVerifyDuraCloudTransferStep(restoreId, 
+                                                  destinationSpaceId,
+                                                  contentStore,
+                                                  jobManagerConfig);
+
+
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.RESTORE_JOB_NAME);
-            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(restoreContentStep)
-                                                          .next(restorePropertiesStep);
+            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(verifyDpnTransferUsingDpnManifestStep)
+                                                          .next(verifyDpnTransferUsingSnapshotDbStep)
+                                                          .next(restoreContentStep)
+                                                          .next(restorePropertiesStep)
+                                                          .next(verifyDuraCloudTransferStep);
             
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
@@ -120,6 +139,157 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             throw new SnapshotException(e.getMessage(), e);
         }
         return job;
+    }
+
+    /**
+     * @param restoreId
+     * @param jobManagerConfig
+     * @return
+     */
+    private Step buildVerifyDpnTransferUsingSnapshotRepoStep(String restoreId,
+                                                           SnapshotJobManagerConfig jobManagerConfig) throws Exception{
+
+        File restoreDir = new File(ContentDirUtils.getSourcePath(restoreId, jobManagerConfig.getContentRootDir()));
+
+        Restoration restore = this.restoreManager.get(restoreId);
+
+        SnapshotRepoManifestReader reader =
+            new SnapshotRepoManifestReader(this.snapshotContentItemRepo, restore.getSnapshot().getName());
+
+        File contentDir = getRestoreContentDir(restoreDir);
+
+        ManifestVerifier writer = new ManifestVerifier(restoreId, contentDir, restoreManager);
+
+        SimpleStepFactoryBean<SnapshotContentItem, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
+        stepFactory.setJobRepository(jobRepository);
+        stepFactory.setTransactionManager(transactionManager);
+        stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
+        stepFactory.setItemReader(reader);
+        stepFactory.setItemWriter(writer);
+        stepFactory.setCommitInterval(1);
+        stepFactory.setThrottleLimit(20);
+        stepFactory.setTaskExecutor(taskExecutor);
+        stepFactory.setListeners(new StepListener[] { writer });
+        return stepFactory.getObject();
+    }
+
+    /**
+     * @param restoreId
+     * @param destinationSpaceId
+     * @param contentStore
+     * @param jobManagerConfig
+     * @return
+     */
+    private Step buildVerifyDuraCloudTransferStep(String restoreId,
+                                                  String destinationSpaceId,
+                                                  ContentStore contentStore,
+                                                  SnapshotJobManagerConfig jobManagerConfig) throws Exception {
+
+        File restoreDir = getRestoreDir(restoreId, jobManagerConfig);
+        
+        File md5Manifest = getRestoreMd5Manifest(restoreDir);
+        
+        DpnManifestReader reader =
+            new DpnManifestReader(md5Manifest, Algorithm.MD5);
+
+        SpaceVerifier writer =
+            new SpaceVerifier(contentStore, destinationSpaceId);
+        
+        
+        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory =
+            new SimpleStepFactoryBean<>();
+        stepFactory.setJobRepository(jobRepository);
+        stepFactory.setTransactionManager(transactionManager);
+        stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
+        stepFactory.setItemReader(reader);
+        stepFactory.setItemWriter(writer);
+        stepFactory.setCommitInterval(1);
+        stepFactory.setThrottleLimit(20);
+        stepFactory.setTaskExecutor(taskExecutor);
+        stepFactory.setListeners(new StepListener[]{writer});
+        return stepFactory.getObject();
+    }
+
+    /**
+     * @param restoreId
+     * @param jobManagerConfig
+     * @return
+     */
+    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restorationId, 
+                                                            SnapshotJobManagerConfig jobManagerConfig)  
+                                                                throws Exception{
+
+        File restoreDir = getRestoreDir(restorationId, jobManagerConfig);
+        
+        File md5Manifest = getRestoreMd5Manifest(restoreDir);
+        
+        DpnManifestReader reader =
+            new DpnManifestReader(md5Manifest, Algorithm.MD5);
+        
+        File contentDir = getRestoreContentDir(restoreDir);
+
+        ManifestVerifier writer =
+            new ManifestVerifier(restorationId, 
+                                 contentDir,
+                                 restoreManager);
+        
+        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory =
+            new SimpleStepFactoryBean<>();
+        stepFactory.setJobRepository(jobRepository);
+        stepFactory.setTransactionManager(transactionManager);
+        stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
+        stepFactory.setItemReader(reader);
+        stepFactory.setItemWriter(writer);
+        stepFactory.setCommitInterval(1);
+        stepFactory.setThrottleLimit(20);
+        stepFactory.setTaskExecutor(taskExecutor);
+        stepFactory.setListeners(new StepListener[]{writer});
+        return stepFactory.getObject();
+    }
+
+    /**
+     * @param restoreDir
+     * @return
+     */
+    private File getRestoreMd5Manifest(File restoreDir) {
+        File md5Manifest = new File(restoreDir, "manifest-md5.txt");
+        
+        if(!md5Manifest.exists()){
+            throw new RuntimeException("The md5 manifest file is missing:  " + 
+                md5Manifest.getAbsolutePath());
+        }
+        return md5Manifest;
+    }
+
+    /**
+     * @param restoreDir
+     * @return
+     */
+    private File getRestoreContentDir(File restoreDir) {
+        File contentDir = new File(restoreDir, "data");
+        
+        if(!contentDir.exists()){
+            throw new RuntimeException("The content direcotry is missing for restoration:  " + 
+                contentDir.getAbsolutePath());
+        }
+        return contentDir;
+    }
+
+    /**
+     * @param restorationId
+     * @param jobManagerConfig
+     * @return
+     */
+    private File getRestoreDir(String restorationId, SnapshotJobManagerConfig jobManagerConfig) {
+        File restoreDir = new File(ContentDirUtils.getSourcePath(restorationId,
+                                                   jobManagerConfig.getContentRootDir()));
+
+        if (!restoreDir.exists()) {
+            throw new RuntimeException("The directory for the restored snapshot " +
+                                       "does not exist in bridge storage: missing: " + 
+                                       restoreDir.getAbsolutePath());
+        }
+        return restoreDir;
     }
 
     private Step

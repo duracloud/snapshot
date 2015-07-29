@@ -31,6 +31,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
 /**
+ * This class is responsible for syncing content from the bridge to DuraCloud.
  * @author Daniel Bernstein 
  *         Date: Jul 17, 2014
  */

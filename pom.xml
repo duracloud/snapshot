@@ -184,6 +184,7 @@
     <spring.batch.version>3.0.4.RELEASE</spring.batch.version>
     <hibernate.version>4.3.5.Final</hibernate.version>
     <duracloud.version>3.4.0-SNAPSHOT</duracloud.version>
+    <duracloud.db.version>3.3.4</duracloud.db.version>
 
     <skipITs>true</skipITs>
   </properties>
@@ -417,6 +418,14 @@
         <artifactId>spring-data-jpa</artifactId>
         <version>${springframework.data.jpa.version}</version>
       </dependency>
+
+
+      <dependency>
+        <groupId>org.duracloud.db</groupId>
+        <artifactId>common</artifactId>
+        <version>${duracloud.db.version}</version>
+      </dependency>
+
 
       <!-- Spring Batch dependencies -->
       <dependency>

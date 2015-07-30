@@ -7,9 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.expectLastCall;
-import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -67,6 +67,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     private String restorationId = "restorationId";
     private String snapshotName = "snapshot-name";
     private String contentDir = "content-dir";
+    private int daysToExpire = 42;
     private JobParameters jobParams;
 
     
@@ -79,10 +80,6 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
                         new JobParameter(restorationId));
         jobParams = new JobParameters(jobParamMap);
     }
-
-    /**
-     * 
-     */
 
     @Test
     public void testAfterJobSuccess() {
@@ -112,20 +109,21 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(executionConfig.getDuracloudEmailAddresses()).andReturn(new String[]{duracloudEmail});
         expect(restoration.getUserEmail()).andReturn(userEmail);
 
+        restoration.setExpirationDate(EasyMock.isA(Date.class));
+        expectLastCall();
+
         replayAll();
 
         executionListener.afterJob(jobExecution);
         String message = messageCapture.getValue();
         assertTrue(message.contains(snapshotName));
         assertTrue(message.contains(String.valueOf(restorationId)));
-        
+        assertTrue(message.contains("EXPIRE"));
+        assertTrue(message.contains(String.valueOf(daysToExpire)));
     }
 
-    /**
-     * 
-     */
     private void setupCommon() {
-        executionListener.init(executionConfig);
+        executionListener.init(executionConfig, daysToExpire);
         expect(jobExecution.getJobParameters())
                 .andReturn(jobParams);
         expect(executionConfig.getContentRoot()).andReturn(new File(contentDir));
@@ -137,7 +135,6 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(restoration.getSnapshot()).andReturn(snapshot);
         expect(snapshot.getName()).andReturn(snapshotName);
         expect(restoreRepo.save(restoration)).andReturn(restoration);
-
     }
 
     @Test
@@ -169,6 +166,19 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         assertTrue(message.contains(snapshotName));
         assertTrue(message.contains(contentDir));
         assertTrue(message.contains("failed"));
+    }
+
+    @Test
+    public void testGetExpirationDate() {
+        Date currentDate = new Date();
+        Date expirationDate =
+            executionListener.getExpirationDate(currentDate, daysToExpire);
+        assertNotNull(expirationDate);
+        long millisecondsInADay = 86400000l;
+        assertEquals(currentDate.getTime() + (daysToExpire * millisecondsInADay),
+                     expirationDate.getTime());
+
+        replayAll();
     }
 
 }

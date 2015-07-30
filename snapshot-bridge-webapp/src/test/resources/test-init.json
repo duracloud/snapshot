@@ -11,5 +11,6 @@
      "databaseURL" : "${snapshot.database.url}",
      "contentDirRoot" : "${snapshot.contentDirRoot}",
      "workDir" : "${snapshot.workDir}",
-     "clean" : "${snapshot.clean}"
+     "clean" : "${snapshot.clean}",
+     "daysToExpireRestore" : "${snapshot.daysToExpireRestore}"
 }

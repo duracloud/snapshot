@@ -92,9 +92,7 @@ public class RestoreManagerImpl  implements RestoreManager{
     public Restoration restoreSnapshot(String snapshotId,
                                        DuracloudEndPointConfig destination,
                                        String userEmail)
-        throws SnapshotNotFoundException,
-            SnapshotInProcessException,
-            SnapshotException {
+        throws SnapshotNotFoundException, SnapshotInProcessException, SnapshotException {
         
         checkInitialized();
         
@@ -161,7 +159,8 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @return
      */
     private Restoration createRestoration(Snapshot snapshot,
-                                          DuracloudEndPointConfig destination, String userEmail)
+                                          DuracloudEndPointConfig destination,
+                                          String userEmail)
         throws SnapshotException {
         Restoration restoration = new Restoration();
         restoration.setDestination(destination);
@@ -239,7 +238,8 @@ public class RestoreManagerImpl  implements RestoreManager{
             log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
         } else if(status.equals(RestoreStatus.WAITING_FOR_DPN)){
-            log.info("caller has indicated that restoration request {} is complete.", restoration);
+            log.info("caller has indicated that restoration request {} is complete.",
+                     restoration);
             Restoration updatedRestoration =
                 transitionRestoreStatus(restorationId,
                                         RestoreStatus.DPN_TRANSFER_COMPLETE,

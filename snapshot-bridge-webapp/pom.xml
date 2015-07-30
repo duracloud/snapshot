@@ -32,6 +32,7 @@
     <snapshot.duracloud.port>8080</snapshot.duracloud.port>
     <snapshot.duracloud.spaceId>test-space</snapshot.duracloud.spaceId>
     <snapshot.duracloud.storeId>0</snapshot.duracloud.storeId>
+    <snapshot.daysToExpireRestore>30</snapshot.daysToExpireRestore>
   </properties>
 
   <build>

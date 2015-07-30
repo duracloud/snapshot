@@ -159,7 +159,7 @@ public class GeneralResource {
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
-        
+
         this.restorationManager.init(config, jobManager);
     }
 
@@ -191,8 +191,7 @@ public class GeneralResource {
             initParams.getOriginatorEmailAddress());
         notifyConfig.setContentRoot(new File(initParams.getContentDirRoot()));
         this.snapshotJobListener.init(notifyConfig);
-        this.restoreJobListener.init(notifyConfig);
-
+        this.restoreJobListener.init(notifyConfig, initParams.getDaysToExpireRestore());
     }
 
 

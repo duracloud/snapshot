@@ -32,6 +32,7 @@ public class InitParams {
     private String duracloudUsername;
     private String duracloudPassword;
     private Integer snapshotFinalizerPeriodMs;
+    private Integer daysToExpireRestore;
     
     /**
      * @return the workDir
@@ -219,5 +220,20 @@ public class InitParams {
      */
     public void setSnapshotFinalizerPeriodMs(Integer snapshotFinalizerPeriodMs) {
         this.snapshotFinalizerPeriodMs = snapshotFinalizerPeriodMs;
+    }
+
+    /**
+     * @return the number of days after which restored content should expire
+     */
+    public Integer getDaysToExpireRestore() {
+        return daysToExpireRestore;
+    }
+
+    /**
+     * @param daysToExpireRestore the number of days after which restored
+     *                            content should expire
+     */
+    public void setDaysToExpireRestore(Integer daysToExpireRestore) {
+        this.daysToExpireRestore = daysToExpireRestore;
     }
 }

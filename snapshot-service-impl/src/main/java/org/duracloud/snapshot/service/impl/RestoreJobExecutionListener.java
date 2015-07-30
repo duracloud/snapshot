@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -32,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -52,7 +54,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
     private RestoreRepo restoreRepo;
     
     private ExecutionListenerConfig config;
-    
+
+    private Integer daysToExpire;
     
     /**
      * @param notificationManager the notificationManager to set
@@ -60,18 +63,17 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
     public void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
-    
-    
+
     /**
      * @param restoreRepo the restoreRepo to set
      */
     public void setRestorationRepo(RestoreRepo restoreRepo) {
         this.restoreRepo = restoreRepo;
     }
-    
 
-    public void init(ExecutionListenerConfig config) {
+    public void init(ExecutionListenerConfig config, int daysToExpire) {
         this.config = config;
+        this.daysToExpire = daysToExpire;
     }
 
     @Transactional
@@ -91,13 +93,16 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         String snapshotId = snapshot.getName();
         String restoreId = restoration.getRestorationId();
 
+        Date currentDate = new Date();
+
         if(BatchStatus.COMPLETED.equals(status)) {
             // Job success. Email duracloud team as well as restoration requestor
-            
-            changeRestoreStatus(restoration,
-                                RestoreStatus.RESTORATION_COMPLETE,
-                                "Completed transfer to duracloud: "
-                                    + new Date());
+
+            Date expirationDate =
+                changeRestoreStatus(restoration,
+                                    RestoreStatus.RESTORATION_COMPLETE,
+                                    "Completed transfer to duracloud on: " + currentDate,
+                                    currentDate);
             String subject =
                 "DuraCloud snapshot " + snapshotId + " has been restored! Restore ID = " + restoreId;
             String message =
@@ -110,6 +115,12 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
             message += "Destination Port: " + destination.getPort() + "\n";
             message += "Destination StoreId: " + destination.getStoreId() + "\n";
             message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
+            message += "\n\nThe restored content WILL EXPIRE IN " + daysToExpire +
+                       " days, on " +
+                       DateUtil.convertToStringShort(expirationDate.getTime()) +
+                        ". At that time, the contents of the space '" +
+                       destination.getSpaceId() +
+                       "' will be removed, and the space will be deleted." + "\n";
             
             log.info("deleting restoration path " + restorationPath);
             
@@ -129,8 +140,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         } else {
             changeRestoreStatus(restoration,
                                 RestoreStatus.ERROR,
-                                "failed to transfer to duracloud: "
-                                    + new Date());
+                                "Failed to transfer to duracloud on: " + currentDate,
+                                currentDate);
 
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =
@@ -143,25 +154,45 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 // TODO: Add details of failure in message
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
-
         }
     }
 
-
-
     /**
-     * @param restoration
-     * @param status 
-     * @param msg
+     * Updates the restore details in the database
+     *
+     * @param restoration the restoration being worked
+     * @param status the new status of the restoration
+     * @param msg status text
      */
-    private void changeRestoreStatus(Restoration restoration,
-                                      RestoreStatus status, String msg) {
+    private Date changeRestoreStatus(Restoration restoration,
+                                     RestoreStatus status,
+                                     String msg,
+                                     Date currentDate) {
         restoration.setStatus(status);
         restoration.setStatusText(msg);
+        Date expirationDate = getExpirationDate(currentDate, daysToExpire);
         if(status.equals(RestoreStatus.RESTORATION_COMPLETE)) {
-            restoration.setEndDate(new Date());
+            restoration.setEndDate(currentDate);
+            restoration.setExpirationDate(expirationDate);
         }
         restoreRepo.save(restoration);
+        return expirationDate;
+    }
+
+    /**
+     * Calculates the restore expiration date based on the restoration
+     * end date and the number of days before retirement
+     *
+     * @param endDate date on which the restoration completed
+     * @param daysToExpire number of days the restored content should stay in place
+     *                     before it is retired
+     * @return expiration date of restored content
+     */
+    protected Date getExpirationDate(Date endDate, int daysToExpire) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(endDate);
+        calendar.add(Calendar.DATE, daysToExpire);
+        return calendar.getTime();
     }
 
     private void sendEmail(String subject, String msg, String... destinations) {

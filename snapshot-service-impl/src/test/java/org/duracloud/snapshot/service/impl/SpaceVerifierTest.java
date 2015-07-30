@@ -67,9 +67,6 @@ public class SpaceVerifierTest extends EasyMockSupport {
         verifyAll();
     }
 
-    /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.SpaceVerifier#write(java.util.List)}.
-     */
     @Test
     public void testSuccessfulRun() throws Exception {
         setupStepExecution();
@@ -80,11 +77,8 @@ public class SpaceVerifierTest extends EasyMockSupport {
         setupTestSubject();
         simulateStepExecution(ExitStatus.COMPLETED);
     }
-    
-    /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.SpaceVerifier#write(java.util.List)}.
-     */
-    @Test
+  
+     @Test
     public void testFailedRunCountDoesNotMatch() throws Exception {
         setupStepExecution();
         setupGetContentProperties(true);

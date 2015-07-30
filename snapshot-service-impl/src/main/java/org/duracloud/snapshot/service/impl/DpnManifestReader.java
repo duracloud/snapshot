@@ -7,9 +7,10 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 
-import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
@@ -22,12 +23,13 @@ import org.springframework.batch.item.UnexpectedInputException;
  */
 public class DpnManifestReader implements ItemReader<ManifestEntry> {
 
+    private File manifestFile;
+    private BufferedReader reader;
     /**
      * @param md5Manifest
-     * @param md5
      */
-     public DpnManifestReader(File md5Manifest, Algorithm md5) {
-        // TODO Auto-generated constructor stub
+     public DpnManifestReader(File manifestFile) {
+         this.manifestFile = manifestFile;
     }
 
     /* (non-Javadoc)
@@ -39,8 +41,16 @@ public class DpnManifestReader implements ItemReader<ManifestEntry> {
             UnexpectedInputException,
             ParseException,
             NonTransientResourceException {
-        // TODO Auto-generated method stub
-        return null;
+        if(this.reader == null){
+            this.reader = new BufferedReader(new FileReader(manifestFile));
+        }
+        
+        String line = this.reader.readLine();
+        if(line != null){
+            return ManifestFileHelper.parseManifestEntry(line);
+        }else{
+            return null;
+        }
     }
-
+    
 }

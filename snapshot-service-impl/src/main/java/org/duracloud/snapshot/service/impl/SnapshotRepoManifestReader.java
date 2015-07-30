@@ -26,28 +26,31 @@ public class SnapshotRepoManifestReader  implements ItemReader<SnapshotContentIt
         
     private SnapshotContentItemRepo repo;
     private StreamingIterator<SnapshotContentItem> items;
+    private String snapshotName;
     
-    public SnapshotRepoManifestReader(SnapshotContentItemRepo repo, final String snapshotName){
+    public SnapshotRepoManifestReader(SnapshotContentItemRepo repo,  String snapshotName){
         this.repo = repo;
-     
-        this.items =
-            new StreamingIterator<SnapshotContentItem>(new JpaIteratorSource<SnapshotContentItemRepo, SnapshotContentItem>(repo) {
-                @Override
-                protected Page<SnapshotContentItem> getNextPage(Pageable pageable, SnapshotContentItemRepo repo) {
-                    return repo.findBySnapshotName(snapshotName, pageable);
-                }
-            });
+        this.snapshotName = snapshotName;
     }
 
     /* (non-Javadoc)
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public SnapshotContentItem read()
+    public SnapshotContentItem read() 
         throws Exception,
             UnexpectedInputException,
             ParseException,
             NonTransientResourceException {
-        return null;
+        if(this.items == null){
+            this.items =
+                new StreamingIterator<SnapshotContentItem>(new JpaIteratorSource<SnapshotContentItemRepo, SnapshotContentItem>(repo) {
+                    @Override
+                    protected Page<SnapshotContentItem> getNextPage(Pageable pageable, SnapshotContentItemRepo repo) {
+                        return repo.findBySnapshotName(snapshotName, pageable);
+                    }
+                });
+        }
+        return this.items.hasNext() ? this.items.next() : null;
     }
 }

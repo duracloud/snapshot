@@ -28,7 +28,7 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
 /**
- * This class verifies that the manifest entry's md5 matches the md5 of the item
+ * This class verifies that the manifest entry's checksum matches the checksum of the item
  * in the destination space.
  * 
  * @author Daniel Bernstein 

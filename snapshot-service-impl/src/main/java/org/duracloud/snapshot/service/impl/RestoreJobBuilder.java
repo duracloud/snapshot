@@ -10,7 +10,6 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 
 import org.duracloud.client.ContentStore;
-import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.retrieval.util.StoreClientUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -41,8 +40,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * @author Daniel Bernstein 
- *         Date: Feb 19, 2014
+ * @author Daniel Bernstein Date: Feb 19, 2014
  */
 @Component
 public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
@@ -55,14 +53,12 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
     private RestoreManager restoreManager;
     private SnapshotContentItemRepo snapshotContentItemRepo;
-    
+
     @Autowired
-    public RestoreJobBuilder(RestoreJobExecutionListener jobListener, 
-                              JobRepository jobRepository,
-                              PlatformTransactionManager transactionManager, 
-                              TaskExecutor taskExecutor,
-                              RestoreManager restoreManager,
-                              SnapshotContentItemRepo snapshotContentItemRepo) {
+    public RestoreJobBuilder(
+        RestoreJobExecutionListener jobListener, JobRepository jobRepository,
+        PlatformTransactionManager transactionManager, TaskExecutor taskExecutor, RestoreManager restoreManager,
+        SnapshotContentItemRepo snapshotContentItemRepo) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
@@ -71,21 +67,25 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         this.restoreManager = restoreManager;
         this.snapshotContentItemRepo = snapshotContentItemRepo;
     }
-    
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java.lang.Object, org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java
+     * .lang.Object,
+     * org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig)
      */
     @Override
-    public Job buildJob(Restoration restoration, SnapshotJobManagerConfig jobManagerConfig)
-        throws SnapshotException {
-         Job job;
-        
+    public Job buildJob(Restoration restoration, SnapshotJobManagerConfig jobManagerConfig) throws SnapshotException {
+        Job job;
+
         try {
 
             DuracloudEndPointConfig destination = restoration.getDestination();
             String destinationSpaceId = destination.getSpaceId();
             String restoreId = restoration.getRestorationId();
-            
+
             StoreClientUtil clientUtil = new StoreClientUtil();
             ContentStore contentStore =
                 clientUtil.createContentStore(destination.getHost(),
@@ -95,46 +95,34 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                               jobManagerConfig.getDuracloudPassword(),
                                               destination.getStoreId());
 
-            Step verifyDpnTransferUsingDpnManifestStep = 
-                buildVerifyDpnTransferUsingDpnManifestStep(restoreId, 
-                                                           jobManagerConfig);
+            Step verifyDpnTransferUsingDpnManifestStep =
+                buildVerifyDpnTransferUsingDpnManifestStep(restoreId, jobManagerConfig);
 
-            Step verifyDpnTransferUsingSnapshotDbStep = 
-                buildVerifyDpnTransferUsingSnapshotRepoStep(restoreId, 
-                                                          jobManagerConfig);
-            
+            Step verifyDpnTransferUsingSnapshotDbStep =
+                buildVerifyDpnTransferUsingSnapshotRepoStep(restoreId, jobManagerConfig);
+
             Step restoreContentStep =
-                buildRestoreContentStep(restoreId,
-                                        destinationSpaceId,
-                                        contentStore,
-                                        jobManagerConfig);
-            
+                buildRestoreContentStep(restoreId, destinationSpaceId, contentStore, jobManagerConfig);
+
             Step restorePropertiesStep =
-                buildRestoreContentPropertiesStep(restoreId, 
-                                                  destinationSpaceId,
-                                                  contentStore,
-                                                  jobManagerConfig);
+                buildRestoreContentPropertiesStep(restoreId, destinationSpaceId, contentStore, jobManagerConfig);
 
             Step verifyDuraCloudTransferStep =
-                buildVerifyDuraCloudTransferStep(restoreId, 
-                                                  destinationSpaceId,
-                                                  contentStore,
-                                                  jobManagerConfig);
+                buildVerifyDuraCloudTransferStep(restoreId, destinationSpaceId, contentStore, jobManagerConfig);
 
-
-            JobBuilderFactory jobBuilderFactory =
-                new JobBuilderFactory(jobRepository);
+            JobBuilderFactory jobBuilderFactory = new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.RESTORE_JOB_NAME);
-            SimpleJobBuilder simpleJobBuilder = jobBuilder.start(verifyDpnTransferUsingDpnManifestStep)
-                                                          .next(verifyDpnTransferUsingSnapshotDbStep)
-                                                          .next(restoreContentStep)
-                                                          .next(restorePropertiesStep)
-                                                          .next(verifyDuraCloudTransferStep);
-            
+            SimpleJobBuilder simpleJobBuilder =
+                jobBuilder.start(verifyDpnTransferUsingDpnManifestStep)
+                          .next(verifyDpnTransferUsingSnapshotDbStep)
+                          .next(restoreContentStep)
+                          .next(restorePropertiesStep)
+                          .next(verifyDuraCloudTransferStep);
+
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
             log.debug("build job {}", job);
-       } catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error creating job: {}", e.getMessage(), e);
             throw new SnapshotException(e.getMessage(), e);
         }
@@ -147,20 +135,17 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @return
      */
     private Step buildVerifyDpnTransferUsingSnapshotRepoStep(String restoreId,
-                                                           SnapshotJobManagerConfig jobManagerConfig) throws Exception{
-
+                                                             SnapshotJobManagerConfig jobManagerConfig)
+                                                                 throws Exception {
         File restoreDir = new File(ContentDirUtils.getSourcePath(restoreId, jobManagerConfig.getContentRootDir()));
-
         Restoration restore = this.restoreManager.get(restoreId);
-
         SnapshotRepoManifestReader reader =
             new SnapshotRepoManifestReader(this.snapshotContentItemRepo, restore.getSnapshot().getName());
 
-        File contentDir = getRestoreContentDir(restoreDir);
+        SnapshotContentItemVerifier writer =
+            new SnapshotContentItemVerifier(getRestoreMd5Manifest(restoreDir), restore.getSnapshot().getName());
+        SimpleStepFactoryBean<SnapshotContentItem, SnapshotContentItem> stepFactory = new SimpleStepFactoryBean<>();
 
-        ManifestVerifier writer = new ManifestVerifier(restoreId, contentDir, restoreManager);
-
-        SimpleStepFactoryBean<SnapshotContentItem, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
@@ -186,27 +171,23 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                                   SnapshotJobManagerConfig jobManagerConfig) throws Exception {
 
         File restoreDir = getRestoreDir(restoreId, jobManagerConfig);
-        
-        File md5Manifest = getRestoreMd5Manifest(restoreDir);
-        
-        DpnManifestReader reader =
-            new DpnManifestReader(md5Manifest, Algorithm.MD5);
 
-        SpaceVerifier writer =
-            new SpaceVerifier(contentStore, destinationSpaceId);
-        
-        
-        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory =
-            new SimpleStepFactoryBean<>();
+        File md5Manifest = getRestoreMd5Manifest(restoreDir);
+
+        DpnManifestReader reader = new DpnManifestReader(md5Manifest);
+
+        SpaceVerifier writer = new SpaceVerifier(contentStore, destinationSpaceId);
+
+        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
-        stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
+        stepFactory.setBeanName("verifyDuraCloudTransferUsingDpnManifestStep");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[]{writer});
+        stepFactory.setListeners(new StepListener[] { writer });
         return stepFactory.getObject();
     }
 
@@ -215,26 +196,21 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @param jobManagerConfig
      * @return
      */
-    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restorationId, 
-                                                            SnapshotJobManagerConfig jobManagerConfig)  
-                                                                throws Exception{
+    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restorationId,
+                                                            SnapshotJobManagerConfig jobManagerConfig)
+                                                                throws Exception {
 
         File restoreDir = getRestoreDir(restorationId, jobManagerConfig);
-        
+
         File md5Manifest = getRestoreMd5Manifest(restoreDir);
-        
-        DpnManifestReader reader =
-            new DpnManifestReader(md5Manifest, Algorithm.MD5);
-        
+
+        DpnManifestReader reader = new DpnManifestReader(md5Manifest);
+
         File contentDir = getRestoreContentDir(restoreDir);
 
-        ManifestVerifier writer =
-            new ManifestVerifier(restorationId, 
-                                 contentDir,
-                                 restoreManager);
-        
-        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory =
-            new SimpleStepFactoryBean<>();
+        ManifestVerifier writer = new ManifestVerifier(restorationId, contentDir);
+
+        SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("verifyDpnTransferUsingDpnManifestStep");
@@ -243,7 +219,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[]{writer});
+        stepFactory.setListeners(new StepListener[] { writer });
         return stepFactory.getObject();
     }
 
@@ -252,11 +228,10 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @return
      */
     private File getRestoreMd5Manifest(File restoreDir) {
-        File md5Manifest = new File(restoreDir, "manifest-md5.txt");
-        
-        if(!md5Manifest.exists()){
-            throw new RuntimeException("The md5 manifest file is missing:  " + 
-                md5Manifest.getAbsolutePath());
+        File md5Manifest = new File(restoreDir, ManifestFileHelper.MANIFEST_MD5_TEXT_FILE_NAME);
+
+        if (!md5Manifest.exists()) {
+            throw new RuntimeException("The md5 manifest file is missing:  " + md5Manifest.getAbsolutePath());
         }
         return md5Manifest;
     }
@@ -267,10 +242,10 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      */
     private File getRestoreContentDir(File restoreDir) {
         File contentDir = new File(restoreDir, "data");
-        
-        if(!contentDir.exists()){
-            throw new RuntimeException("The content direcotry is missing for restoration:  " + 
-                contentDir.getAbsolutePath());
+
+        if (!contentDir.exists()) {
+            throw new RuntimeException("The content direcotry is missing for restoration:  "
+                + contentDir.getAbsolutePath());
         }
         return contentDir;
     }
@@ -281,42 +256,34 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @return
      */
     private File getRestoreDir(String restorationId, SnapshotJobManagerConfig jobManagerConfig) {
-        File restoreDir = new File(ContentDirUtils.getSourcePath(restorationId,
-                                                   jobManagerConfig.getContentRootDir()));
+        File restoreDir = new File(ContentDirUtils.getSourcePath(restorationId, jobManagerConfig.getContentRootDir()));
 
         if (!restoreDir.exists()) {
-            throw new RuntimeException("The directory for the restored snapshot " +
-                                       "does not exist in bridge storage: missing: " + 
-                                       restoreDir.getAbsolutePath());
+            throw new RuntimeException("The directory for the restored snapshot "
+                + "does not exist in bridge storage: missing: " + restoreDir.getAbsolutePath());
         }
         return restoreDir;
     }
 
-    private Step
-        buildRestoreContentPropertiesStep(String restorationId,
-                                          String destinationSpaceId,
-                                          ContentStore contentStore,
-                                          SnapshotJobManagerConfig jobManagerConfig)
-                      throws Exception {    
-        
-        File contentPropertiesJsonFile = new File(ContentDirUtils.getSourcePath(restorationId,
-                                                   jobManagerConfig.getContentRootDir()), 
-                                   SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
+    private Step buildRestoreContentPropertiesStep(String restorationId,
+                                                   String destinationSpaceId,
+                                                   ContentStore contentStore,
+                                                   SnapshotJobManagerConfig jobManagerConfig) throws Exception {
+
+        File contentPropertiesJsonFile =
+            new File(ContentDirUtils.getSourcePath(restorationId, jobManagerConfig.getContentRootDir()),
+                     SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
 
         if (!contentPropertiesJsonFile.exists()) {
-            throw new RuntimeException("The restored content properties file is missing : " + 
-                                       contentPropertiesJsonFile.getAbsolutePath());
+            throw new RuntimeException("The restored content properties file is missing : "
+                + contentPropertiesJsonFile.getAbsolutePath());
         }
-        
-        
-        ContentPropertiesFileReader reader =
-            new ContentPropertiesFileReader(contentPropertiesJsonFile);
 
-         ContentPropertiesWriter writer = new ContentPropertiesWriter(contentStore, destinationSpaceId);
+        ContentPropertiesFileReader reader = new ContentPropertiesFileReader(contentPropertiesJsonFile);
 
-        
-        SimpleStepFactoryBean<ContentProperties,ContentProperties> stepFactory =
-            new SimpleStepFactoryBean<>();
+        ContentPropertiesWriter writer = new ContentPropertiesWriter(contentStore, destinationSpaceId);
+
+        SimpleStepFactoryBean<ContentProperties, ContentProperties> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("restoreContentPropertiesStep");
@@ -325,16 +292,14 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[]{writer});
-        return stepFactory.getObject();   
+        stepFactory.setListeners(new StepListener[] { writer });
+        return stepFactory.getObject();
     }
 
-    private Step
-        buildRestoreContentStep(String restorationId,
-                                String destinationSpaceId,
-                                ContentStore contentStore,
-                                SnapshotJobManagerConfig jobManagerConfig)
-            throws Exception {        
+    private Step buildRestoreContentStep(String restorationId,
+                                         String destinationSpaceId,
+                                         ContentStore contentStore,
+                                         SnapshotJobManagerConfig jobManagerConfig) throws Exception {
 
         SyncEndpoint endpoint =
             new DuraStoreChunkSyncEndpoint(contentStore,
@@ -344,32 +309,22 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                            true,
                                            1073741824); // 1GiB chunk size
         endpoint.addEndPointListener(new EndPointLogger());
-        
+
         File watchDir =
-            new File(ContentDirUtils.getSourcePath(restorationId,
-                                                   jobManagerConfig.getContentRootDir())
+            new File(ContentDirUtils.getSourcePath(restorationId, jobManagerConfig.getContentRootDir())
                 + File.separator + "data");
 
         if (!watchDir.exists()) {
-            throw new RuntimeException("The content directory for the restored snapshot " +
-                                       "does not exist in bridge storage: missing watchDir: " + 
-                                       watchDir.getAbsolutePath());
+            throw new RuntimeException("The content directory for the restored snapshot "
+                + "does not exist in bridge storage: missing watchDir: " + watchDir.getAbsolutePath());
         }
-        
-        
-        FileSystemReader reader =
-            new FileSystemReader(watchDir);
+
+        FileSystemReader reader = new FileSystemReader(watchDir);
 
         SyncWriter writer =
-            new SyncWriter(restorationId, watchDir,
-                           endpoint,
-                           contentStore,
-                           destinationSpaceId,
-                           restoreManager);
+            new SyncWriter(restorationId, watchDir, endpoint, contentStore, destinationSpaceId, restoreManager);
 
-        
-        SimpleStepFactoryBean<File, File> stepFactory =
-            new SimpleStepFactoryBean<>();
+        SimpleStepFactoryBean<File, File> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
         stepFactory.setBeanName("restoreContentStep");
@@ -378,20 +333,26 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[]{writer});
+        stepFactory.setListeners(new StepListener[] { writer });
         return stepFactory.getObject();
     }
-    
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildIdentifyingJobParameters(java.lang.Object)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#
+     * buildIdentifyingJobParameters(java.lang.Object)
      */
     @Override
     public JobParameters buildIdentifyingJobParameters(Restoration restoration) {
         return new JobParameters(RestoreJobParameterMarshaller.marshal(restoration));
     }
-    
-    /* (non-Javadoc)
-     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJobParameters(java.lang.Object)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#
+     * buildJobParameters(java.lang.Object)
      */
     @Override
     public JobParameters buildJobParameters(Restoration entity) {

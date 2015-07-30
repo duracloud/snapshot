@@ -36,6 +36,8 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
      * @param pageable
      * @return
      */
-    public Page<SnapshotContentItem> findBySnapshotName(@Param("snapshotName") String snapshotName, Pageable pageable);
+    public Page<SnapshotContentItem> 
+        findBySnapshotName(@Param("snapshotName") String snapshotName, 
+                           Pageable pageable);
 
 }

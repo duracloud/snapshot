@@ -7,6 +7,14 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -24,13 +32,6 @@ import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This class is responsible for reading the contents and properties of a duracloud content item,
@@ -157,16 +158,20 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     protected void writeMD5Checksum(ContentItem contentItem,
                                     String md5Checksum) throws IOException {
         synchronized (md5Writer) {
-            md5Writer.write(md5Checksum + "  data/" +
-                               contentItem.getContentId() + "\n");
+            ManifestFileHelper.writeManifestEntry(md5Writer, 
+                                                    contentItem.getContentId(), 
+                                                    md5Checksum);
         }
     }
+
+
 
     protected synchronized void writeSHA256Checksum(ContentItem contentItem,
                                        File localFile) throws IOException {
         String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
-        sha256Writer.write(sha256Checksum + "  data/" +
-                           contentItem.getContentId() + "\n");
+        ManifestFileHelper.writeManifestEntry(sha256Writer, 
+                                                contentItem.getContentId(), 
+                                                sha256Checksum);
     }
 
     protected void writeContentProperties(ContentItem contentItem,

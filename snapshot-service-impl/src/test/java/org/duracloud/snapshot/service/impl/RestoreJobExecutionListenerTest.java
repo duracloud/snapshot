@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -26,6 +27,7 @@ import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -54,7 +56,16 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private RestoreRepo restoreRepo;
-    
+
+    @Mock
+    private SnapshotTaskClientHelper snapshotTaskClientHelper;
+
+    @Mock
+    private SnapshotTaskClient snapshotTaskClient;
+
+    @Mock
+    private BridgeConfiguration bridgeConfig;
+
     @Mock
     private Snapshot snapshot;
 
@@ -69,7 +80,6 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     private String contentDir = "content-dir";
     private int daysToExpire = 42;
     private JobParameters jobParams;
-
     
     @Before
     public void setup() {
@@ -82,11 +92,16 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testAfterJobSuccess() {
+    public void testAfterJobSuccess() throws Exception {
         setupCommon();
 
         String duracloudEmail = "duracloud-email";
         String userEmail = "user-email";
+        String spaceId = "space-id";
+        String dcUsername = "dc-username";
+        String dcPassword = "dc-password";
+        DuracloudEndPointConfig endPointConfig = new DuracloudEndPointConfig();
+        endPointConfig.setSpaceId(spaceId);
 
         expect(jobExecution.getStatus())
                 .andReturn(BatchStatus.COMPLETED);
@@ -105,12 +120,25 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
         restoration.setEndDate(EasyMock.isA(Date.class));
         expectLastCall();
-        expect(restoration.getDestination()).andReturn(new DuracloudEndPointConfig());
+        expect(restoration.getDestination()).andReturn(endPointConfig);
         expect(executionConfig.getDuracloudEmailAddresses()).andReturn(new String[]{duracloudEmail});
         expect(restoration.getUserEmail()).andReturn(userEmail);
 
         restoration.setExpirationDate(EasyMock.isA(Date.class));
         expectLastCall();
+
+        EasyMock.expect(snapshotTaskClientHelper
+                            .create(EasyMock.isA(DuracloudEndPointConfig.class),
+                                    EasyMock.<String>anyObject(),
+                                    EasyMock.<String>anyObject()))
+                .andReturn(snapshotTaskClient);
+        EasyMock.expect(snapshotTaskClient.completeRestore(spaceId, daysToExpire))
+                .andReturn(null);
+
+        EasyMock.expect(bridgeConfig.getDuracloudUsername())
+                .andReturn(dcUsername);
+        EasyMock.expect(bridgeConfig.getDuracloudPassword())
+                .andReturn(dcPassword);
 
         replayAll();
 

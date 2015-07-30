@@ -53,10 +53,13 @@ public class SnapshotManagerImpl implements SnapshotManager {
     //      when annotating methods with @Transactional.
     @Autowired
     private SnapshotContentItemRepo snapshotContentItemRepo;
+
     @Autowired
     private SnapshotRepo snapshotRepo;
+
     @Autowired
     private NotificationManager notificationManager;
+
     @Autowired
     private SnapshotTaskClientHelper snapshotTaskClientHelper;
     
@@ -64,6 +67,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     private StoreClientHelper storeClientHelper;
     
     private ChecksumUtil checksumUtil;
+
     @Autowired
     private BridgeConfiguration bridgeConfig;
 
@@ -74,8 +78,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     /**
      * @param snapshotContentItemRepo the snapshotContentItemRepo to set
      */
-    public void
-        setSnapshotContentItemRepo(SnapshotContentItemRepo snapshotContentItemRepo) {
+    public void setSnapshotContentItemRepo(SnapshotContentItemRepo snapshotContentItemRepo) {
         this.snapshotContentItemRepo = snapshotContentItemRepo;
     }
 
@@ -96,8 +99,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     /**
      * @param snapshotTaskClientHelper the snapshotTaskClientHelper to set
      */
-    public void
-        setSnapshotTaskClientHelper(SnapshotTaskClientHelper snapshotTaskClientHelper) {
+    public void setSnapshotTaskClientHelper(SnapshotTaskClientHelper snapshotTaskClientHelper) {
         this.snapshotTaskClientHelper = snapshotTaskClientHelper;
     }
 
@@ -142,8 +144,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     private synchronized String getIdChecksum(String contentId) {
         return checksumUtil.generateChecksum(contentId);
     }
-    
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(org.duracloud.snapshot.db.model.Snapshot)
      */
@@ -151,8 +152,6 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Transactional
     public Snapshot transferToDpnNodeComplete(String snapshotId)
         throws SnapshotException {
-        
-        
         try {
             Snapshot snapshot = getSnapshot(snapshotId);
 
@@ -163,13 +162,10 @@ public class SnapshotManagerImpl implements SnapshotManager {
             FileUtils.deleteDirectory(snapshotDir);
 
             DuracloudEndPointConfig source = snapshot.getSource();
-
             String spaceId = source.getSpaceId();
-            SnapshotTaskClient client =
-                this.snapshotTaskClientHelper.create(source,
-                                                     bridgeConfig.getDuracloudUsername(),
-                                                     bridgeConfig.getDuracloudPassword());
-            client.cleanupSnapshot(spaceId);
+
+            // Call DuraCloud to clean up snapshot
+            getSnapshotTaskClient(source).cleanupSnapshot(spaceId);
             log.info("successfully initiated snapshot cleanup on DuraCloud for snapshotId = "
                 + snapshotId + "; spaceId = " + spaceId);
             
@@ -181,6 +177,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
         }
     }
 
+    /**
+     * Build the snapshot task client - for communicating with the DuraCloud snapshot
+     * provider to perform tasks.
+     *
+     * @param source DuraCloud connection source
+     * @return task client
+     */
+    private SnapshotTaskClient getSnapshotTaskClient(DuracloudEndPointConfig source) {
+        return this.snapshotTaskClientHelper.create(source,
+                                                    bridgeConfig.getDuracloudUsername(),
+                                                    bridgeConfig.getDuracloudPassword());
+    }
 
     /**
      * @param snapshotId
@@ -194,7 +202,6 @@ public class SnapshotManagerImpl implements SnapshotManager {
         }
         return snapshot;
     }
-    
 
     private Snapshot cleanupComplete(Snapshot snapshot)
         throws SnapshotException {
@@ -227,28 +234,22 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Override
     @Transactional
     public void finalizeSnapshots() {
-        String username =  this.bridgeConfig.getDuracloudUsername();
-        String password = this.bridgeConfig.getDuracloudPassword();
-        log.debug("running...");
+        log.debug("Running finalize snapshots...");
         List<Snapshot> snapshots = this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();
             ContentStore store =
                 storeClientHelper.create(source,
-                                         username,
-                                         password);
+                                         bridgeConfig.getDuracloudUsername(),
+                                         bridgeConfig.getDuracloudPassword());
             try {
                 String spaceId = source.getSpaceId();
                 Iterator<String> it  = store.getSpaceContents(spaceId);
                 if(!it.hasNext()) {
-                    //call complete on task
-                    SnapshotTaskClient client =
-                        this.snapshotTaskClientHelper.create(source,
-                                                             username,
-                                                             password);
-
+                    // Call DuraCloud to complete snapshot
                     log.debug("notifying task provider that snapshot is complete for space " + spaceId );
-                    CompleteSnapshotTaskResult result = client.completeSnapshot(spaceId);
+                    CompleteSnapshotTaskResult result =
+                        getSnapshotTaskClient(source).completeSnapshot(spaceId);
                     log.info("snapshot complete call to task provider performed for space "
                         + spaceId + ": result = " + result.getResult());
 

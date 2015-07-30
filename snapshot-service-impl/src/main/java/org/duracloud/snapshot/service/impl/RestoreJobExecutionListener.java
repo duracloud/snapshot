@@ -9,6 +9,8 @@ package org.duracloud.snapshot.service.impl;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.duracloud.client.ContentStore;
+import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.DateUtil;
@@ -19,6 +21,7 @@ import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -52,6 +55,12 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
     
     @Autowired
     private RestoreRepo restoreRepo;
+
+    @Autowired
+    private SnapshotTaskClientHelper snapshotTaskClientHelper;
+
+    @Autowired
+    private BridgeConfiguration bridgeConfig;
     
     private ExecutionListenerConfig config;
 
@@ -69,6 +78,20 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
      */
     public void setRestorationRepo(RestoreRepo restoreRepo) {
         this.restoreRepo = restoreRepo;
+    }
+
+    /**
+     * @param snapshotTaskClientHelper the snapshotTaskClientHelper to set
+     */
+    public void setSnapshotTaskClientHelper(SnapshotTaskClientHelper snapshotTaskClientHelper) {
+        this.snapshotTaskClientHelper = snapshotTaskClientHelper;
+    }
+
+    /**
+     * @param bridgeConfig the bridgeConfig to set
+     */
+    public void setBridgeConfig(BridgeConfiguration bridgeConfig) {
+        this.bridgeConfig = bridgeConfig;
     }
 
     public void init(ExecutionListenerConfig config, int daysToExpire) {
@@ -97,20 +120,27 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
         if(BatchStatus.COMPLETED.equals(status)) {
             try {
-                // Job success. Email duracloud team as well as restoration requestor
+                // Job success, set completion state
                 Date expirationDate =
                     changeRestoreStatus(restoration,
                                         RestoreStatus.RESTORATION_COMPLETE,
                                         "Completed transfer to duracloud on: " +
                                         currentDate,
                                         currentDate);
+
+                DuracloudEndPointConfig destination = restoration.getDestination();
+
+                // Tell DuraCloud to set expiration policy
+                SnapshotTaskClient taskClient = getSnapshotTaskClient(destination);
+                taskClient.completeRestore(destination.getSpaceId(), daysToExpire);
+
+                // Email duracloud team as well as restoration requestor
                 String subject =
                     "DuraCloud snapshot " + snapshotId +
                     " has been restored! Restore ID = " + restoreId;
                 String message =
                     "A DuraCloud snapshot restore has completed successfully:\n\n";
 
-                DuracloudEndPointConfig destination = restoration.getDestination();
                 message += "SnapshotId: " + snapshotId + "\n";
                 message += "Restore Id: " + restoreId + "\n";
                 message += "Destination Host: " + destination.getHost() + "\n";
@@ -221,5 +251,18 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         
         log.info("sent email with subject=\""
             + subject + "\" to " + StringUtils.join(destinations, ","));
+    }
+
+    /**
+     * Build the snapshot task client - for communicating with the DuraCloud snapshot
+     * provider to perform tasks.
+     *
+     * @param source DuraCloud connection source
+     * @return task client
+     */
+    private SnapshotTaskClient getSnapshotTaskClient(DuracloudEndPointConfig source) {
+        return this.snapshotTaskClientHelper.create(source,
+                                                    bridgeConfig.getDuracloudUsername(),
+                                                    bridgeConfig.getDuracloudPassword());
     }
 }

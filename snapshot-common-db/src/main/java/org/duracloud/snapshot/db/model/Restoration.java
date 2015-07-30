@@ -113,7 +113,6 @@ public class Restoration extends BaseEntity {
     /**
      * @param expirationDate the expiration date of this restoration
      */
-
     public void setExpirationDate(Date expirationDate) {
         this.expirationDate = expirationDate;
     }

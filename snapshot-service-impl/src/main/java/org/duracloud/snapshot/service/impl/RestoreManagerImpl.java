@@ -132,7 +132,7 @@ public class RestoreManagerImpl  implements RestoreManager{
 
         transitionRestoreStatus(restoration,
                                 RestoreStatus.WAITING_FOR_DPN,
-                                "restoration request issued");
+                                "Restoration request issued");
 
         restoration =  save(restoration);
 
@@ -258,7 +258,7 @@ public class RestoreManagerImpl  implements RestoreManager{
             Restoration updatedRestoration =
                 transitionRestoreStatus(restorationId,
                                         RestoreStatus.DPN_TRANSFER_COMPLETE,
-                                        "completed");
+                                        "Completed restore to bridge storage");
             this.jobManager.executeRestoration(restorationId);
             
             return updatedRestoration;
@@ -356,7 +356,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         throws InvalidStateTransitionException {
         RestorationStateTransitionValidator.validate(restoration.getStatus(), status);
         restoration.setStatus(status);
-        restoration.setStatusText(new Date() + ": " + message);
+        restoration.setStatusText(message + " on: " + new Date());
     }
 
     /* (non-Javadoc)
@@ -389,7 +389,7 @@ public class RestoreManagerImpl  implements RestoreManager{
                         // Update restore status
                         transitionRestoreStatus(restoration,
                                                 RestoreStatus.RESTORATION_EXPIRED,
-                                                "restoration expired");
+                                                "Restoration expired");
                         restoration =  save(restoration);
                         log.info("Transition of restore " +
                                  restoration.getRestorationId() +

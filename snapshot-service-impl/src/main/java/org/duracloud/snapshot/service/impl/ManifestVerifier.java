@@ -12,9 +12,12 @@ import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -35,15 +38,17 @@ public class ManifestVerifier
     private File contentDir;
     private List<String> errors;
     private ChecksumUtil checksumUtil = new ChecksumUtil(Algorithm.MD5);
+    private RestoreManager restoreManager;
 
     /**
      * @param restorationId
      * @param contentDir
      * @param restoreManager
      */
-    public ManifestVerifier(String restorationId, File contentDir) {
+    public ManifestVerifier(String restorationId, File contentDir, RestoreManager restorationManager) {
         this.restorationId = restorationId;
         this.contentDir = contentDir;
+        this.restoreManager = restorationManager;
         this.errors = new LinkedList<>();
     }
 
@@ -88,6 +93,24 @@ public class ManifestVerifier
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
+        errors.clear();
+        try {
+            new Retrier().execute(new Retriable(){
+                /* (non-Javadoc)
+                 * @see org.duracloud.common.retry.Retriable#retry()
+                 */
+                @Override
+                public Object retry() throws Exception {
+                    restoreManager.transitionRestoreStatus(restorationId, 
+                                                           RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER, 
+                                                           "");
+                    return null;
+                }
+            });
+        }catch(Exception ex){
+            stepExecution.addFailureException(ex);
+        }
+        
     }
 
     /*
@@ -98,20 +121,30 @@ public class ManifestVerifier
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        ExitStatus status = stepExecution.getExitStatus();
         if (this.errors.size() > 0) {
-            log.error("manifest verification finished: result=failed step_execution_id={} job_execution_id={} restore_id={} errors=\"{}\"",
+            status = status.and(ExitStatus.FAILED);
+            for(String error:errors){
+                status = status.addExitDescription(error);
+            }
+
+            log.error("manifest verification finished:  step_execution_id={} job_execution_id={} restore_id={} exit_status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       restorationId,
-                      StringUtils.join(errors, ", \n"));
-            return ExitStatus.FAILED;
+                      status);
+            
         } else {
-            log.info("manifest verification finished: result=success step_execution_id={} job_execution_id={} restore_id={}",
+            log.info("manifest verification finished:step_execution_id={} job_execution_id={} restore_id={} exit_status=\"{}\"",
                      stepExecution.getId(),
                      stepExecution.getJobExecutionId(),
-                     restorationId);
-            return ExitStatus.COMPLETED;
+                     restorationId,
+                     status);
+            
+            status = status.and(ExitStatus.COMPLETED);
         }
+        
+        return status;
     }
 
     /*
@@ -122,30 +155,37 @@ public class ManifestVerifier
     @Override
     public void write(List<? extends ManifestEntry> items) throws Exception {
         for (ManifestEntry entry : items) {
-            String contentId = entry.getContentId();
-            String checksum = entry.getChecksum();
+            try{
+                String contentId = entry.getContentId();
+                String checksum = entry.getChecksum();
 
-            File file = new File(this.contentDir.getAbsolutePath() + File.separator + contentId);
-            if (!file.exists()) {
-                String message =
-                    MessageFormat.format("content (\"{0}\") not found in path ({1}) for restore ({2})",
-                                         contentId,
-                                         file.getAbsolutePath(),
-                                         restorationId);
-                log.error(message);
-                errors.add(message);
-            } else {
-                String fileChecksum = checksumUtil.generateChecksum(file);
-                if (!checksum.equals(fileChecksum)) {
+                File file = new File(this.contentDir.getAbsolutePath() + File.separator + contentId);
+                if (!file.exists()) {
                     String message =
-                        MessageFormat.format("content id's (\"{0}\")  manifest checksum ({1}) does not match file's checksum",
+                        MessageFormat.format("content (\"{0}\") not found in path ({1}) for restore ({2})",
                                              contentId,
-                                             file.getAbsolutePath());
+                                             file.getAbsolutePath(),
+                                             restorationId);
                     log.error(message);
                     errors.add(message);
                 } else {
-                    log.debug("successfully verified entry {}", entry);
+                    String fileChecksum = checksumUtil.generateChecksum(file);
+                    if (!checksum.equals(fileChecksum)) {
+                        String message =
+                            MessageFormat.format("content id's (\"{0}\")  manifest checksum ({1}) does not match file's checksum",
+                                                 contentId,
+                                                 file.getAbsolutePath());
+                        log.error(message);
+                        errors.add(message);
+                    } else {
+                        log.debug("successfully verified entry {}", entry);
+                    }
                 }
+                
+            }catch(Exception ex){
+                String message = "failed to verify " + entry + ": " + ex.getMessage();
+                log.error(message, ex);
+                errors.add(message);
             }
         }
     }

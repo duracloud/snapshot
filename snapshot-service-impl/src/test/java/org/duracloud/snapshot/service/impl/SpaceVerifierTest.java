@@ -17,6 +17,10 @@ import java.util.Map;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.error.ContentStoreException;
+import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.RestoreManager;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
 import org.easymock.EasyMockSupport;
 import org.easymock.IExpectationSetters;
@@ -45,6 +49,11 @@ public class SpaceVerifierTest extends EasyMockSupport {
     @Mock
     private ContentStore contentStore;
     
+    @Mock
+    private RestoreManager restoreManager;
+    
+    private String restoreId = "restore-id";
+    
     /**
      * @throws java.lang.Exception
      */
@@ -56,7 +65,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
      * 
      */
     private void setupTestSubject() {
-        this.verifier = new SpaceVerifier(contentStore, spaceId);
+        this.verifier = new SpaceVerifier(restoreId, contentStore, spaceId, restoreManager);
     }
 
     /**
@@ -109,7 +118,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
         verifier.beforeWrite(items);
         verifier.write(items);
         verifier.afterWrite(items);
-        assertEquals(expectedStatus, verifier.afterStep(stepExecution));
+        assertEquals(expectedStatus.getExitCode(), verifier.afterStep(stepExecution).getExitCode());
     }
 
     /**
@@ -123,9 +132,15 @@ public class SpaceVerifierTest extends EasyMockSupport {
     /**
      * 
      */
-    private void setupStepExecution() {
+    private void setupStepExecution() throws Exception{
+        expect(stepExecution.getExitStatus()).andReturn(ExitStatus.EXECUTING);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
+
+        expect(restoreManager.transitionRestoreStatus(eq(restoreId),
+                                                      eq(RestoreStatus.VERIFYING_TRANSFERRED_CONTENT),
+                                                      eq(""))).andReturn(EasyMock.createMock(Restoration.class));
+
     }
 
     /**

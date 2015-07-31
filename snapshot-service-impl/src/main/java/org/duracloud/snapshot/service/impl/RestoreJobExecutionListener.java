@@ -7,6 +7,13 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.duracloud.common.notification.NotificationManager;
@@ -19,20 +26,13 @@ import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * @author Erik Paulsson
@@ -80,7 +80,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
     @Transactional
     public void afterJob(JobExecution jobExecution) {
         JobParameters jobParams = jobExecution.getJobParameters();
-        BatchStatus status = jobExecution.getStatus();
+        ExitStatus status = jobExecution.getExitStatus();
         String restorationId = RestoreJobParameterMarshaller.unmarshal(jobParams);
         Restoration restoration = restoreRepo.findByRestorationId(restorationId);
         String restorationPath = ContentDirUtils.getSourcePath(restoration.getRestorationId(), config.getContentRoot());
@@ -89,8 +89,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         Snapshot snapshot = restoration.getSnapshot();
         String snapshotId = snapshot.getName();
         String restoreId = restoration.getRestorationId();
-
-        if(BatchStatus.COMPLETED.equals(status)) {
+        if(ExitStatus.COMPLETED.getExitCode().equals(status.getExitCode())) {
             // Job success. Email duracloud team as well as restoration requestor
             
             changeRestoreStatus(restoration,
@@ -138,8 +137,9 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 "A DuraCloud snapshot restoration has failed to complete.\n" +
                 "\nrestore-id=" + restoreId +
                 "\nsnapshot-id=" + snapshotId +
-                "\nrestore-path=" + restorationPath;
-                // TODO: Add details of failure in message
+                "\nrestore-path=" + restorationPath+
+                "\npring-batch-exit-status-code=" + status.getExitCode() + 
+                "\nerrors=" + status.getExitDescription();
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
 

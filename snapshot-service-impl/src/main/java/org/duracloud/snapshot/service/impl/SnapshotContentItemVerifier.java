@@ -16,10 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.lang3.StringUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.collection.WriteOnlyStringSet;
+import org.duracloud.common.constant.Constants;
+import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -39,19 +43,23 @@ public class SnapshotContentItemVerifier
 
     private Logger log = LoggerFactory.getLogger(SpaceVerifier.class);
     private File manifestFile;
+    private String restoreId;
     private WriteOnlyStringSet manifestSet;
     private String snapshotName;
     private List<String> errors;
     private AtomicLong snapshotContentItemCount;
+    private RestoreManager restoreManager;
     /**
      * @param manifestFile
      */
     
-    public SnapshotContentItemVerifier(File manifestFile, String snapshotName) {
+    public SnapshotContentItemVerifier(String restoreId, File manifestFile, String snapshotName, RestoreManager restoreManager) {
+        this.restoreId = restoreId;
         this.manifestFile = manifestFile;
         this.snapshotName = snapshotName;
         this.errors = new LinkedList<>();
         this.snapshotContentItemCount = new AtomicLong(0);
+        this.restoreManager = restoreManager;
     }
 
     /* (non-Javadoc)
@@ -79,8 +87,8 @@ public class SnapshotContentItemVerifier
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        if(this.manifestSet == null){
 
+        if(this.manifestSet == null){
             int count = 0;
             
             try(BufferedReader breader = new BufferedReader(new FileReader(this.manifestFile))){
@@ -95,17 +103,31 @@ public class SnapshotContentItemVerifier
 
             try {
                 DpnManifestReader reader = new DpnManifestReader(this.manifestFile);
-                reader = new DpnManifestReader(this.manifestFile);
                 
                 ManifestEntry entry = null;
                 while((entry = reader.read()) != null){
                     this.manifestSet.add(formatManifestSetString(entry.getContentId(), 
                                                                  entry.getChecksum()));
                 }
-                
+            
+                new Retrier().execute(new Retriable(){
+                    /* (non-Javadoc)
+                     * @see org.duracloud.common.retry.Retriable#retry()
+                     */
+                    @Override
+                    public Object retry() throws Exception {
+                        restoreManager.transitionRestoreStatus(restoreId, 
+                                                               RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST, 
+                                                               "");
+                        return null;
+                    }
+                });
+            
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                stepExecution.addFailureException(e);
             }
+            
+            
         }
     }
 
@@ -126,29 +148,38 @@ public class SnapshotContentItemVerifier
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         try{
+
+            //compare counts (which should not include SNAPSHOT_PROPS_FILENAME on the snapshot repo side since
+            //it does not get written to the manifest.
+            if(snapshotContentItemCount.get() == this.manifestSet.size()){
+                log.debug("snapshot repo count matches manifest count: step_execution_id={} job_execution_id={} snapshot_name={}",
+                         stepExecution.getId(),
+                         stepExecution.getJobExecutionId(),
+                         this.snapshotName);                    
+            }else{
+                errors.add("snapshot ("+snapshotName+") content item count (" + snapshotContentItemCount.get() + ") does not match manifest count (" + manifestSet.size() + ")");
+            }
+
+            
+            ExitStatus status = stepExecution.getExitStatus();
+            
             if(this.errors.size() > 0){
-                log.error("snapshot repo verification finished: result=failed step_execution_id={} job_execution_id={} snapshot_name={} errors=\"{}\"",
+                status = status.and(ExitStatus.FAILED);
+                
+                for(String error:errors){
+                    status = status.addExitDescription(error);
+                }
+
+                log.error("snapshot repo verification finished: step_execution_id={} job_execution_id={} snapshot_name={} status=\"{}\"",
                           stepExecution.getId(),
                           stepExecution.getJobExecutionId(),
                           snapshotName,
-                          StringUtils.join(errors, ", \n"));                
-                return ExitStatus.FAILED;
+                          status);                
             }else{
-                if(snapshotContentItemCount.get() == this.manifestSet.size()){
-                    log.info("snapshot repo verification completed: result=success step_execution_id={} job_execution_id={} snapshot_name={}",
-                             stepExecution.getId(),
-                             stepExecution.getJobExecutionId(),
-                             this.snapshotName);                    
-                    return ExitStatus.COMPLETED;
-                }else{
-                    log.error("snapshot repo verification finished: result=failed step_execution_id={} job_execution_id={} snapshot_name={} message=\"{}\"",
-                              stepExecution.getId(),
-                              stepExecution.getJobExecutionId(),
-                              snapshotName,
-                              "snapshot content item count (" + snapshotContentItemCount.get() + ") does not match manifest count (" + manifestSet.size() + ")");                
-                    return ExitStatus.FAILED;
-                }
+                status = status.and(ExitStatus.COMPLETED);
             }
+            
+            return status;
         }finally{
             this.manifestSet = null;
             this.snapshotContentItemCount.set(0);
@@ -165,12 +196,16 @@ public class SnapshotContentItemVerifier
             Map<String,String> props = PropertiesSerializer.deserialize(item.getMetadata());
             String contentId = item.getContentId();
             String checksum = props.get(ContentStore.CONTENT_CHECKSUM);
-            if(!this.manifestSet.contains(formatManifestSetString(contentId,checksum))){
-                errors.add(MessageFormat.format("Content item {0} with checksum {1} not found in manifest for snapshot {2}", 
-                                                    contentId, checksum, 
-                                                    this.snapshotName));
+            
+            //verify that manifest contains every item from the database except SNAPSHOT_PROPS_FILENAME
+            if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                if(!this.manifestSet.contains(formatManifestSetString(contentId,checksum))){
+                    errors.add(MessageFormat.format("Content item {0} with checksum {1} not found in manifest for snapshot {2}", 
+                                                        contentId, checksum, 
+                                                        this.snapshotName));
+                }
+                snapshotContentItemCount.incrementAndGet();
             }
-            snapshotContentItemCount.incrementAndGet();
         }
     }
 

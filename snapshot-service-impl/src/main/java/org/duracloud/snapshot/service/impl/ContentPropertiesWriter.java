@@ -9,6 +9,8 @@ package org.duracloud.snapshot.service.impl;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
+import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -120,17 +122,20 @@ public class ContentPropertiesWriter
      */
     @Override
     public void write(List<? extends ContentProperties> items) throws Exception {
-        for(ContentProperties props : items){
-            if(!Constants.SNAPSHOT_PROPS_FILENAME.equals(props.getContentId())) {
-                this.contentStore.setContentProperties(destinationSpaceId,
-                                                       props.getContentId(),
-                                                       props.getProperties());
-                log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
-                          props,
-                          destinationSpaceId,
-                          storeId,
-                          storageProviderType);
-            }
+        for (final ContentProperties props : items) {
+            new Retrier().execute(new Retriable() {
+
+                @Override
+                public Object retry() throws Exception {
+                    contentStore.setContentProperties(destinationSpaceId, props.getContentId(), props.getProperties());
+                    log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
+                              props,
+                              destinationSpaceId,
+                              storeId,
+                              storageProviderType);
+                    return null;
+                }
+            });
         }
     }
 

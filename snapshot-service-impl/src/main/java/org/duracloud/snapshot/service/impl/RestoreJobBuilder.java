@@ -143,7 +143,10 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             new SnapshotRepoManifestReader(this.snapshotContentItemRepo, restore.getSnapshot().getName());
 
         SnapshotContentItemVerifier writer =
-            new SnapshotContentItemVerifier(getRestoreMd5Manifest(restoreDir), restore.getSnapshot().getName());
+            new SnapshotContentItemVerifier(restoreId,
+                                            getRestoreMd5Manifest(restoreDir),
+                                            restore.getSnapshot().getName(),
+                                            restoreManager);
         SimpleStepFactoryBean<SnapshotContentItem, SnapshotContentItem> stepFactory = new SimpleStepFactoryBean<>();
 
         stepFactory.setJobRepository(jobRepository);
@@ -176,7 +179,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
         DpnManifestReader reader = new DpnManifestReader(md5Manifest);
 
-        SpaceVerifier writer = new SpaceVerifier(contentStore, destinationSpaceId);
+        SpaceVerifier writer = new SpaceVerifier(restoreId, contentStore, destinationSpaceId, restoreManager);
 
         SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
@@ -196,11 +199,11 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
      * @param jobManagerConfig
      * @return
      */
-    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restorationId,
+    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restoreId,
                                                             SnapshotJobManagerConfig jobManagerConfig)
                                                                 throws Exception {
 
-        File restoreDir = getRestoreDir(restorationId, jobManagerConfig);
+        File restoreDir = getRestoreDir(restoreId, jobManagerConfig);
 
         File md5Manifest = getRestoreMd5Manifest(restoreDir);
 
@@ -208,7 +211,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
         File contentDir = getRestoreContentDir(restoreDir);
 
-        ManifestVerifier writer = new ManifestVerifier(restorationId, contentDir);
+        ManifestVerifier writer = new ManifestVerifier(restoreId, contentDir, restoreManager);
 
         SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);

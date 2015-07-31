@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.List;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
 import org.duracloud.domain.Space;
@@ -29,6 +30,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
+
 
 /**
  * This class is responsible for syncing content from the bridge to DuraCloud.
@@ -69,16 +71,23 @@ public class SyncWriter
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        ExitStatus status = stepExecution.getExitStatus();
         try {
+            
+            
             restoreManager.transitionRestoreStatus(restorationId,
                                                    RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE,
                                                    "");
+            //restore the snapshot props file to the data directory.
+            restoreFile(new File(this.watchDir, Constants.SNAPSHOT_PROPS_FILENAME), watchDir);
+            return status.and(ExitStatus.COMPLETED);
+
         } catch (Exception e) {
-            log.error("failed to transition restore status: " + e.getMessage(), e);
-            return ExitStatus.FAILED;
+            String message= "failed to transition restore status: " + e.getMessage();
+            log.error(message, e);
+            return status.and(ExitStatus.FAILED).addExitDescription(message);
         }
 
-        return stepExecution.getExitStatus();
     }
 
     /* (non-Javadoc)
@@ -121,28 +130,36 @@ public class SyncWriter
     public void write(List<? extends File> items) throws Exception {
         log.info("starting to write {} file(s) to duracloud", items.size());
         for(final File file : items){
-            new Retrier().execute(new Retriable() {
-                
-                @Override
-                public Object retry() throws Exception {
-                    MonitoredFile monitoredFile = new MonitoredFile(file);
-                    SyncResultType result =  endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
-                    if(result.equals(SyncResultType.FAILED)){
-                        String message = "Failed to upload "
-                            + file.getAbsolutePath() + " after uploading "
-                            + monitoredFile.getStreamBytesRead() + " of "
-                            + file.length() + " bytes.";
-                        throw new Exception(message);
-                    }
-                    
-                    log.info("successfully uploaded {}: result = {}",
-                             file.getAbsolutePath(),
-                             result);
-                    
-                    return result;
-                }
-            });
+            restoreFile(file, watchDir);
         }
+    }
+
+    /**
+     * @param file
+     * @throws Exception
+     */
+    private void restoreFile(final File file, final File watchDir) throws Exception {
+        new Retrier().execute(new Retriable() {
+            
+            @Override
+            public Object retry() throws Exception {
+                MonitoredFile monitoredFile = new MonitoredFile(file);
+                SyncResultType result =  endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
+                if(result.equals(SyncResultType.FAILED)){
+                    String message = "Failed to upload "
+                        + file.getAbsolutePath() + " after uploading "
+                        + monitoredFile.getStreamBytesRead() + " of "
+                        + file.length() + " bytes.";
+                    throw new Exception(message);
+                }
+                
+                log.info("successfully uploaded {}: result = {}",
+                         file.getAbsolutePath(),
+                         result);
+                
+                return result;
+            }
+        });
     }
 
     

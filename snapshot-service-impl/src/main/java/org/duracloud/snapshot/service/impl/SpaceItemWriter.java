@@ -84,8 +84,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             String contentId = contentItem.getContentId();
             log.debug("writing: {}", contentId);
 
-            if(! contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
-                File dataDir = new File(contentDir, "data");
+            if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
+                File dataDir = getDataDir();
                 retrieveFile(contentItem, dataDir);
             } else {
                 // Cache the snapshot properties ContentItem so we can
@@ -93,6 +93,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 snapshotPropsContentItem = contentItem;
             }
         }
+    }
+
+    /**
+     * @return
+     */
+    private File getDataDir() {
+        return new File(contentDir, "data");
     }
 
     protected void retrieveFile(ContentItem contentItem, File directory)
@@ -120,8 +127,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 writeMD5Checksum(contentItem, md5Checksum);
                 writeSHA256Checksum(contentItem, localFile);
             }
-            writeContentProperties(contentItem, props, lastItem);
             writeToSnapshotManager(contentItem, props);
+            writeContentProperties(contentItem, props, lastItem);
         } else {
             // There was a problem! Throw a meaningful exception:
             String baseError =

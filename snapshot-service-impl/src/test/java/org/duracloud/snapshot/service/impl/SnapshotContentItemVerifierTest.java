@@ -10,18 +10,19 @@ package org.duracloud.snapshot.service.impl;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.RestoreManager;
+import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
 import org.easymock.EasyMockSupport;
 import org.easymock.Mock;
@@ -43,9 +44,14 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     @Mock
     private StepExecution stepExecution;
     
+    @Mock
+    private RestoreManager restoreManager;
+    
     private String snapshotName = "snapshot-name";
 
     private File manifestFile;
+    
+    private String restoreId = "restore-id";
     /**
      * @throws java.lang.Exception
      */
@@ -69,8 +75,16 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         replayAll();
-        this.verifier = new SnapshotContentItemVerifier(manifestFile, snapshotName);
+        createVerifier();
         simulateStepExecution(ExitStatus.COMPLETED, snapshotContentItems);
+    }
+
+
+    /**
+     * 
+     */
+    private void createVerifier() {
+        this.verifier = new SnapshotContentItemVerifier(this.restoreId, manifestFile, snapshotName, restoreManager);
     }
     
     
@@ -82,7 +96,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         snapshotContentItems.add(createSnapshotContentItem("missing-content", "checksum"));
         replayAll();
-        this.verifier = new SnapshotContentItemVerifier(manifestFile, snapshotName);
+        createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
     }
 
@@ -94,7 +108,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         //replace the checksum of last item with bad checksum.
         snapshotContentItems.get(snapshotContentItems.size()-1).setMetadata(getMetadata("badchecksum"));
         replayAll();
-        this.verifier = new SnapshotContentItemVerifier(manifestFile, snapshotName);
+        createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
     }
 
@@ -106,7 +120,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         //remove a snapshot item 
         snapshotContentItems.remove(0);
         replayAll();
-        this.verifier = new SnapshotContentItemVerifier(manifestFile, snapshotName);
+        createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
     }
 
@@ -160,9 +174,15 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     }
     
     
-    private void setupStepExecution() {
+    private void setupStepExecution() throws Exception {
+        expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
+        
+        expect(restoreManager.transitionRestoreStatus(eq(restoreId),
+                                                      eq(RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST),
+                                                      eq(""))).andReturn(EasyMock.createMock(Restoration.class));
+
     }
     
     /**
@@ -174,6 +194,6 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         verifier.beforeWrite(items);
         verifier.write(items);
         verifier.afterWrite(items);
-        assertEquals(expectedStatus, verifier.afterStep(stepExecution));
+        assertEquals(expectedStatus.getExitCode(), verifier.afterStep(stepExecution).getExitCode());
     }
 }

@@ -15,10 +15,12 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.lang3.StringUtils;
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -42,14 +44,17 @@ public class SpaceVerifier
     private String spaceId;
     private AtomicLong manifestEntryCount = new AtomicLong(0);
     private List<String> errors = new LinkedList<>();
-
+    private RestoreManager restoreManager;
+    private String restoreId;
     /**
      * 
      * @param contentStore
      */
-    public SpaceVerifier(ContentStore contentStore, String spaceId) {
+    public SpaceVerifier(String restoreId, ContentStore contentStore, String spaceId, RestoreManager restoreManager) {
+        this.restoreId = restoreId;
         this.contentStore = contentStore;
         this.spaceId = spaceId;
+        this.restoreManager = restoreManager;
     }
 
     /*
@@ -92,6 +97,22 @@ public class SpaceVerifier
     public void beforeStep(StepExecution stepExecution) {
         this.manifestEntryCount.set(0);
         this.errors.clear();
+        try {
+            new Retrier().execute(new Retriable(){
+                /* (non-Javadoc)
+                 * @see org.duracloud.common.retry.Retriable#retry()
+                 */
+                @Override
+                public Object retry() throws Exception {
+                    restoreManager.transitionRestoreStatus(restoreId, 
+                                                           RestoreStatus.VERIFYING_TRANSFERRED_CONTENT, 
+                                                           "");
+                    return null;
+                }
+            });
+        }catch(Exception ex){
+            stepExecution.addFailureException(ex);
+        }
     }
 
     /*
@@ -111,8 +132,13 @@ public class SpaceVerifier
                         Long count = 0l;
                         Iterator<String> iterator = contentStore.getSpaceContents(spaceId);
                         try {
-                            while (iterator.next() != null) {
-                                count++;
+                            String contentId = null;
+                            while ((contentId = iterator.next()) != null) {
+                                //do not count the snapshot prop file because it is not 
+                                //written in the manifest.
+                                if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                                    count++;
+                                }
                             }
                         } catch (NoSuchElementException ex) {
                         }
@@ -141,22 +167,32 @@ public class SpaceVerifier
             }
         }
 
-        ExitStatus status = errors.size() == 0 ? ExitStatus.COMPLETED : ExitStatus.FAILED;
-
-        if (status == ExitStatus.COMPLETED) {
-            log.info("space verification finished: result=success step_execution_id={} job_execution_id={} store_id={} spaceId={}",
-                     stepExecution.getId(),
-                     stepExecution.getJobExecutionId(),
-                     contentStore.getStoreId(),
-                     spaceId);
-        } else {
-            log.error("space verification finished: result=failed step_execution_id={} job_execution_id={} store_id={} spaceId={} errors=\"{}\"",
+        ExitStatus status = stepExecution.getExitStatus();
+        
+        if(errors.size() > 0){
+            status = status.and(ExitStatus.FAILED);
+            
+            for(String error: errors){
+                status = status.addExitDescription(error);
+            }
+            
+            log.error("space verification step finished: step_execution_id={} job_execution_id={} store_id={} spaceId={} status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       contentStore.getStoreId(),
                       spaceId,
-                      StringUtils.join(errors, ", \n"));
+                      status);
+        }else {
+            
+            status = status.and(ExitStatus.COMPLETED);
+            log.info("space verification step finished: step_execution_id={} job_execution_id={} store_id={} spaceId={} exit_status={} ",
+                     stepExecution.getId(),
+                     stepExecution.getJobExecutionId(),
+                     contentStore.getStoreId(),
+                     spaceId,
+                     status);
         }
+
         return status;
     }
 

@@ -15,7 +15,11 @@ import static org.duracloud.snapshot.dto.RestoreStatus.*;
  *         Date: Jul 30, 2014
  */
 public class RestorationStateTransitionValidator {
-    public static void validate(RestoreStatus from , RestoreStatus to) throws InvalidStateTransitionException{
-        //TODO implement state transition rules here
+    public static void validate(RestoreStatus from , RestoreStatus to)
+        throws InvalidStateTransitionException{
+
+        if(from.equals(to)) {
+            throw new InvalidStateTransitionException(from.name(), to.name());
+        }
     }
 }

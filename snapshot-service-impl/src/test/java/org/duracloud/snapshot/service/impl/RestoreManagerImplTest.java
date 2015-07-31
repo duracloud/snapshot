@@ -10,7 +10,12 @@ package org.duracloud.snapshot.service.impl;
 import static org.easymock.EasyMock.*;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
+import org.duracloud.client.ContentStore;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.SnapshotException;
@@ -24,9 +29,11 @@ import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
@@ -63,6 +70,15 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     @Mock
     private Restoration restoration;
 
+    @Mock
+    private BridgeConfiguration bridgeConfig;
+
+    @Mock
+    private StoreClientHelper storeClientHelper;
+
+    @Mock
+    private ContentStore contentStore;
+
     private String snapshotName = "snapshot-name";
 
     private String restorationId = "restoration-id";
@@ -80,7 +96,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     /**
 
     /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreSnapshot(java.lang.String)}.
+     * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreSnapshot(String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig, String)}.
      * @throws SnapshotException 
      * @throws SnapshotInProcessException 
      * @throws SnapshotNotFoundException 
@@ -108,7 +124,6 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         Restoration restoration = manager.restoreSnapshot(snapshotName, destination, userEmail );
         Assert.assertNotNull(restoration);
     }
- 
 
     /**
      * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#getRestoration(java.lang.String)}.
@@ -127,7 +142,6 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
             Assert.assertTrue(true);
         }
     }
-
 
     /**
      * 
@@ -167,7 +181,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         
         restoration = manager.restoreCompleted(restorationId);
         Assert.assertNotNull(restoration);
-        
+
     }
     /**
      * 
@@ -187,7 +201,51 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         Restoration output = this.manager.get(restorationId);
         
         Assert.assertNotNull(output);
-        
+    }
+
+    @Test
+    public void testFinalizeRestores() throws Exception {
+        String dcUser = "dcUser";
+        String dcPass = "dcPass";
+        String host = "host";
+        String spaceId = "spaceId";
+        String restorationId = "restorationId";
+
+        List<Restoration> restorationList = new ArrayList<>();
+        restorationList.add(restoration);
+        expect(restoreRepo.findByStatus(RestoreStatus.RESTORATION_COMPLETE))
+            .andReturn(restorationList);
+
+        Date fiveMinutesAgo = new Date(System.currentTimeMillis() - 300000);
+        expect(restoration.getExpirationDate()).andReturn(fiveMinutesAgo);
+
+        expect(restoration.getDestination()).andReturn(destination);
+
+        expect(bridgeConfig.getDuracloudUsername()).andReturn(dcUser);
+        expect(bridgeConfig.getDuracloudPassword()).andReturn(dcPass);
+        expect(storeClientHelper.create(destination, dcUser, dcPass))
+            .andReturn(contentStore);
+
+        expect(destination.getSpaceId()).andReturn(spaceId);
+        expect(destination.getHost()).andReturn(host);
+        expect(contentStore.getSpaceContents(spaceId))
+            .andReturn(Collections.<String>emptyList().iterator());
+
+        contentStore.deleteSpace(spaceId);
+        expectLastCall();
+
+        expect(restoration.getStatus()).andReturn(RestoreStatus.RESTORATION_COMPLETE);
+        restoration.setStatus(RestoreStatus.RESTORATION_EXPIRED);
+        expectLastCall();
+        restoration.setStatusText(isA(String.class));
+        expectLastCall();
+        expect(restoration.getRestorationId()).andReturn(restorationId);
+
+        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
+
+        replayAll();
+
+        manager.finalizeRestores();
     }
 
 }

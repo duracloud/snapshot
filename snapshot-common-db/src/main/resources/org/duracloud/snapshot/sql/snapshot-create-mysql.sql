@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `restoration` (
   `store_id` varchar(255) NOT NULL,
   `end_date` datetime DEFAULT NULL,
   `start_date` datetime DEFAULT NULL,
+  `expiration_date` datetime DEFAULT NULL,
   `status` varchar(255) NOT NULL,
   `status_text` longtext,
   `user_email` varchar(255) NOT NULL,
@@ -62,7 +63,6 @@ CREATE TABLE IF NOT EXISTS `restoration` (
 --
 -- Table structure for table `snapshot_content_item`
 --
-
 CREATE TABLE IF NOT EXISTS `snapshot_content_item` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime NOT NULL,

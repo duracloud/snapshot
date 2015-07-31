@@ -187,8 +187,10 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
      * 
      */
     private void setupEndpoint() {
-        EasyMock.expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username");
-        EasyMock.expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password");
+        EasyMock.expect(this.bridgeConfig.getDuracloudUsername())
+                .andReturn("username").anyTimes();
+        EasyMock.expect(this.bridgeConfig.getDuracloudPassword())
+                .andReturn("password").anyTimes();
         EasyMock.expect(snapshot.getSource()).andReturn(endPointConfig);
     }
 

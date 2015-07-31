@@ -33,7 +33,7 @@ import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.BridgeConfiguration;
-import org.duracloud.snapshot.service.SnapshotFinalizer;
+import org.duracloud.snapshot.service.Finalizer;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -74,7 +74,7 @@ public class GeneralResource {
     private RestoreManager restorationManager;
     private NotificationManager notificationManager;
     private BridgeConfiguration bridgeConfiguration;
-    private SnapshotFinalizer snapshotFinalizer;
+    private Finalizer finalizer;
     
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
@@ -83,7 +83,7 @@ public class GeneralResource {
                             SnapshotJobExecutionListener snapshotJobListener,
                             RestoreJobExecutionListener restoreListener,
                             NotificationManager notificationManager, 
-                            SnapshotFinalizer snapshotFinalizer,
+                            Finalizer finalizer,
                             BridgeConfiguration bridgeConfiguration) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
@@ -91,7 +91,7 @@ public class GeneralResource {
         this.snapshotJobListener = snapshotJobListener;
         this.restoreJobListener = restoreListener;
         this.notificationManager = notificationManager;
-        this.snapshotFinalizer = snapshotFinalizer;
+        this.finalizer = finalizer;
         this.bridgeConfiguration = bridgeConfiguration;
     }    
     
@@ -108,7 +108,7 @@ public class GeneralResource {
             initJobManager(initParams);
             initRestorationResource(initParams);
             initNotificationManager(initParams);
-            this.snapshotFinalizer.initialize(initParams.getSnapshotFinalizerPeriodMs());
+            this.finalizer.initialize(initParams.getFinalizerPeriodMs());
             
             log.info("successfully initialized bridge application.");
 
@@ -159,7 +159,7 @@ public class GeneralResource {
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
-        
+
         this.restorationManager.init(config, jobManager);
     }
 
@@ -191,8 +191,7 @@ public class GeneralResource {
             initParams.getOriginatorEmailAddress());
         notifyConfig.setContentRoot(new File(initParams.getContentDirRoot()));
         this.snapshotJobListener.init(notifyConfig);
-        this.restoreJobListener.init(notifyConfig);
-
+        this.restoreJobListener.init(notifyConfig, initParams.getDaysToExpireRestore());
     }
 
 

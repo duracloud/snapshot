@@ -109,6 +109,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getName()).andReturn("snapshot-id");
         EasyMock.expect(r.getStartDate()).andReturn(new Date());
         EasyMock.expect(r.getEndDate()).andReturn(new Date());
+        EasyMock.expect(r.getExpirationDate()).andReturn(new Date());
         EasyMock.expect(r.getStatusText()).andReturn("status text");
         DuracloudEndPointConfig dest = createMock(DuracloudEndPointConfig.class);
         EasyMock.expect(r.getDestination()).andReturn(dest);

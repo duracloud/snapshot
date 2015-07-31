@@ -13,7 +13,8 @@ import java.util.TimerTask;
 
 import javax.annotation.PreDestroy;
 
-import org.duracloud.snapshot.service.SnapshotFinalizer;
+import org.duracloud.snapshot.service.RestoreManager;
+import org.duracloud.snapshot.service.Finalizer;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,23 +26,32 @@ import org.springframework.stereotype.Component;
  *         Date: Aug 18, 2014
  */
 @Component
-public class SnapshotFinalizerImpl implements SnapshotFinalizer {
-    private static Logger log = LoggerFactory.getLogger(SnapshotFinalizerImpl.class);
+public class FinalizerImpl implements Finalizer {
+    private static Logger log = LoggerFactory.getLogger(FinalizerImpl.class);
     private Timer timer;
 
     @Autowired
     private SnapshotManager snapshotManager;
-    
+
+    @Autowired
+    private RestoreManager restoreManager;
+
     /**
      * @param snapshotManager the snapshotManager to set
      */
     public void setSnapshotManager(SnapshotManager snapshotManager) {
         this.snapshotManager = snapshotManager;
     }
-    
+
+    /**
+     * @param restoreManager the restoreManager to set
+     */
+    public void setRestoreManager(RestoreManager restoreManager) {
+        this.restoreManager = restoreManager;
+    }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotFinalizer#initialize(java.lang.Integer)
+     * @see org.duracloud.snapshot.service.Finalizer#initialize(java.lang.Integer)
      */
     @Override
     public void initialize(Integer pollingPeriodMs) {
@@ -54,8 +64,9 @@ public class SnapshotFinalizerImpl implements SnapshotFinalizer {
                 @Override
                 public void run() {
                     try{
-                        log.info("launching periodic snapshot finalization...");
+                        log.info("Launching periodic finalization...");
                         snapshotManager.finalizeSnapshots();
+                        restoreManager.finalizeRestores();
                     }catch(Exception ex){
                         ex.printStackTrace();
                     }
@@ -67,11 +78,9 @@ public class SnapshotFinalizerImpl implements SnapshotFinalizer {
             }
 
             timer.schedule(task, new Date(), pollingPeriodMs);
-            log.info("snapshot finalization scheduled to run every "
+            log.info("Finalization scheduled to run every "
                 + pollingPeriodMs + " milliseconds.");
-
          }
-        
     }
 
     /* (non-Javadoc)

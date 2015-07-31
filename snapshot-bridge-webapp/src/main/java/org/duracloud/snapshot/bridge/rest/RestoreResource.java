@@ -162,6 +162,7 @@ public class RestoreResource {
         result.setSnapshotId(restoration.getSnapshot().getName());
         result.setStartDate(restoration.getStartDate());
         result.setEndDate(restoration.getEndDate());
+        result.setExpirationDate(restoration.getExpirationDate());
         result.setStatus(restoration.getStatus());
         result.setStatusText(restoration.getStatusText());
         result.setDestinationStoreId(destination.getStoreId());

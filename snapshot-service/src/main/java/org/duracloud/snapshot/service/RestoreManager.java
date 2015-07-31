@@ -69,7 +69,8 @@ public interface RestoreManager {
     Restoration get(String restorationId) throws RestorationNotFoundException;
 
     /**
-     * 
+     * Transition the workflow status of the restore activity to a new status
+     *
      * @param restorationId
      * @param status
      * @param message
@@ -81,8 +82,16 @@ public interface RestoreManager {
         throws InvalidStateTransitionException, RestorationNotFoundException;
 
     /**
+     * Retrieves a restoration based on the ID of the snapshot being restored
+     *
      * @param snapshotId
      * @return
      */
-    Restoration getBySnapshotId(String snapshotId)  throws RestorationNotFoundException ;
+    public Restoration getBySnapshotId(String snapshotId)
+        throws RestorationNotFoundException;
+
+    /**
+     * Look for restorations which have expired, and perform final cleanup actions
+     */
+    public void finalizeRestores();
 }

@@ -10,6 +10,7 @@ package org.duracloud.snapshot.db.repo;
 import java.util.List;
 
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.dto.RestoreStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -39,4 +40,11 @@ public interface RestoreRepo extends JpaRepository<Restoration, Long> {
      * @return
      */
     public Restoration findByRestorationId(String restorationId);
+
+    /**
+     * Returns a list of restorations based on the restoration's status
+     * @param status
+     * @return
+     */
+    public List<Restoration> findByStatus(RestoreStatus status);
 }

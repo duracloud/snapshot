@@ -62,7 +62,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private String[] dpnEmailAddresses = {"dpn-email"};
     private String duracloudUsername = "duracloud-username";
     private String duracloudPassword = "duracloud-password";
-    private Integer snapshotFinalizerPeriodMs = 1000;
+    private Integer finalizerPeriodMs = 1000;
     private int daysToExpire = 42;
     private File workDir = new File(System.getProperty("java.io.tmpdir"),
         "snapshot-work");
@@ -127,7 +127,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 EasyMock.eq(daysToExpire));
         EasyMock.expectLastCall();
 
-        finalizer.initialize(snapshotFinalizerPeriodMs);
+        finalizer.initialize(finalizerPeriodMs);
         EasyMock.expectLastCall();
 
         Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
@@ -235,7 +235,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         initParams.setDuracloudPassword(duracloudPassword);
         initParams.setWorkDir(workDir.getAbsolutePath());
         initParams.setContentDirRoot(contentDirRoot.getAbsolutePath());
-        initParams.setSnapshotFinalizerPeriodMs(snapshotFinalizerPeriodMs);
+        initParams.setFinalizerPeriodMs(finalizerPeriodMs);
         initParams.setDaysToExpireRestore(daysToExpire);
         return initParams;
     }

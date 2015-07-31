@@ -51,7 +51,7 @@ public class FinalizerImpl implements Finalizer {
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotFinalizer#initialize(java.lang.Integer)
+     * @see org.duracloud.snapshot.service.Finalizer#initialize(java.lang.Integer)
      */
     @Override
     public void initialize(Integer pollingPeriodMs) {

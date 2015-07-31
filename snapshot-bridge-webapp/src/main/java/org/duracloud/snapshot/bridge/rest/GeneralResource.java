@@ -108,7 +108,7 @@ public class GeneralResource {
             initJobManager(initParams);
             initRestorationResource(initParams);
             initNotificationManager(initParams);
-            this.finalizer.initialize(initParams.getSnapshotFinalizerPeriodMs());
+            this.finalizer.initialize(initParams.getFinalizerPeriodMs());
             
             log.info("successfully initialized bridge application.");
 

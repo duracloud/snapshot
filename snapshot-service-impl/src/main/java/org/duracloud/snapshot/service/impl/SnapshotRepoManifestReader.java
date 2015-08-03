@@ -37,7 +37,7 @@ public class SnapshotRepoManifestReader  implements ItemReader<SnapshotContentIt
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public SnapshotContentItem read() 
+    public synchronized SnapshotContentItem read() 
         throws Exception,
             UnexpectedInputException,
             ParseException,

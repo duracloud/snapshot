@@ -127,8 +127,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         } else {
             changeRestoreStatus(restoration,
                                 RestoreStatus.ERROR,
-                                "failed to transfer to duracloud: "
-                                    + new Date());
+                                status.getExitDescription());
 
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =

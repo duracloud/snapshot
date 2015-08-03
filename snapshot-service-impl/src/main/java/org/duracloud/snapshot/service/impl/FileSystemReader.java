@@ -34,7 +34,7 @@ public class FileSystemReader implements ItemReader<File>{
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public File read()
+    public synchronized File read()
         throws Exception,
             UnexpectedInputException,
             ParseException,

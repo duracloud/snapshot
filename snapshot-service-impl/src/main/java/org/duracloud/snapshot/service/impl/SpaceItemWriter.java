@@ -10,7 +10,7 @@ package org.duracloud.snapshot.service.impl;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.Writer;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +58,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private ContentItem snapshotPropsContentItem;
     private SnapshotManager snapshotManager;
     private Snapshot snapshot;
-
+    private List<String> errors;
+    
     public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
                            File contentDir,
                            OutputWriter outputWriter,
@@ -76,6 +77,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
         this.snapshotManager = snapshotManager;
+        this.errors = new LinkedList<>();
     }
 
     @Override
@@ -251,12 +253,23 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             log.error("Error closing content property " +
                              "manifest BufferedWriter: ", ioe);
         }
-        return stepExecution.getExitStatus();
+        
+        ExitStatus status = stepExecution.getExitStatus();
+        
+        if(errors.size() > 0){
+            status = status.and(ExitStatus.FAILED);
+            for(String error : errors){
+                status = status.addExitDescription(error);
+            }
+        }
+        return status;
     }
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
         try {
+            
+            this.errors.clear();
             synchronized (propsWriter) {
                 propsWriter.write("[\n");
             }
@@ -269,12 +282,14 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     // Method defined in ItemWriteListener interface
     @Override
     public void onWriteError(Exception e, List<? extends ContentItem> items) {
-        StringBuffer sb = new StringBuffer(50);
+        StringBuilder sb = new StringBuilder();
         for(ContentItem item: items) {
             sb.append(item.getContentId() + ", ");
         }
-        log.error("Error writing item(s): " + sb.toString(), e);
-        // TODO: write error entry to database?
+        
+        String message = "Error writing item(s): " + e.getMessage() + ": items=" + sb.toString();
+        this.errors.add(message);
+        log.error(message,e);
     }
 
     // Method defined in ItemWriteListener interface

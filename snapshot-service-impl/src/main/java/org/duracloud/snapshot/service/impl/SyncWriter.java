@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.duracloud.client.ContentStore;
@@ -31,31 +32,32 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 
-
 /**
  * This class is responsible for syncing content from the bridge to DuraCloud.
- * @author Daniel Bernstein 
- *         Date: Jul 17, 2014
+ * 
+ * @author Daniel Bernstein Date: Jul 17, 2014
  */
-public class SyncWriter
-    implements ItemWriter<File>, StepExecutionListener, ItemWriteListener<File> {
+public class SyncWriter implements ItemWriter<File>, StepExecutionListener, ItemWriteListener<File> {
     private static Logger log = LoggerFactory.getLogger(SyncWriter.class);
-    
+
     private SyncEndpoint endpoint;
     private File watchDir;
     private ContentStore contentStore;
     private String destinationSpaceId;
     private RestoreManager restoreManager;
     private String restorationId;
-    
+    private List<String> errors;
+
     /**
      * @param endpoint
      * @param watchDir
-     * @param contentStore 
-     * @param restoreRepo 
-     * @param string 
+     * @param contentStore
+     * @param restoreRepo
+     * @param string
      */
-    public SyncWriter(String restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore, String destinationSpaceId, RestoreManager restoreManager) {
+    public SyncWriter(
+        String restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore,
+        String destinationSpaceId, RestoreManager restoreManager) {
         super();
         this.endpoint = endpoint;
         this.watchDir = watchDir;
@@ -63,48 +65,60 @@ public class SyncWriter
         this.destinationSpaceId = destinationSpaceId;
         this.restoreManager = restoreManager;
         this.restorationId = restorationId;
+        this.errors = new LinkedList<>();
     }
 
-    //StepExecution Interface
-    /* (non-Javadoc)
-     * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.springframework.batch.core.StepExecution)
+    // StepExecution Interface
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.
+     * springframework.batch.core.StepExecution)
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = stepExecution.getExitStatus();
-        try {
-            
-            
-            restoreManager.transitionRestoreStatus(restorationId,
-                                                   RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE,
-                                                   "");
-            //restore the snapshot props file to the data directory.
-            restoreFile(new File(this.watchDir, Constants.SNAPSHOT_PROPS_FILENAME), watchDir);
-            return status.and(ExitStatus.COMPLETED);
+        if (this.errors.isEmpty()) {
+            try {
+                restoreManager.transitionRestoreStatus(restorationId, RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE, "");
+                // restore the snapshot props file to the data directory.
+                restoreFile(new File(this.watchDir.getParentFile(), Constants.SNAPSHOT_PROPS_FILENAME),
+                            watchDir.getParentFile());
+                return status.and(ExitStatus.COMPLETED);
 
-        } catch (Exception e) {
-            String message= "failed to transition restore status: " + e.getMessage();
-            log.error(message, e);
-            return status.and(ExitStatus.FAILED).addExitDescription(message);
+            } catch (Exception e) {
+                String message = "failed to transition restore status: " + e.getMessage();
+                log.error(message, e);
+                return status.and(ExitStatus.FAILED).addExitDescription(message);
+            }
+
+        } else {
+            status = status.and(ExitStatus.FAILED);
+            status.addExitDescription("Transfer to DuraCloud failed: " + this.errors.size() + " items failed.");
+            for (String error : this.errors) {
+                status.addExitDescription(error);
+            }
+            
+            return status;
         }
-
     }
 
-    /* (non-Javadoc)
-     * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.springframework.batch.core.StepExecution)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.
+     * springframework.batch.core.StepExecution)
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
-       try {
-            restoreManager.transitionRestoreStatus(restorationId,
-                                                   RestoreStatus.TRANSFERRING_TO_DURACLOUD,
-                                                   "");
-           Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
-           if(!CollectionUtils.isEmpty(space.getContentIds())){
+        try {
+            this.errors.clear();
+            restoreManager.transitionRestoreStatus(restorationId, RestoreStatus.TRANSFERRING_TO_DURACLOUD, "");
+            Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
+            if (!CollectionUtils.isEmpty(space.getContentIds())) {
                 stepExecution.addFailureException(new RuntimeException("destination space "
-                    + destinationSpaceId
-                    + " must be empty to receive restored content"));
-           }
+                    + destinationSpaceId + " must be empty to receive restored content"));
+            }
         } catch (NotFoundException ex) {
             try {
                 this.contentStore.createSpace(destinationSpaceId);
@@ -114,22 +128,29 @@ public class SyncWriter
         } catch (Exception ex) {
             stepExecution.addFailureException(ex);
         }
-    }    
-    //ItemWriteListener interface
+    }
+    // ItemWriteListener interface
 
-    /* (non-Javadoc)
-     * @see org.springframework.batch.core.ItemWriteListener#beforeWrite(java.util.List)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.springframework.batch.core.ItemWriteListener#beforeWrite(java.util.
+     * List)
      */
     @Override
-    public void beforeWrite(List<? extends File> items) {}
-    
-    /* (non-Javadoc)
+    public void beforeWrite(List<? extends File> items) {
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.springframework.batch.item.ItemWriter#write(java.util.List)
      */
     @Override
     public void write(List<? extends File> items) throws Exception {
         log.info("starting to write {} file(s) to duracloud", items.size());
-        for(final File file : items){
+        for (final File file : items) {
             restoreFile(file, watchDir);
         }
     }
@@ -139,48 +160,53 @@ public class SyncWriter
      * @throws Exception
      */
     private void restoreFile(final File file, final File watchDir) throws Exception {
-        new Retrier().execute(new Retriable() {
-            
-            @Override
-            public Object retry() throws Exception {
-                MonitoredFile monitoredFile = new MonitoredFile(file);
-                SyncResultType result =  endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
-                if(result.equals(SyncResultType.FAILED)){
-                    String message = "Failed to upload "
-                        + file.getAbsolutePath() + " after uploading "
-                        + monitoredFile.getStreamBytesRead() + " of "
-                        + file.length() + " bytes.";
-                    throw new Exception(message);
+        try {
+            new Retrier().execute(new Retriable() {
+
+                @Override
+                public Object retry() throws Exception {
+                    MonitoredFile monitoredFile = new MonitoredFile(file);
+                    SyncResultType result = endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
+                    if (result.equals(SyncResultType.FAILED)) {
+                        String message =
+                            "Failed to upload "
+                                + file.getAbsolutePath() + " after uploading " + monitoredFile.getStreamBytesRead()
+                                + " of " + file.length() + " bytes.";
+                        throw new Exception(message);
+                    }
+
+                    log.info("successfully uploaded {}: result = {}", file.getAbsolutePath(), result);
+
+                    return result;
                 }
-                
-                log.info("successfully uploaded {}: result = {}",
-                         file.getAbsolutePath(),
-                         result);
-                
-                return result;
-            }
-        });
+            });
+        } catch (Exception ex) {
+            this.errors.add(ex.getMessage());
+        }
     }
 
-    
-    /* (non-Javadoc)
-     * @see org.springframework.batch.core.ItemWriteListener#afterWrite(java.util.List)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.springframework.batch.core.ItemWriteListener#afterWrite(java.util.
+     * List)
      */
     @Override
-    public void afterWrite(List<? extends File> items) {}
+    public void afterWrite(List<? extends File> items) {
+    }
 
-    //ItemWriteListener
-    /* (non-Javadoc)
-     * @see org.springframework.batch.core.ItemWriteListener#onWriteError(java.lang.Exception, java.util.List)
+    // ItemWriteListener
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.springframework.batch.core.ItemWriteListener#onWriteError(java.lang.
+     * Exception, java.util.List)
      */
     @Override
     public void onWriteError(Exception ex, List<? extends File> items) {
         log.error("Error writing item(s): " + items.toString(), ex);
-        //TODO How should this be properly handled.
-        //the interface doesn't supply any information about which items were processed
-        //and which one(s) failed.
-        //TODO Update the database with the failure status (failed to transfer to duracloud.)
     }
-
 
 }

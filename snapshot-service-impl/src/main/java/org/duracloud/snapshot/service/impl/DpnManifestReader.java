@@ -36,7 +36,7 @@ public class DpnManifestReader implements ItemReader<ManifestEntry> {
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public ManifestEntry read()
+    public synchronized ManifestEntry read()
         throws Exception,
             UnexpectedInputException,
             ParseException,

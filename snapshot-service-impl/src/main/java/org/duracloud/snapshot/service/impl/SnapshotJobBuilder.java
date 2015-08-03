@@ -14,15 +14,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
-import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
 import org.duracloud.retrieval.mgmt.LoggingOutputWriter;
-import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.retrieval.util.StoreClientUtil;
@@ -60,7 +57,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
 
     private static final String MANIFEST_SHA256_TXT_FILE_NAME =
         "manifest-sha256.txt";
-    private static final String MANIFEST_MD5_TXT_FILE_NAME = "manifest-md5.txt";
+    private static final String MANIFEST_MD5_TXT_FILE_NAME = ManifestFileHelper.MANIFEST_MD5_TEXT_FILE_NAME;
     private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;

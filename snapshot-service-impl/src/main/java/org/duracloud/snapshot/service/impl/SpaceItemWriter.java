@@ -7,6 +7,14 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -25,14 +33,11 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
+ * This class is responsible for reading the contents and properties of a duracloud content item,
+ * writing it to disk,  appending its md5 and sha256 to separate text files, appending
+ * the item properties to a json file, and writing the item to the snapshot content repo.
+ * 
  * @author Erik Paulsson
  *         Date: 2/7/14
  */
@@ -53,7 +58,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private ContentItem snapshotPropsContentItem;
     private SnapshotManager snapshotManager;
     private Snapshot snapshot;
-
+    private List<String> errors;
+    
     public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
                            File contentDir,
                            OutputWriter outputWriter,
@@ -71,6 +77,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
         this.snapshotManager = snapshotManager;
+        this.errors = new LinkedList<>();
     }
 
     @Override
@@ -79,8 +86,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             String contentId = contentItem.getContentId();
             log.debug("writing: {}", contentId);
 
-            if(! contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
-                File dataDir = new File(contentDir, "data");
+            if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
+                File dataDir = getDataDir();
                 retrieveFile(contentItem, dataDir);
             } else {
                 // Cache the snapshot properties ContentItem so we can
@@ -88,6 +95,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 snapshotPropsContentItem = contentItem;
             }
         }
+    }
+
+    /**
+     * @return
+     */
+    private File getDataDir() {
+        return new File(contentDir, "data");
     }
 
     protected void retrieveFile(ContentItem contentItem, File directory)
@@ -115,8 +129,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                 writeMD5Checksum(contentItem, md5Checksum);
                 writeSHA256Checksum(contentItem, localFile);
             }
-            writeContentProperties(contentItem, props, lastItem);
             writeToSnapshotManager(contentItem, props);
+            writeContentProperties(contentItem, props, lastItem);
         } else {
             // There was a problem! Throw a meaningful exception:
             String baseError =
@@ -153,16 +167,20 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     protected void writeMD5Checksum(ContentItem contentItem,
                                     String md5Checksum) throws IOException {
         synchronized (md5Writer) {
-            md5Writer.write(md5Checksum + "  data/" +
-                               contentItem.getContentId() + "\n");
+            ManifestFileHelper.writeManifestEntry(md5Writer, 
+                                                    contentItem.getContentId(), 
+                                                    md5Checksum);
         }
     }
+
+
 
     protected synchronized void writeSHA256Checksum(ContentItem contentItem,
                                        File localFile) throws IOException {
         String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
-        sha256Writer.write(sha256Checksum + "  data/" +
-                           contentItem.getContentId() + "\n");
+        ManifestFileHelper.writeManifestEntry(sha256Writer, 
+                                                contentItem.getContentId(), 
+                                                sha256Checksum);
     }
 
     protected void writeContentProperties(ContentItem contentItem,
@@ -235,12 +253,23 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             log.error("Error closing content property " +
                              "manifest BufferedWriter: ", ioe);
         }
-        return stepExecution.getExitStatus();
+        
+        ExitStatus status = stepExecution.getExitStatus();
+        
+        if(errors.size() > 0){
+            status = status.and(ExitStatus.FAILED);
+            for(String error : errors){
+                status = status.addExitDescription(error);
+            }
+        }
+        return status;
     }
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
         try {
+            
+            this.errors.clear();
             synchronized (propsWriter) {
                 propsWriter.write("[\n");
             }
@@ -253,12 +282,14 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     // Method defined in ItemWriteListener interface
     @Override
     public void onWriteError(Exception e, List<? extends ContentItem> items) {
-        StringBuffer sb = new StringBuffer(50);
+        StringBuilder sb = new StringBuilder();
         for(ContentItem item: items) {
             sb.append(item.getContentId() + ", ");
         }
-        log.error("Error writing item(s): " + sb.toString(), e);
-        // TODO: write error entry to database?
+        
+        String message = "Error writing item(s): " + e.getMessage() + ": items=" + sb.toString();
+        this.errors.add(message);
+        log.error(message,e);
     }
 
     // Method defined in ItemWriteListener interface

@@ -134,6 +134,9 @@ public class SyncWriterTest extends SnapshotTestBase{
                 .andReturn(restoration);
         
         EasyMock.expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
+        EasyMock.expect(endpoint.syncFileAndReturnDetailedResult(EasyMock.isA(MonitoredFile.class),
+                                                                 EasyMock.isA(File.class)))
+                .andReturn(SyncResultType.ADDED);
         replayAll();
         
         this.writer.afterStep(stepExecution);

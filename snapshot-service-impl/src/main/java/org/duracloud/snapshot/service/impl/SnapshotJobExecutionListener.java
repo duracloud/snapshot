@@ -152,12 +152,18 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
 
     private void sendEmail(String subject, String msg, String... destinations) {
-        notificationManager.sendNotification(NotificationType.EMAIL,
-                                             subject,
-                                             msg.toString(),
-                                             destinations);
-        log.info("sent email with subject=\""
-            + subject + "\" to " + StringUtils.join(destinations, ","));
+        try{
+            notificationManager.sendNotification(NotificationType.EMAIL,
+                                                 subject,
+                                                 msg.toString(),
+                                                 destinations);
+            log.info("sent email with subject=\""
+                + subject + "\" to " + StringUtils.join(destinations, ","));
+        }catch(Exception ex){
+            log.error("failed sent email with subject=\""
+                + subject + "\"  and body=\""+ msg + "\"to " + StringUtils.join(destinations, ","));
+            
+        }
 
     }
 }

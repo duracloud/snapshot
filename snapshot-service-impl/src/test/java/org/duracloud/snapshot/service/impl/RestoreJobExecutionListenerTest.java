@@ -8,9 +8,7 @@
 package org.duracloud.snapshot.service.impl;
 
 import static org.easymock.EasyMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.Date;
@@ -35,6 +33,7 @@ import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameter;
 import org.springframework.batch.core.JobParameters;
@@ -103,8 +102,8 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         DuracloudEndPointConfig endPointConfig = new DuracloudEndPointConfig();
         endPointConfig.setSpaceId(spaceId);
 
-        expect(jobExecution.getStatus())
-                .andReturn(BatchStatus.COMPLETED);
+        expect(jobExecution.getExitStatus())
+                .andReturn(ExitStatus.COMPLETED);
 
         Capture<String> messageCapture = new Capture<>();
         notificationManager.sendNotification(
@@ -171,8 +170,8 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
         String duracloudEmail = "duracloud-email";
 
-        expect(jobExecution.getStatus())
-                .andReturn(BatchStatus.FAILED);
+        expect(jobExecution.getExitStatus())
+                .andReturn(ExitStatus.FAILED);
 
         Capture<String> messageCapture = new Capture<>();
         notificationManager.sendNotification(

@@ -11,17 +11,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.DateUtil;
-import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -114,60 +113,35 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         Snapshot snapshot = restoration.getSnapshot();
         String snapshotId = snapshot.getName();
         String restoreId = restoration.getRestorationId();
-<<<<<<< HEAD
 
         Date currentDate = new Date();
 
-        if(BatchStatus.COMPLETED.equals(status)) {
-=======
         if(ExitStatus.COMPLETED.getExitCode().equals(status.getExitCode())) {
-            // Job success. Email duracloud team as well as restoration requestor
-            
-            changeRestoreStatus(restoration,
-                                RestoreStatus.RESTORATION_COMPLETE,
-                                "Completed transfer to duracloud: "
-                                    + new Date());
-            String subject =
-                "DuraCloud snapshot " + snapshotId + " has been restored! Restore ID = " + restoreId;
-            String message =
-                "A DuraCloud snapshot restore has completed successfully:\n\n";
-            
-            DuracloudEndPointConfig destination = restoration.getDestination();
-            message += "SnapshotId: " + snapshotId + "\n";
-            message += "Restore Id: " + restoreId + "\n";
-            message += "Destination Host: " + destination.getHost() + "\n";
-            message += "Destination Port: " + destination.getPort() + "\n";
-            message += "Destination StoreId: " + destination.getStoreId() + "\n";
-            message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
-            
-            log.info("deleting restoration path " + restorationPath);
-            
->>>>>>> feature/durachron-74
             try {
                 // Job success, set completion state
                 Date expirationDate =
                     changeRestoreStatus(restoration,
                                         RestoreStatus.RESTORATION_COMPLETE,
                                         "Completed transfer to duracloud on: " +
-                                        currentDate,
+                                        currentDate, 
                                         currentDate);
 
-<<<<<<< HEAD
                 DuracloudEndPointConfig destination = restoration.getDestination();
 
                 // Tell DuraCloud to set expiration policy
                 SnapshotTaskClient taskClient = getSnapshotTaskClient(destination);
                 taskClient.completeRestore(destination.getSpaceId(), daysToExpire);
-
+                
                 // Email duracloud team as well as restoration requestor
                 String subject =
-                    "DuraCloud snapshot " + snapshotId + " has been restored!";
+                    "DuraCloud snapshot " + snapshotId + " has been restored!  Restore ID = " + restoreId;
                 String message =
                     "A DuraCloud snapshot restore has completed successfully:\n\n";
 
                 message += "Snapshot Id: " + snapshotId + "\n";
                 message += "Restore Id: " + restoreId + "\n";
                 message += "Destination Host: " + destination.getHost() + "\n";
+                message += "Destination Port: " + destination.getPort() + "\n";
                 message += "Destination StoreId: " + destination.getStoreId() + "\n";
                 message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
                 message += "\nThe restored content WILL EXPIRE IN " + daysToExpire +
@@ -176,25 +150,6 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                            ". At that time, the contents of the space '" +
                            destination.getSpaceId() +
                            "' will be removed, and the space will be deleted." + "\n";
-=======
-        } else {
-            changeRestoreStatus(restoration,
-                                RestoreStatus.ERROR,
-                                status.getExitDescription());
-
-            // Job failed.  Email DuraSpace team about failed snapshot attempt.
-            String subject =
-                "DuraCloud snapshot "+ snapshotId + " restoration failed to complete";
-            String message =
-                "A DuraCloud snapshot restoration has failed to complete.\n" +
-                "\nrestore-id=" + restoreId +
-                "\nsnapshot-id=" + snapshotId +
-                "\nrestore-path=" + restorationPath+
-                "\npring-batch-exit-status-code=" + status.getExitCode() + 
-                "\nerrors=" + status.getExitDescription();
-            sendEmail(subject, message,
-                      config.getDuracloudEmailAddresses());
->>>>>>> feature/durachron-74
 
                 log.info("deleting restoration path " + restorationPath);
 
@@ -211,14 +166,14 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 sendEmail(subject, message, emailAddresses.toArray(new String[0]));
             } catch(Exception e) {
                 handleError(restoration, currentDate, snapshotId, restoreId,
-                            restorationPath, e.getMessage());
+                            restorationPath, e.getMessage(), status);
             }
         } else {
             String errorMessage = "Expected status of (spring batch) restore job to be " +
-                                  BatchStatus.COMPLETED + ", but it was " + status +
+                                  ExitStatus.COMPLETED + ", but it was " + status +
                                   ". Unable to complete restoration.";
             handleError(restoration, currentDate, snapshotId, restoreId,
-                        restorationPath, errorMessage);
+                        restorationPath, errorMessage, status);
         }
     }
 
@@ -227,7 +182,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                              String snapshotId,
                              String restoreId,
                              String restorationPath,
-                             String errorMessage) {
+                             String errorMessage, 
+                             ExitStatus status) {
         changeRestoreStatus(restoration,
                             RestoreStatus.ERROR,
                             "Failed to transfer to duracloud on: " + currentDate,
@@ -241,6 +197,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
             "\nrestore-id=" + restoreId +
             "\nsnapshot-id=" + snapshotId +
             "\nrestore-path=" + restorationPath +
+            "\nspring-batch-exit-status-code=" + status.getExitCode() + 
+            "\nspring-batch-exit-status-description=" + status.getExitDescription() + 
             "\nerror-message=" + errorMessage;
         sendEmail(subject, message,
                   config.getDuracloudEmailAddresses());

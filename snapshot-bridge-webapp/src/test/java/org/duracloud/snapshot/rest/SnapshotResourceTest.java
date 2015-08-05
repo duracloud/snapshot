@@ -7,20 +7,10 @@
  */
 package org.duracloud.snapshot.rest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-
-import javax.ws.rs.core.Response;
-
 import org.codehaus.jettison.json.JSONException;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.bridge.rest.AlternateIdsJSONParam;
 import org.duracloud.snapshot.bridge.rest.SnapshotResource;
-import org.duracloud.snapshot.bridge.rest.UpdateHistoryJSONParam;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -30,11 +20,13 @@ import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.BridgeConfiguration;
@@ -48,6 +40,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
+
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * @author Daniel Bernstein 
@@ -181,8 +180,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         List<String> snapshotAlternateIds = new ArrayList<String>();
         snapshotAlternateIds.add("alternate-name-1");
         snapshotAlternateIds.add("alternate-name-2");
-        AlternateIdsJSONParam alternateIdsJSONParam = new AlternateIdsJSONParam();
-        alternateIdsJSONParam.setAlternateIds(snapshotAlternateIds);
+        CompleteSnapshotBridgeParameters params =
+            new CompleteSnapshotBridgeParameters(snapshotAlternateIds);
 
         EasyMock.expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds);
@@ -191,7 +190,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         EasyMock.expect(snapshot.getStatusText()).andReturn("ok");
         EasyMock.expectLastCall();
         replayAll();
-        Response response = resource.complete(snapshotId, alternateIdsJSONParam);
+        Response response = resource.complete(snapshotId, params);
         Assert.assertTrue(response.getEntity() instanceof CompleteSnapshotBridgeResult);
     }
 
@@ -283,9 +282,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String snapshotId = "snapshot-id";
         String history = "this is some history";
         // object to send as JSON request
-        UpdateHistoryJSONParam historyUpdateParam = new UpdateHistoryJSONParam();
-        historyUpdateParam.setAlternate(false);
-        historyUpdateParam.setHistory(history);
+        UpdateSnapshotHistoryBridgeParameters params =
+            new UpdateSnapshotHistoryBridgeParameters(false, history);
         // list of history back from snapshot
         ArrayList<SnapshotHistory> historyList = new ArrayList<SnapshotHistory>();
         SnapshotHistory test = new SnapshotHistory();
@@ -303,7 +301,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         replayAll();
 
-        Response response = resource.updateHistory(snapshotId, historyUpdateParam);
+        Response response = resource.updateHistory(snapshotId, params);
 
         Assert.assertTrue(response.getEntity() instanceof UpdateSnapshotHistoryBridgeResult);
         Assert.assertEquals(history, ((UpdateSnapshotHistoryBridgeResult)response.getEntity()).getHistory());

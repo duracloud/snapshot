@@ -234,7 +234,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Override
     @Transactional
     public void finalizeSnapshots() {
-        log.debug("Running finalize snapshots...");
+         log.debug("Running finalize snapshots...");
         List<Snapshot> snapshots = this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();

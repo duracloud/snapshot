@@ -134,14 +134,13 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 
                 // Email duracloud team as well as restoration requestor
                 String subject =
-                    "DuraCloud snapshot " + snapshotId + " has been restored!  Restore ID = " + restoreId;
+                    "DuraCloud snapshot " + snapshotId + " has been restored!";
                 String message =
                     "A DuraCloud snapshot restore has completed successfully:\n\n";
 
                 message += "Snapshot Id: " + snapshotId + "\n";
                 message += "Restore Id: " + restoreId + "\n";
                 message += "Destination Host: " + destination.getHost() + "\n";
-                message += "Destination Port: " + destination.getPort() + "\n";
                 message += "Destination StoreId: " + destination.getStoreId() + "\n";
                 message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
                 message += "\nThe restored content WILL EXPIRE IN " + daysToExpire +

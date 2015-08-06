@@ -43,7 +43,8 @@ public class ContentPropertiesWriter
         this.destinationSpaceId = destinationSpaceId;
         this.storeId = contentStore.getStoreId();
         this.storageProviderType = contentStore.getStorageProviderType();
-        log.debug("constructed ContentPropertiesWriter for destination spaceId ({}), storeId ({}), storeType({})",
+        log.debug("constructed ContentPropertiesWriter for destination spaceId ({}), " +
+                  "storeId ({}), storeType({})",
                   destinationSpaceId,
                   storeId,
                   storageProviderType);
@@ -109,7 +110,8 @@ public class ContentPropertiesWriter
     @Override
     public void onWriteError(Exception exception,
                              List<? extends ContentProperties> items) {
-        log.error("firing onWriteError: currrently not handling: exception message=" + exception.getMessage(), exception);
+        log.error("firing onWriteError: currrently not handling: exception message=" +
+                  exception.getMessage(), exception);
         for(ContentProperties props : items){
             log.error("item failed: " + props);
         }
@@ -127,8 +129,11 @@ public class ContentPropertiesWriter
 
                 @Override
                 public Object retry() throws Exception {
-                    contentStore.setContentProperties(destinationSpaceId, props.getContentId(), props.getProperties());
-                    log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
+                    contentStore.setContentProperties(destinationSpaceId,
+                                                      props.getContentId(),
+                                                      props.getProperties());
+                    log.debug("wrote content properties ({}) " +
+                              "to space ({}) on store ({}/{}):",
                               props,
                               destinationSpaceId,
                               storeId,

@@ -107,8 +107,11 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         ExitStatus status = jobExecution.getExitStatus();
         String restorationId = RestoreJobParameterMarshaller.unmarshal(jobParams);
         Restoration restoration = restoreRepo.findByRestorationId(restorationId);
-        String restorationPath = ContentDirUtils.getSourcePath(restoration.getRestorationId(), config.getContentRoot());
-        log.debug("Completed restoration: {} with status: {}", restoration.getRestorationId(), status);
+        String restorationPath =
+            ContentDirUtils.getSourcePath(restoration.getRestorationId(),
+                                          config.getContentRoot());
+        log.debug("Completed restoration: {} with status: {}",
+                  restoration.getRestorationId(), status);
 
         Snapshot snapshot = restoration.getSnapshot();
         String snapshotId = snapshot.getName();

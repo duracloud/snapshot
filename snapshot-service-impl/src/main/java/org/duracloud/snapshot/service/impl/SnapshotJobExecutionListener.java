@@ -62,7 +62,6 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     public void setSnapshotRepo(SnapshotRepo snapshotRepo) {
         this.snapshotRepo = snapshotRepo;
     }
-    
 
     public void init(ExecutionListenerConfig config) {
         this.config = config;
@@ -149,7 +148,6 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         snapshotRepo.save(snapshot);
         log.debug("updated status of " + snapshot + " to " + status);
     }
-
 
     private void sendEmail(String subject, String msg, String... destinations) {
         try{

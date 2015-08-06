@@ -69,7 +69,7 @@ public class FileSystemReader implements ItemReader<File>{
             t.start();
         }
         
-           /* (non-Javadoc)
+        /* (non-Javadoc)
          * @see org.apache.commons.io.DirectoryWalker#handleFile(java.io.File, int, java.util.Collection)
          */
         @Override

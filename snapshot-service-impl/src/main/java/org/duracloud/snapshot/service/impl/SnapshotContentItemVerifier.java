@@ -49,11 +49,17 @@ public class SnapshotContentItemVerifier
     private List<String> errors;
     private AtomicLong snapshotContentItemCount;
     private RestoreManager restoreManager;
+
     /**
+     * @param restoreId
      * @param manifestFile
+     * @param snapshotName
+     * @param restoreManager
      */
-    
-    public SnapshotContentItemVerifier(String restoreId, File manifestFile, String snapshotName, RestoreManager restoreManager) {
+    public SnapshotContentItemVerifier(String restoreId,
+                                       File manifestFile,
+                                       String snapshotName,
+                                       RestoreManager restoreManager) {
         this.restoreId = restoreId;
         this.manifestFile = manifestFile;
         this.snapshotName = snapshotName;
@@ -91,7 +97,9 @@ public class SnapshotContentItemVerifier
         if(this.manifestSet == null){
             int count = 0;
             
-            try(BufferedReader breader = new BufferedReader(new FileReader(this.manifestFile))){
+            try(
+                BufferedReader breader =
+                    new BufferedReader(new FileReader(this.manifestFile))){
                 while(breader.readLine() != null){
                     count++;
                 }
@@ -116,9 +124,9 @@ public class SnapshotContentItemVerifier
                      */
                     @Override
                     public Object retry() throws Exception {
-                        restoreManager.transitionRestoreStatus(restoreId, 
-                                                               RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST, 
-                                                               "");
+                        RestoreStatus newStatus =
+                            RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST;
+                        restoreManager.transitionRestoreStatus(restoreId, newStatus, "");
                         return null;
                     }
                 });
@@ -132,7 +140,8 @@ public class SnapshotContentItemVerifier
     }
 
     /**
-     * @param entry
+     * @param contentId
+     * @param checksum
      * @return
      */
     private String formatManifestSetString(String contentId, String checksum) {
@@ -149,15 +158,18 @@ public class SnapshotContentItemVerifier
     public ExitStatus afterStep(StepExecution stepExecution) {
         try{
 
-            //compare counts (which should not include SNAPSHOT_PROPS_FILENAME on the snapshot repo side since
-            //it does not get written to the manifest.
+            // compare counts (which should not include SNAPSHOT_PROPS_FILENAME
+            // on the snapshot repo side since it does not get written to the manifest.
             if(snapshotContentItemCount.get() == this.manifestSet.size()){
-                log.debug("snapshot repo count matches manifest count: step_execution_id={} job_execution_id={} snapshot_name={}",
-                         stepExecution.getId(),
-                         stepExecution.getJobExecutionId(),
-                         this.snapshotName);                    
+                log.debug("snapshot repo count matches manifest count: " +
+                          "step_execution_id={} job_execution_id={} snapshot_name={}",
+                          stepExecution.getId(),
+                          stepExecution.getJobExecutionId(),
+                          this.snapshotName);
             }else{
-                errors.add("snapshot ("+snapshotName+") content item count (" + snapshotContentItemCount.get() + ") does not match manifest count (" + manifestSet.size() + ")");
+                errors.add("snapshot ("+snapshotName+") content item count (" +
+                           snapshotContentItemCount.get() +
+                           ") does not match manifest count (" + manifestSet.size() + ")");
             }
 
             
@@ -170,7 +182,8 @@ public class SnapshotContentItemVerifier
                     status = status.addExitDescription(error);
                 }
 
-                log.error("snapshot repo verification finished: step_execution_id={} job_execution_id={} snapshot_name={} status=\"{}\"",
+                log.error("snapshot repo verification finished: step_execution_id={} " +
+                          "job_execution_id={} snapshot_name={} status=\"{}\"",
                           stepExecution.getId(),
                           stepExecution.getJobExecutionId(),
                           snapshotName,
@@ -200,9 +213,12 @@ public class SnapshotContentItemVerifier
             //verify that manifest contains every item from the database except SNAPSHOT_PROPS_FILENAME
             if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
                 if(!this.manifestSet.contains(formatManifestSetString(contentId,checksum))){
-                    errors.add(MessageFormat.format("Content item {0} with checksum {1} not found in manifest for snapshot {2}", 
-                                                        contentId, checksum, 
-                                                        this.snapshotName));
+                    errors.add(
+                        MessageFormat.format(
+                            "Content item {0} with checksum {1} not found in manifest " +
+                            "for snapshot {2}",
+                        contentId, checksum,
+                        this.snapshotName));
                 }
                 snapshotContentItemCount.incrementAndGet();
             }

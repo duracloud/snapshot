@@ -31,8 +31,10 @@ import org.springframework.batch.item.ItemWriter;
  * 
  * @author Daniel Bernstein Date: Jul 28, 2015
  */
-public class ManifestVerifier
-    implements ItemWriter<ManifestEntry>, StepExecutionListener, ItemWriteListener<ManifestEntry> {
+public class ManifestVerifier implements ItemWriter<ManifestEntry>,
+                                         StepExecutionListener,
+                                         ItemWriteListener<ManifestEntry> {
+
     private Logger log = LoggerFactory.getLogger(ManifestVerifier.class);
     private String restorationId;
     private File contentDir;
@@ -43,9 +45,11 @@ public class ManifestVerifier
     /**
      * @param restorationId
      * @param contentDir
-     * @param restoreManager
+     * @param restorationManager
      */
-    public ManifestVerifier(String restorationId, File contentDir, RestoreManager restorationManager) {
+    public ManifestVerifier(String restorationId,
+                            File contentDir,
+                            RestoreManager restorationManager) {
         this.restorationId = restorationId;
         this.contentDir = contentDir;
         this.restoreManager = restorationManager;
@@ -101,9 +105,9 @@ public class ManifestVerifier
                  */
                 @Override
                 public Object retry() throws Exception {
-                    restoreManager.transitionRestoreStatus(restorationId, 
-                                                           RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER, 
-                                                           "");
+                    RestoreStatus newStatus =
+                        RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER;
+                    restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
                     return null;
                 }
             });
@@ -128,14 +132,16 @@ public class ManifestVerifier
                 status = status.addExitDescription(error);
             }
 
-            log.error("manifest verification finished:  step_execution_id={} job_execution_id={} restore_id={} exit_status=\"{}\"",
+            log.error("manifest verification finished: step_execution_id={} " +
+                      "job_execution_id={} restore_id={} exit_status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       restorationId,
                       status);
             
         } else {
-            log.info("manifest verification finished:step_execution_id={} job_execution_id={} restore_id={} exit_status=\"{}\"",
+            log.info("manifest verification finished:step_execution_id={} " +
+                     "job_execution_id={} restore_id={} exit_status=\"{}\"",
                      stepExecution.getId(),
                      stepExecution.getJobExecutionId(),
                      restorationId,
@@ -159,10 +165,12 @@ public class ManifestVerifier
                 String contentId = entry.getContentId();
                 String checksum = entry.getChecksum();
 
-                File file = new File(this.contentDir.getAbsolutePath() + File.separator + contentId);
+                File file = new File(this.contentDir.getAbsolutePath() +
+                                     File.separator + contentId);
                 if (!file.exists()) {
                     String message =
-                        MessageFormat.format("content (\"{0}\") not found in path ({1}) for restore ({2})",
+                        MessageFormat.format("content (\"{0}\") not found in " +
+                                             "path ({1}) for restore ({2})",
                                              contentId,
                                              file.getAbsolutePath(),
                                              restorationId);
@@ -172,7 +180,9 @@ public class ManifestVerifier
                     String fileChecksum = checksumUtil.generateChecksum(file);
                     if (!checksum.equals(fileChecksum)) {
                         String message =
-                            MessageFormat.format("content id's (\"{0}\")  manifest checksum ({1}) does not match file's checksum",
+                            MessageFormat.format("content id's (\"{0}\") manifest " +
+                                                 "checksum ({1}) does not match " +
+                                                 "file's checksum",
                                                  contentId,
                                                  file.getAbsolutePath());
                         log.error(message);

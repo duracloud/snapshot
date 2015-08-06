@@ -44,9 +44,11 @@ public class SnapshotRepoManifestReader  implements ItemReader<SnapshotContentIt
             NonTransientResourceException {
         if(this.items == null){
             this.items =
-                new StreamingIterator<SnapshotContentItem>(new JpaIteratorSource<SnapshotContentItemRepo, SnapshotContentItem>(repo) {
+                new StreamingIterator<>(new JpaIteratorSource<SnapshotContentItemRepo,
+                                                              SnapshotContentItem>(repo) {
                     @Override
-                    protected Page<SnapshotContentItem> getNextPage(Pageable pageable, SnapshotContentItemRepo repo) {
+                    protected Page<SnapshotContentItem> getNextPage(Pageable pageable,
+                                                                    SnapshotContentItemRepo repo) {
                         return repo.findBySnapshotName(snapshotName, pageable);
                     }
                 });

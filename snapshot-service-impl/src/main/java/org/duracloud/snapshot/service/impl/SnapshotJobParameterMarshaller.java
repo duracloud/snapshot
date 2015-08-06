@@ -27,7 +27,8 @@ public class SnapshotJobParameterMarshaller {
      */
     public static Map<String, JobParameter> marshal(Snapshot snapshot) {
         Map<String, JobParameter> map = new HashMap<>();
-        map.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID, new JobParameter(snapshot.getName(), true));
+        map.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
+                new JobParameter(snapshot.getName(), true));
         return map;
     }
     

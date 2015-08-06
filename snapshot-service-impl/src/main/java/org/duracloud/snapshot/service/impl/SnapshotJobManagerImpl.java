@@ -64,8 +64,6 @@ public class SnapshotJobManagerImpl
         this.jobRepository = jobRepository;
     }
 
-
-
     /*
      * (non-Javadoc)
      * 
@@ -92,7 +90,6 @@ public class SnapshotJobManagerImpl
     private boolean isInitialized() {
         return this.config != null;
     }
-
 
     private Snapshot getSnapshot(String snapshotId) throws SnapshotNotFoundException{
         Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
@@ -128,7 +125,6 @@ public class SnapshotJobManagerImpl
             throw new SnapshotException(e.getMessage(), e);
         }
     }
-    
 
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.manager.SnapshotJobManager#executeRestoration(java.lang.String)
@@ -138,13 +134,13 @@ public class SnapshotJobManagerImpl
         throws SnapshotException {
         return executeJob(getRestoration(restorationId));
     }
-    
 
     /**
      * @param restorationId
      * @return
      */
-    private Restoration getRestoration(String restorationId)  throws RestorationNotFoundException {
+    private Restoration getRestoration(String restorationId)
+        throws RestorationNotFoundException {
         Restoration restoration = this.restoreRepo.findByRestorationId(restorationId);
         if(restoration == null){
             throw new RestorationNotFoundException(restorationId);
@@ -152,7 +148,6 @@ public class SnapshotJobManagerImpl
         return restoration;
     }
 
- 
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.manager.SnapshotJobManager#executeSnapshot(java.lang.String)
      */
@@ -190,7 +185,8 @@ public class SnapshotJobManagerImpl
         BatchJobBuilder builder = this.builderManager.getBuilder(snapshot);
         JobParameters params = builder.buildIdentifyingJobParameters(snapshot);
         JobExecution ex =
-            this.jobRepository.getLastJobExecution(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, params);
+            this.jobRepository.getLastJobExecution(
+                SnapshotServiceConstants.SNAPSHOT_JOB_NAME, params);
         if (ex == null) {
             return BatchStatus.UNKNOWN;
         }else{

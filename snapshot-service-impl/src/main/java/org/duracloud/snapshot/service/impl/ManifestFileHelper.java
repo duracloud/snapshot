@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
 public class ManifestFileHelper {
 
     public static final String MANIFEST_MD5_TEXT_FILE_NAME = "manifest-md5.txt";
-    private static final Pattern MANIFEST_LINE_PATTERN = Pattern.compile("(\\w*)[\\s^\\r^\\n]+data/(.*)");
+    private static final Pattern MANIFEST_LINE_PATTERN =
+        Pattern.compile("(\\w*)[\\s^\\r^\\n]+data/(.*)");
    
     /**
      * @param writer
@@ -45,9 +46,11 @@ public class ManifestFileHelper {
             return new ManifestEntry(checksum,contentId);
             
         }catch(Exception ex){
-            throw new ParseException(MessageFormat.format("failed to parse \"{0}\": does not match regex (\"{1}\")",
-                                                          line,
-                                                          MANIFEST_LINE_PATTERN.pattern()),
+            throw new ParseException(
+                MessageFormat.format("failed to parse \"{0}\": " +
+                                     "does not match regex (\"{1}\")",
+                                     line,
+                                     MANIFEST_LINE_PATTERN.pattern()),
                                      0);
         }
     }

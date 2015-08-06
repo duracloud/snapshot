@@ -49,15 +49,19 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
     private List<String> errors;
 
     /**
-     * @param endpoint
+     * @param restorationId
      * @param watchDir
+     * @param endpoint
      * @param contentStore
-     * @param restoreRepo
-     * @param string
+     * @param destinationSpaceId
+     * @param restoreManager
      */
-    public SyncWriter(
-        String restorationId, File watchDir, SyncEndpoint endpoint, ContentStore contentStore,
-        String destinationSpaceId, RestoreManager restoreManager) {
+    public SyncWriter(String restorationId,
+                      File watchDir,
+                      SyncEndpoint endpoint,
+                      ContentStore contentStore,
+                      String destinationSpaceId,
+                      RestoreManager restoreManager) {
         super();
         this.endpoint = endpoint;
         this.watchDir = watchDir;
@@ -80,7 +84,9 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
         ExitStatus status = stepExecution.getExitStatus();
         if (this.errors.isEmpty()) {
             try {
-                restoreManager.transitionRestoreStatus(restorationId, RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE, "");
+                RestoreStatus newStatus = RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE;
+                restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
+
                 // restore the snapshot props file to the data directory.
                 restoreFile(new File(this.watchDir.getParentFile(), Constants.SNAPSHOT_PROPS_FILENAME),
                             watchDir.getParentFile());
@@ -94,7 +100,8 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
 
         } else {
             status = status.and(ExitStatus.FAILED);
-            status.addExitDescription("Transfer to DuraCloud failed: " + this.errors.size() + " items failed.");
+            status.addExitDescription("Transfer to DuraCloud failed: " +
+                                      this.errors.size() + " items failed.");
             for (String error : this.errors) {
                 status.addExitDescription(error);
             }
@@ -113,7 +120,8 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
     public void beforeStep(StepExecution stepExecution) {
         try {
             this.errors.clear();
-            restoreManager.transitionRestoreStatus(restorationId, RestoreStatus.TRANSFERRING_TO_DURACLOUD, "");
+            RestoreStatus newStatus = RestoreStatus.TRANSFERRING_TO_DURACLOUD;
+            restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
             Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
             if (!CollectionUtils.isEmpty(space.getContentIds())) {
                 stepExecution.addFailureException(new RuntimeException("destination space "
@@ -166,16 +174,18 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
                 @Override
                 public Object retry() throws Exception {
                     MonitoredFile monitoredFile = new MonitoredFile(file);
-                    SyncResultType result = endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
+                    SyncResultType result =
+                        endpoint.syncFileAndReturnDetailedResult(monitoredFile, watchDir);
                     if (result.equals(SyncResultType.FAILED)) {
-                        String message =
-                            "Failed to upload "
-                                + file.getAbsolutePath() + " after uploading " + monitoredFile.getStreamBytesRead()
-                                + " of " + file.length() + " bytes.";
+                        String message = "Failed to upload " + file.getAbsolutePath() +
+                                         " after uploading " +
+                                         monitoredFile.getStreamBytesRead() +
+                                         " of " + file.length() + " bytes.";
                         throw new Exception(message);
                     }
 
-                    log.info("successfully uploaded {}: result = {}", file.getAbsolutePath(), result);
+                    log.info("successfully uploaded {}: result = {}",
+                             file.getAbsolutePath(), result);
 
                     return result;
                 }

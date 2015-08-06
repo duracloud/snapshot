@@ -275,7 +275,8 @@ public class RestoreManagerImpl  implements RestoreManager{
     
     private void checkInitialized() throws SnapshotException {
         if(this.config == null){
-            throw new SnapshotException("The snapshot restoration manager has not been initialized.", null);
+            throw new SnapshotException("The snapshot restoration manager has not " +
+                                        "been initialized.", null);
         }
     }
 
@@ -289,7 +290,8 @@ public class RestoreManagerImpl  implements RestoreManager{
     }
     
     private String getRestorationContentDir(String restorationId) {
-        return ContentDirUtils.getSourcePath(restorationId, new File(this.config.getRestorationRootDir()));
+        return ContentDirUtils.getSourcePath(restorationId,
+                                             new File(this.config.getRestorationRootDir()));
     }
     
     /* (non-Javadoc)
@@ -300,7 +302,8 @@ public class RestoreManagerImpl  implements RestoreManager{
         throws RestorationNotFoundException {
         Restoration restoration =  this.restoreRepo.findByRestorationId(restorationId);
         if(restoration == null){
-            log.debug("Restoration returned null for {}. Throwing exception...", restorationId);
+            log.debug("Restoration returned null for {}. Throwing exception...",
+                      restorationId);
             throw new RestorationNotFoundException(restorationId);
         }
         
@@ -312,11 +315,14 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @see org.duracloud.snapshot.service.RestoreManager#getBySnapshotId(java.lang.String)
      */
     @Override
-    public Restoration getBySnapshotId(String snapshotId) throws RestorationNotFoundException {
+    public Restoration getBySnapshotId(String snapshotId)
+        throws RestorationNotFoundException {
         List<Restoration> restorations =  this.restoreRepo.findBySnapshotNameOrderByModifiedDesc(snapshotId);
         if(CollectionUtils.isEmpty(restorations)){
-            log.debug("Restoration returned null for snapshot id {}. Throwing exception...", snapshotId);
-            throw new RestorationNotFoundException("No restorations associated with snapshot " + snapshotId);
+            log.debug("Restoration returned null for snapshot id {}. Throwing exception...",
+                      snapshotId);
+            throw new RestorationNotFoundException(
+                "No restorations associated with snapshot " + snapshotId);
         }
         
         return restorations.get(0);

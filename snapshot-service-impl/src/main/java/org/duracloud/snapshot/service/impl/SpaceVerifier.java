@@ -36,8 +36,9 @@ import org.springframework.batch.item.ItemWriter;
  * @author Daniel Bernstein 
  *         Date: Jul 29, 2015
  */
-public class SpaceVerifier
-    implements ItemWriter<ManifestEntry>, StepExecutionListener, ItemWriteListener<ManifestEntry> {
+public class SpaceVerifier implements ItemWriter<ManifestEntry>,
+                                      StepExecutionListener,
+                                      ItemWriteListener<ManifestEntry> {
 
     private Logger log = LoggerFactory.getLogger(SpaceVerifier.class);
     private ContentStore contentStore;
@@ -104,9 +105,8 @@ public class SpaceVerifier
                  */
                 @Override
                 public Object retry() throws Exception {
-                    restoreManager.transitionRestoreStatus(restoreId, 
-                                                           RestoreStatus.VERIFYING_TRANSFERRED_CONTENT, 
-                                                           "");
+                    RestoreStatus newStatus = RestoreStatus.VERIFYING_TRANSFERRED_CONTENT;
+                    restoreManager.transitionRestoreStatus(restoreId, newStatus, "");
                     return null;
                 }
             });
@@ -126,7 +126,6 @@ public class SpaceVerifier
         if (errors.size() == 0) {
             try {
                 long spaceCount = new Retrier().execute(new Retriable() {
-
                     @Override
                     public Object retry() throws Exception {
                         Long count = 0l;
@@ -147,23 +146,29 @@ public class SpaceVerifier
                 });
 
                 if (spaceCount != manifestEntryCount.get()) {
-                    errors.add(MessageFormat.format("counts do not match: step_execution_id={0}  job_execution_id={1} store_id={2} spaceId={3} manifest_count={4} "
-                        + "space_count={5}",
-                                                    stepExecution.getId(),
-                                                    stepExecution.getJobExecutionId(),
-                                                    contentStore.getStoreId(),
-                                                    spaceId,
-                                                    manifestEntryCount.get(),
-                                                    spaceCount));
+                    errors.add(
+                        MessageFormat.format(
+                            "counts do not match: step_execution_id={0} " +
+                            "job_execution_id={1} store_id={2} spaceId={3} " +
+                            "manifest_count={4} space_count={5}",
+                        stepExecution.getId(),
+                        stepExecution.getJobExecutionId(),
+                        contentStore.getStoreId(),
+                        spaceId,
+                        manifestEntryCount.get(),
+                        spaceCount));
                 }
 
             } catch (Exception ex) {
-                errors.add(MessageFormat.format("failed to count items in space:  step_execution_id={0} job_execution_id={1} store_id={2} spaceId={3} message=\"{4}\"",
-                                                stepExecution.getId(),
-                                                stepExecution.getJobExecutionId(),
-                                                contentStore.getStoreId(),
-                                                spaceId,
-                                                ex.getMessage()));
+                errors.add(
+                    MessageFormat.format(
+                        "failed to count items in space:  step_execution_id={0} " +
+                        "job_execution_id={1} store_id={2} spaceId={3} message=\"{4}\"",
+                    stepExecution.getId(),
+                    stepExecution.getJobExecutionId(),
+                    contentStore.getStoreId(),
+                    spaceId,
+                    ex.getMessage()));
             }
         }
 
@@ -176,7 +181,8 @@ public class SpaceVerifier
                 status = status.addExitDescription(error);
             }
             
-            log.error("space verification step finished: step_execution_id={} job_execution_id={} store_id={} spaceId={} status=\"{}\"",
+            log.error("space verification step finished: step_execution_id={} " +
+                      "job_execution_id={} store_id={} spaceId={} status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       contentStore.getStoreId(),
@@ -185,7 +191,8 @@ public class SpaceVerifier
         }else {
             
             status = status.and(ExitStatus.COMPLETED);
-            log.info("space verification step finished: step_execution_id={} job_execution_id={} store_id={} spaceId={} exit_status={} ",
+            log.info("space verification step finished: step_execution_id={} " +
+                     "job_execution_id={} store_id={} spaceId={} exit_status={} ",
                      stepExecution.getId(),
                      stepExecution.getJobExecutionId(),
                      contentStore.getStoreId(),
@@ -209,17 +216,22 @@ public class SpaceVerifier
                     @Override
                     public Object retry() throws Exception {
                         String contentId = item.getContentId();
-                        Map<String, String> props = contentStore.getContentProperties(spaceId, contentId);
-                        String remoteItemChecksum = props.get(ContentStore.CONTENT_CHECKSUM);
+                        Map<String, String> props =
+                            contentStore.getContentProperties(spaceId, contentId);
+                        String remoteItemChecksum =
+                            props.get(ContentStore.CONTENT_CHECKSUM);
                         String manifestChecksum = item.getChecksum();
                         if (!manifestChecksum.equals(remoteItemChecksum)) {
-                            throw new Exception(MessageFormat.format("Checksums do not match: store_id={0}, spaceId={1}, "
-                                + "contentId={2}, manifest_checksum={3}, " + "content_checksum_property={4}",
-                                                                     contentStore.getStoreId(),
-                                                                     spaceId,
-                                                                     contentId,
-                                                                     manifestChecksum,
-                                                                     remoteItemChecksum));
+                            throw new Exception(
+                                MessageFormat.format(
+                                    "Checksums do not match: store_id={0}, spaceId={1}, " +
+                                    "contentId={2}, manifest_checksum={3}, " +
+                                    "content_checksum_property={4}",
+                                contentStore.getStoreId(),
+                                spaceId,
+                                contentId,
+                                manifestChecksum,
+                                remoteItemChecksum));
                         }
 
                         log.debug("Checksums match: store_id={}, spaceId={}, contentId={}",

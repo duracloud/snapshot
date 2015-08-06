@@ -57,7 +57,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
 
     private static final String MANIFEST_SHA256_TXT_FILE_NAME =
         "manifest-sha256.txt";
-    private static final String MANIFEST_MD5_TXT_FILE_NAME = ManifestFileHelper.MANIFEST_MD5_TEXT_FILE_NAME;
+    private static final String MANIFEST_MD5_TXT_FILE_NAME =
+        ManifestFileHelper.MANIFEST_MD5_TEXT_FILE_NAME;
     private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;
@@ -82,8 +83,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
      * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java.lang.Object, org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig)
      */
     @Override
-    public Job
-        buildJob(Snapshot snapshot, SnapshotJobManagerConfig config) throws SnapshotException {
+    public Job buildJob(Snapshot snapshot, SnapshotJobManagerConfig config)
+        throws SnapshotException {
 
         Job job;
         try {
@@ -110,13 +111,16 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             ItemReader<ContentItem> itemReader =
                 new SpaceItemReader(retrievalSource);
 
-            File contentDir = new File(ContentDirUtils.getDestinationPath(snapshot.getName(), config.getContentRootDir()));
+            File contentDir =
+                new File(ContentDirUtils.getDestinationPath(snapshot.getName(),
+                                                            config.getContentRootDir()));
             if(!contentDir.exists()){
                 contentDir.mkdirs();
             }
 
             BufferedWriter propsWriter =
-                createWriter(contentDir, SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
+                createWriter(contentDir,
+                             SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
             BufferedWriter md5Writer =
                 createWriter(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
             BufferedWriter sha256Writer =
@@ -146,7 +150,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
 
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
+            JobBuilder jobBuilder =
+                jobBuilderFactory.get(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
 
@@ -183,7 +188,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
         return SnapshotJobParameterMarshaller.marshal(snapshot);
     }
 
-    
     /**
      * @param contentDir
      * @param file
@@ -197,7 +201,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
         return propsWriter;
     }
-
 
     /**
      * @param contentDir

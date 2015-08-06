@@ -30,7 +30,8 @@ public class BatchJobBuilderManager  {
     private Map<Class,BatchJobBuilder> builders = new HashMap<>();
     
     @Autowired
-    public BatchJobBuilderManager(SnapshotJobBuilder snapshot, RestoreJobBuilder restoration){
+    public BatchJobBuilderManager(SnapshotJobBuilder snapshot,
+                                  RestoreJobBuilder restoration){
         this.builders.put(Snapshot.class, snapshot);
         this.builders.put(Restoration.class, restoration);
     }

@@ -22,12 +22,13 @@ import org.springframework.batch.core.JobParameters;
 public class RestoreJobParameterMarshaller {
 
     /**
-     * @param snapshot
+     * @param restoration
      * @return
      */
     public static Map<String, JobParameter> marshal(Restoration restoration) {
         Map<String, JobParameter> map = new HashMap<>();
-        map.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID, new JobParameter(restoration.getRestorationId(), true));
+        map.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
+                new JobParameter(restoration.getRestorationId(),true));
         return map;
     }
     

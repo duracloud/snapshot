@@ -156,7 +156,9 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private void writeToSnapshotManager(ContentItem contentItem,
                                         Map<String, String> props) throws IOException{
         try {
-            this.snapshotManager.addContentItem(snapshot, contentItem.getContentId(), props);
+            this.snapshotManager.addContentItem(snapshot,
+                                                contentItem.getContentId(),
+                                                props);
         } catch (SnapshotException e) {
             log.error("failed to add snapshot content item: "
                 + contentItem + ": " + e.getMessage(), e);

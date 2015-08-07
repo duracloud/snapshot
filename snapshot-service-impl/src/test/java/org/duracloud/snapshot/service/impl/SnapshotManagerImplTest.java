@@ -108,6 +108,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         props.put("key", "value");
         String contentId = "content-id";
         Capture<SnapshotContentItem> contentItemCapture = new Capture<>();
+        EasyMock.expect(this.snapshotContentItemRepo.findBySnapshotAndContentIdHash(EasyMock.isA(Snapshot.class), EasyMock.isA(String.class))).andReturn(null);
+        
         EasyMock.expect(this.snapshotContentItemRepo.save(EasyMock.capture(contentItemCapture)))
                 .andReturn(createMock(SnapshotContentItem.class));
         replayAll();

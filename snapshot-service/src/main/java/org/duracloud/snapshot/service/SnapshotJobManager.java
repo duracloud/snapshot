@@ -61,5 +61,5 @@ public interface SnapshotJobManager  {
      */
     public BatchStatus executeRestoration(String restorationId)
         throws SnapshotException;
-    
+
 }

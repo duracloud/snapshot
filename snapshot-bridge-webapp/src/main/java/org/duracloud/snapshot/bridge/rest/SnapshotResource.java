@@ -27,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -42,8 +43,9 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
-import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
@@ -52,6 +54,7 @@ import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -175,6 +178,46 @@ public class SnapshotResource {
         }
     }
 
+    @Path("{snapshotId}/restart")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response restart(@PathParam("snapshotId") String snapshotId) {
+        log.debug("attempting restart of snapshot " + snapshotId);
+        
+        try {
+            Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
+            if (snapshot == null) {
+                throw new SnapshotNotFoundException(snapshotId);
+            }
+            
+            log.debug("snapshot {} found.", snapshot);
+            
+            if(!snapshot.getStatus().equals(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD)){
+                String message= "Snapshot can only be restarted when it has reached a failure state. ( snapshot=" + snapshot + ")";
+                throw new SnapshotException(message,null);
+            }
+            
+            snapshot.setEndDate(null);
+            snapshot.setStatusText("restarting");
+            snapshot.setStatus(SnapshotStatus.INITIALIZED);
+            snapshot = this.snapshotRepo.saveAndFlush(snapshot);
+            
+            this.jobManager.executeSnapshot(snapshotId);
+            RestartSnapshotBridgeResult result =
+                new RestartSnapshotBridgeResult(snapshotId, snapshot.getStatus());
+            
+            log.info("successfully restarted snapshot: {}", result);
+            return Response.accepted().entity(result).build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+
+    }
+    
+    
     @Path("{snapshotId}")
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)

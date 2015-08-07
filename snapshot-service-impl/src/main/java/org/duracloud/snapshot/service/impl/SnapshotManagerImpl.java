@@ -39,7 +39,10 @@ import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -123,14 +126,24 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                String contentId,
                                Map<String, String> props)
         throws SnapshotException {
-        SnapshotContentItem item = new SnapshotContentItem();
-        item.setContentId(contentId);
-        item.setSnapshot(snapshot);
-        item.setContentIdHash(getIdChecksum(contentId));
-
-        String propString = PropertiesSerializer.serialize(props);
-        item.setMetadata(propString);
-        this.snapshotContentItemRepo.save(item);
+        
+        String contentIdHash = getIdChecksum(contentId);
+        try{
+            
+            if(this.snapshotContentItemRepo.findBySnapshotAndContentIdHash(snapshot, contentIdHash) != null){
+                return;
+            }
+            
+            SnapshotContentItem item = new SnapshotContentItem();
+            item.setContentId(contentId);
+            item.setSnapshot(snapshot);
+            item.setContentIdHash(contentIdHash);
+            String propString = PropertiesSerializer.serialize(props);
+            item.setMetadata(propString);
+            this.snapshotContentItemRepo.save(item);
+        } catch(Exception ex){
+            throw new SnapshotException("failed to add content item: " + ex.getMessage(), ex);
+        }
     }
 
     @Override

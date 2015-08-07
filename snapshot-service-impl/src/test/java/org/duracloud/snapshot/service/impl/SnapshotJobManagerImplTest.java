@@ -14,9 +14,6 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
-import org.duracloud.snapshot.service.impl.BatchJobBuilderManager;
-import org.duracloud.snapshot.service.impl.SnapshotJobBuilder;
-import org.duracloud.snapshot.service.impl.SnapshotJobManagerImpl;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -43,7 +40,6 @@ import com.amazonaws.services.elasticache.model.SnapshotNotFoundException;
 public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
     private String snapshotName = "test-id";
-    private Long snapshotId = 10101l;
 
     @TestSubject
     private SnapshotJobManagerImpl manager;

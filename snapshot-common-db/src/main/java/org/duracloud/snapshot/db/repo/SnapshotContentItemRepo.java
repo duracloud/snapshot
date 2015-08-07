@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.db.repo;
 
+import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,4 +41,12 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
         findBySnapshotName(@Param("snapshotName") String snapshotName, 
                            Pageable pageable);
 
+    /**
+     * @param id
+     * @param contentIdHash
+     * @return
+     */
+    public SnapshotContentItem findBySnapshotAndContentIdHash(Snapshot snapshot, String contentIdHash);
+
+ 
 }

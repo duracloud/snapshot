@@ -18,11 +18,12 @@ import java.util.Set;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
+import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
-import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
@@ -153,13 +154,18 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
      * @param contentItem
      * @param props
      */
-    private void writeToSnapshotManager(ContentItem contentItem,
-                                        Map<String, String> props) throws IOException{
+    private void writeToSnapshotManager(final ContentItem contentItem,
+                                        final Map<String, String> props) throws IOException{
         try {
-            this.snapshotManager.addContentItem(snapshot,
-                                                contentItem.getContentId(),
-                                                props);
-        } catch (SnapshotException e) {
+            new Retrier().execute(new Retriable() {
+                @Override
+                public Object retry() throws Exception {
+                    snapshotManager.addContentItem(snapshot, contentItem.getContentId(), props);
+                    return null;
+                }
+
+            });
+        } catch (Exception e) {
             log.error("failed to add snapshot content item: "
                 + contentItem + ": " + e.getMessage(), e);
             throw new IOException(e);
@@ -270,7 +276,6 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     @Override
     public void beforeStep(StepExecution stepExecution) {
         try {
-            
             this.errors.clear();
             synchronized (propsWriter) {
                 propsWriter.write("[\n");

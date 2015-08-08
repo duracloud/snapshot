@@ -53,6 +53,11 @@ public class ContentPropertiesFileReader implements ItemReader<ContentProperties
             jParser = jfactory.createJsonParser(this.propertiesFile);
             jParser.nextToken(); //skips the first [
         }
+        
+        //once parser is closed, always return null.
+       if(jParser.isClosed()){
+            return null;
+        }
 
         try {
             while (jParser.nextToken() != JsonToken.END_ARRAY &&
@@ -60,8 +65,10 @@ public class ContentPropertiesFileReader implements ItemReader<ContentProperties
                 return parseNext(jParser);
             }
         } catch(Exception e) {
-            log.error("Error parsing content properties file: " +
-                      e.getMessage(), e);
+            String message = "Error parsing content properties file: " +
+                e.getMessage();
+            log.error(message, e);
+            throw new ParseException(message,e);
         }
 
         jParser.close();

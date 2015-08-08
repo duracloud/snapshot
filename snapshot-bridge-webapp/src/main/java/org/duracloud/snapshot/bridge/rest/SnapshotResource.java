@@ -54,7 +54,6 @@ import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -191,9 +190,11 @@ public class SnapshotResource {
             }
             
             log.debug("snapshot {} found.", snapshot);
+            SnapshotStatus status = snapshot.getStatus();
             
-            if(!snapshot.getStatus().equals(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD)){
-                String message= "Snapshot can only be restarted when it has reached a failure state. ( snapshot=" + snapshot + ")";
+            if(!status.equals(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD)){
+                String message= "Snapshot can only be restarted when it has reached " + 
+                                "a failure state. ( snapshot=" + snapshot + ")";
                 throw new SnapshotException(message,null);
             }
             

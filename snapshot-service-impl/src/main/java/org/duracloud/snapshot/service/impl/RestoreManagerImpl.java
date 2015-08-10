@@ -136,15 +136,17 @@ public class RestoreManagerImpl  implements RestoreManager{
 
         restoration =  save(restoration);
 
-        File restoreDir = getRestoreDir(restoration.getRestorationId());
+        String restorationId = restoration.getRestorationId();
+        File restoreDir = getRestoreDir(restorationId);
         restoreDir.mkdirs();
 
         //send email to DPN
         String subject = "Snapshot Restoration Request for Snapshot ID = " +
                          snapshotId;
-        String body = "Please perform a snapshot restore.\n\nSnapshot ID: " +
-                      snapshotId + "\nRestore Location: " +
-                      restoreDir.getAbsolutePath();
+        String body = "Please perform a snapshot restore.\n" +
+                      "\nSnapshot ID: " + snapshotId +
+                      "\nRestore ID: " + restorationId +
+                      "\nRestore Location: " + restoreDir.getAbsolutePath();
         notificationManager.sendNotification(NotificationType.EMAIL,
                                              subject,
                                              body,

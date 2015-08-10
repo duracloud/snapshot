@@ -33,6 +33,7 @@ import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -98,11 +99,9 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     /**
      * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreSnapshot(String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig, String)}.
      * @throws SnapshotException 
-     * @throws SnapshotInProcessException 
-     * @throws SnapshotNotFoundException 
      */
     @Test
-    public void testRestoreSnapshot() throws SnapshotNotFoundException, SnapshotInProcessException, SnapshotException {
+    public void testRestoreSnapshot() throws SnapshotException {
         expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
         DuracloudEndPointConfig source = createMock(DuracloudEndPointConfig.class);
@@ -112,9 +111,10 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expect(snapshot.getSource()).andReturn(source);
 
         expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
+        Capture<String> emailBodyCapture = new Capture<>();
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
-                                             isA(String.class),
+                                             capture(emailBodyCapture),
                                              isA(String.class),
                                              isA(String.class));
         expectLastCall();
@@ -123,6 +123,12 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         replayAll();
         Restoration restoration = manager.restoreSnapshot(snapshotName, destination, userEmail );
         Assert.assertNotNull(restoration);
+
+        String emailBody = emailBodyCapture.getValue();
+        Assert.assertTrue("Expecting snapshot ID in email body",
+                          emailBody.contains(snapshotName));
+        Assert.assertTrue("Expecting restore ID in email body",
+                          emailBody.contains(restorationId));
     }
 
     /**

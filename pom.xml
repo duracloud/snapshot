@@ -184,7 +184,7 @@
     <spring.batch.version>3.0.4.RELEASE</spring.batch.version>
     <hibernate.version>4.3.5.Final</hibernate.version>
     <duracloud.version>3.4.0-SNAPSHOT</duracloud.version>
-    <duracloud.db.version>3.4.0-SNAPSHOT</duracloud.db.version>
+    <duracloud.db.version>3.3.5</duracloud.db.version>
 
     <skipITs>true</skipITs>
   </properties>

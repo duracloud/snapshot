@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.internal.runners.statements.Fail;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
@@ -58,6 +59,9 @@ public class ContentPropertiesFileReaderTest {
             count++;
         }
         
+        //verify that once the reader returns null, it will always return null.
+        Assert.assertNull(reader.read());
+
         Assert.assertEquals(2, count++);
     }
 

@@ -9,7 +9,7 @@ package org.duracloud.snapshot.db;
 
 import java.util.List;
 
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -50,6 +50,12 @@ public class DatabaseInitializer implements ApplicationContextAware{
         dataSource.setUrl(databaseConfig.getUrl());
         dataSource.setUsername(databaseConfig.getUsername());
         dataSource.setPassword(databaseConfig.getPassword());
+        dataSource.setInitialSize(5);
+        dataSource.setMaxIdle(5);
+        dataSource.setMaxTotal(50);
+        dataSource.setMaxConnLifetimeMillis(14400);
+        dataSource.setTimeBetweenEvictionRunsMillis(60*1000*15);
+        
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(databasePopulator(databaseConfig));
 

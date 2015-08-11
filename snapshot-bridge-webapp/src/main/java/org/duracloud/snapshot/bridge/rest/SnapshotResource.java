@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -203,11 +204,12 @@ public class SnapshotResource {
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
             
+            SnapshotStatus snapshotStatus = snapshot.getStatus();
             this.jobManager.executeSnapshot(snapshotId);
+            String message = MessageFormat.format("successfully restarted snapshot: {0}", snapshotStatus);
+            log.info(message);
             RestartSnapshotBridgeResult result =
-                new RestartSnapshotBridgeResult(snapshotId, snapshot.getStatus());
-            
-            log.info("successfully restarted snapshot: {}", result);
+                new RestartSnapshotBridgeResult(message, snapshotStatus);
             return Response.accepted().entity(result).build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);

@@ -203,7 +203,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             (RestartSnapshotBridgeResult) response.getEntity();
 
         assertNotNull(result);
-        assertEquals(snapshotId, result.getSnapshotId());
+        assertNotNull(result.getDescription());
         assertEquals(SnapshotStatus.INITIALIZED, result.getStatus());
 
     }

@@ -83,7 +83,7 @@
         <prop key="jadira.usertype.autoRegisterUserTypes">true</prop>
         <prop key="jadira.usertype.databaseZone">jvm</prop>
         <!-- Set the following 3 properties to true to have SQL statements used show up in the logs -->
-        <prop key="hibernate.show_sql">true</prop>
+        <prop key="hibernate.show_sql">false</prop>
         <prop key="hibernate.format_sql">true</prop>
         <prop key="hibernate.show_comments">false</prop>
       </props>

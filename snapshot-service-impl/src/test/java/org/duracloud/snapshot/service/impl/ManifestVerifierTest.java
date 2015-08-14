@@ -18,6 +18,8 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.batch.runtime.JobExecution;
+
 import org.apache.commons.io.FileUtils;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
@@ -32,6 +34,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 
@@ -95,6 +98,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
     @Test
     public void testBadChecksum() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
         List<ManifestEntry> list = setupManifestFileAndContentDir();
         list.get(list.size() - 1).setChecksum("badChecksum");
         replayAll();
@@ -105,6 +109,8 @@ public class ManifestVerifierTest extends EasyMockSupport {
     @Test
     public void testContentInManifestButNotOnDisk() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
+
         List<ManifestEntry> list = setupManifestFileAndContentDir();
         String contentId = list.get(list.size() - 1).getContentId();
         File file = new File(restoreDir.getAbsolutePath() + File.separator + contentId);
@@ -112,6 +118,13 @@ public class ManifestVerifierTest extends EasyMockSupport {
         replayAll();
         createVerifier();
         simulateStepExecution(ExitStatus.FAILED, list);
+    }
+
+    private void setupStepExecutionFailure() {
+       stepExecution.setTerminateOnly();
+       expectLastCall();
+       stepExecution.upgradeStatus(BatchStatus.FAILED);
+       expectLastCall();
     }
 
     /**

@@ -30,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 
@@ -92,6 +93,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     @Test
     public void testFailureMissingManifestItem() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         snapshotContentItems.add(createSnapshotContentItem("missing-content", "checksum"));
@@ -99,10 +101,20 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
     }
+    
+    private void setupStepExecutionFailure() {
+        stepExecution.setTerminateOnly();
+        expectLastCall();
+        stepExecution.upgradeStatus(BatchStatus.FAILED);
+        expectLastCall();
+     }
+
 
     @Test
     public void testFailureChecksumMismatch() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
+
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         //replace the checksum of last item with bad checksum.
@@ -115,6 +127,8 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     @Test
     public void testFailureMissingSnapshotItem() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
+
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         //remove a snapshot item 

@@ -125,7 +125,6 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                           .next(restoreContentStep)
                           .next(restorePropertiesStep)
                           .next(verifyDuraCloudTransferStep);
-
             simpleJobBuilder.listener(jobListener);
             job = simpleJobBuilder.build();
             log.debug("build job {}", job);

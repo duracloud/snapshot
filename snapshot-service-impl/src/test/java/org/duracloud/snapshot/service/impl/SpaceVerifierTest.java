@@ -29,6 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 
@@ -90,6 +91,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
      @Test
     public void testFailedRunCountDoesNotMatch() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
         setupGetContentProperties(true);
         setupGetStoreId();
         setupGetSpaceContents(Arrays.asList(contentId, "mystery-content-id"));
@@ -101,6 +103,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
     @Test
     public void testFailedRunBadChecksum() throws Exception {
         setupStepExecution();
+        setupStepExecutionFailure();
         setupGetContentProperties(false);
         setupGetStoreId();
         replayAll();
@@ -143,6 +146,13 @@ public class SpaceVerifierTest extends EasyMockSupport {
 
     }
 
+    private void setupStepExecutionFailure() {
+        stepExecution.setTerminateOnly();
+        expectLastCall();
+        stepExecution.upgradeStatus(BatchStatus.FAILED);
+        expectLastCall();
+     }
+    
     /**
      * 
      */

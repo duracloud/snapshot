@@ -26,6 +26,7 @@ import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
@@ -131,8 +132,11 @@ public class SnapshotContentItemVerifier
                     }
                 });
             
-            } catch (Exception e) {
-                stepExecution.addFailureException(e);
+            } catch (Exception ex) {
+                this.errors.add("failed to transition status to " +
+                    RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST + ": " + 
+                    ex.getMessage());
+                stepExecution.addFailureException(ex);
             }
             
             
@@ -182,6 +186,8 @@ public class SnapshotContentItemVerifier
                     status = status.addExitDescription(error);
                 }
 
+                stepExecution.upgradeStatus(BatchStatus.FAILED);
+                stepExecution.setTerminateOnly();
                 log.error("snapshot repo verification finished: step_execution_id={} " +
                           "job_execution_id={} snapshot_name={} status=\"{}\"",
                           stepExecution.getId(),

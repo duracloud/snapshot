@@ -33,16 +33,14 @@ import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
+import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -148,7 +146,15 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     @Override
     @Transactional
-    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) {
+    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) throws AlternateIdAlreadyExistsException {
+        
+        for(String altId : alternateIds){
+            Snapshot altSnapshot = this.snapshotRepo.findBySnapshotAlternateIds(altId);
+            if (altSnapshot != null && !altSnapshot.getName().equals(snapshot.getName())) {
+                throw new AlternateIdAlreadyExistsException("The alternate snapshot id ("
+                    + altId + ") already exists in another snapshot (" + altSnapshot.getName()+")");
+            }
+        }
         snapshot.addSnapshotAlternateIds(alternateIds);
         this.snapshotRepo.save(snapshot);
     }

@@ -32,15 +32,16 @@ public interface SnapshotManager {
      * Adds a list of snapshot alternate Id's to a snapshot. To map DPN Bag Id's to Duracloud Snapshot Id's
      * @param snapshot
      * @param alternateId
-     * @throws SnapshotException
+     * @throws AlternateIdAlreadyExistsException 
      */
-    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds);
+    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
+        throws AlternateIdAlreadyExistsException;
 
     /**
      * Notifies the bridge that the snapshot's transfer to DPN node is complete.  This call is initiated
      * by the DPN node via the bridge REST API.
      * @param snapshotId
-     * @throws SnapshotManagerException
+     * @throws SnapshotException
      */
     public Snapshot transferToDpnNodeComplete(String snapshotId) throws SnapshotException;
 

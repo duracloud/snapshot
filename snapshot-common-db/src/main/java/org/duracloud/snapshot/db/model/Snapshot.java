@@ -186,7 +186,9 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
             }
             // copy all the items from JSONArray to ArrayList
             for (String snapshotAlternateId : snapshotAlternateIds) {
-                this.snapshotAlternateIds.add(snapshotAlternateId);
+                if(!this.snapshotAlternateIds.contains(snapshotAlternateId)){
+                    this.snapshotAlternateIds.add(snapshotAlternateId);
+                }
             }
         }
     }

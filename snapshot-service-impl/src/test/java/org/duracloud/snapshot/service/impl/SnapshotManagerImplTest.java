@@ -10,6 +10,7 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CleanupSnapshotTaskResult;
 import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
+import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.easymock.Capture;
@@ -168,6 +170,39 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         }
     }
 
+    @Test
+    public void testAddDuplicateAlternateIdsInSameSnapshot() throws AlternateIdAlreadyExistsException{
+        String altTestId = "alt-test";
+        List<String> alternateIds = Arrays.asList(new String[]{altTestId});
+        String snapshotId = "test";
+        expect(snapshot.getName()).andReturn(snapshotId).times(2);
+        expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot);
+        this.snapshot.addSnapshotAlternateIds(alternateIds);
+        expectLastCall();
+        expect(this.snapshotRepo.save(snapshot)).andReturn(snapshot);
+        replayAll();
+        this.manager.addAlternateSnapshotIds(snapshot, alternateIds);
+    }
+    
+    @Test
+    public void testAddDuplicateAlternateIdsInDifferentSnapshot(){
+        String altTestId = "alt-test";
+        List<String> alternateIds = Arrays.asList(new String[]{altTestId});
+        String snapshotId = "test";
+        Snapshot snapshot2 = createMock(Snapshot.class);
+        
+        expect(snapshot.getName()).andReturn(snapshotId);
+        expect(snapshot2.getName()).andReturn("snapshot2").atLeastOnce();
+        
+        expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot2);
+        replayAll();
+        try {
+            this.manager.addAlternateSnapshotIds(snapshot, alternateIds);
+            fail("call to addAlternateSnapshotIds should have failed");
+        } catch (AlternateIdAlreadyExistsException e) {
+            assertTrue(true);
+        }
+    }
     /**
      * 
      */

@@ -29,6 +29,8 @@ import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.common.util.IOUtil;
+import org.duracloud.error.ContentStoreException;
+import org.duracloud.error.NotFoundException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -50,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
 
 /**
  * @author Daniel Bernstein Date: Jul 31, 2014
@@ -200,6 +203,8 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
             ContentStore store = getContentStore(source);
             
+            ensureMetadataSpaceExists(store); 
+            
             String zipChecksum = this.checksumUtil.generateChecksum(zipFile);            
             store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
                              zipFile.getName(),
@@ -224,6 +229,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
             String message = "failed to initiate snapshot clean up: " + e.getMessage();
             log.error(message, e);
             throw new SnapshotManagerException(e.getMessage());
+        }
+    }
+
+    /**
+     * @param store
+     */
+    private void ensureMetadataSpaceExists(ContentStore store) throws ContentStoreException {
+        String spaceId = Constants.SNAPSHOT_METADATA_SPACE;
+        try {
+            store.getSpace(spaceId, null, 0, null);
+        } catch (NotFoundException e) {
+            store.createSpace(spaceId);
         }
     }
 

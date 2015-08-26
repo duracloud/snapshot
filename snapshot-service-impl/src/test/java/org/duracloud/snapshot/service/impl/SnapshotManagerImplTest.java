@@ -30,6 +30,7 @@ import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.error.ContentStoreException;
+import org.duracloud.error.NotFoundException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -158,6 +159,12 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         }
         
         ContentStore contentStore = createMock(ContentStore.class);
+        expect(contentStore.getSpace(eq(Constants.SNAPSHOT_METADATA_SPACE),
+                                     isNull(String.class),
+                                     anyLong(),
+                                     isNull(String.class))).andThrow(new NotFoundException("not found"));
+        contentStore.createSpace(eq(Constants.SNAPSHOT_METADATA_SPACE));
+        expectLastCall();
         expect(contentStore.addContent(eq(Constants.SNAPSHOT_METADATA_SPACE),
                                        eq(snapshotId + ".zip"),
                                        isA(InputStream.class),

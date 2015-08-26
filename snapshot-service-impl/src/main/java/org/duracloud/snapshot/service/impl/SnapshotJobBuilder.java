@@ -55,10 +55,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     private static Logger log = LoggerFactory.getLogger(SnapshotJobBuilder.class);
 
-    private static final String MANIFEST_SHA256_TXT_FILE_NAME =
-        "manifest-sha256.txt";
-    private static final String MANIFEST_MD5_TXT_FILE_NAME =
-        ManifestFileHelper.MANIFEST_MD5_TEXT_FILE_NAME;
+    private static final String MANIFEST_SHA256_TXT_FILE_NAME = 
+        SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME;
+    private static final String MANIFEST_MD5_TXT_FILE_NAME = 
+        SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME;
     private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
     private PlatformTransactionManager transactionManager;

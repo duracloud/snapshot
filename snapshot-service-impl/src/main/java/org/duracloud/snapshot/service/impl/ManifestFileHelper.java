@@ -14,13 +14,16 @@ import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
+
 /**
  * @author Daniel Bernstein
  *         Date: Jul 29, 2015
  */
 public class ManifestFileHelper {
 
-    public static final String MANIFEST_MD5_TEXT_FILE_NAME = "manifest-md5.txt";
+    public static final String MANIFEST_MD5_TEXT_FILE_NAME = 
+        SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME;
     private static final Pattern MANIFEST_LINE_PATTERN =
         Pattern.compile("(\\w*)[\\s^\\r^\\n]+data/(.*)");
    

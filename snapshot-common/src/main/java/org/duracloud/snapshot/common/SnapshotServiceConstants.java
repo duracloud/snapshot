@@ -18,4 +18,9 @@ public class SnapshotServiceConstants {
     public static final String DURASTORE_CONTEXT = "durastore";
     public static final String CONTENT_PROPERTIES_JSON_FILENAME =
         "content-properties.json";
+    public static final String MANIFEST_SHA256_TXT_FILE_NAME = 
+        "manifest-sha256.txt";
+    public static final String MANIFEST_MD5_TXT_FILE_NAME = 
+        "manifest-md5.txt";
+
 }

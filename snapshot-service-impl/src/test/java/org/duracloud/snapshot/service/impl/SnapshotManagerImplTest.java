@@ -7,8 +7,13 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.easymock.EasyMock.*;
+import static org.junit.Assert.*;
+
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -18,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.error.ContentStoreException;
@@ -42,9 +49,6 @@ import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
 
 /**
  * @author Daniel Bernstein Date: Jul 31, 2014
@@ -129,7 +133,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testTransferToDpnNodeComplete() throws SnapshotException, ContentStoreException {
+    public void testTransferToDpnNodeComplete() throws SnapshotException, ContentStoreException,IOException {
         String snapshotId = "snapshot-name";
         String spaceId = "space-id";
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
@@ -143,6 +147,28 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         File dir = new File(ContentDirUtils.getDestinationPath(snapshotId, root));
         dir.mkdirs();
         assertTrue(dir.exists());
+        
+        
+        for(String f : SnapshotManagerImpl.METADATA_FILENAMES){
+            File file = new File(dir, f);
+            file.deleteOnExit();
+            try(FileOutputStream fos = new FileOutputStream(file)){
+                IOUtils.write("test", fos);
+            }
+        }
+        
+        ContentStore contentStore = createMock(ContentStore.class);
+        expect(contentStore.addContent(eq(Constants.SNAPSHOT_METADATA_SPACE),
+                                       eq(snapshotId + ".zip"),
+                                       isA(InputStream.class),
+                                       anyLong(),
+                                       eq("application/zip"),
+                                       isA(String.class),
+                                       (Map<String, String>) isNull())).andReturn("test");
+        
+        expect(storeClientHelper.create(isA(DuracloudEndPointConfig.class),
+                                        isA(String.class),
+                                        isA(String.class))).andReturn(contentStore);
 
         setupEndpoint();
 

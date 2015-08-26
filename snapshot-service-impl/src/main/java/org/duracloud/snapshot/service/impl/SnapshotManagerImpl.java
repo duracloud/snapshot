@@ -8,22 +8,30 @@
 package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.client.task.SnapshotTaskClient;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
+import org.duracloud.common.util.IOUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -50,6 +58,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class SnapshotManagerImpl implements SnapshotManager {
     private static Logger log = LoggerFactory.getLogger(SnapshotManagerImpl.class);
 
+    protected static String[] METADATA_FILENAMES = {Constants.SNAPSHOT_PROPS_FILENAME, 
+        SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME, 
+        SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME,
+        SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME};
+    
     //NOTE: auto wiring at the field level rather than in the constructor seems to be necessary
     //      when annotating methods with @Transactional.
     @Autowired
@@ -180,11 +193,27 @@ public class SnapshotManagerImpl implements SnapshotManager {
             File snapshotDir =
                 new File(ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                             bridgeConfig.getContentRootDir()));
+
+             File zipFile = zipMetadata(snapshotId, snapshotDir);
+            
+            DuracloudEndPointConfig source = snapshot.getSource();
+
+            ContentStore store = getContentStore(source);
+            
+            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);            
+            store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
+                             zipFile.getName(),
+                             new FileInputStream(zipFile),
+                             zipFile.length(),
+                             "application/zip",
+                             zipChecksum,
+                             null);
+            
+            zipFile.delete();
+            
             FileUtils.deleteDirectory(snapshotDir);
 
-            DuracloudEndPointConfig source = snapshot.getSource();
             String spaceId = source.getSpaceId();
-
             // Call DuraCloud to clean up snapshot
             getSnapshotTaskClient(source).cleanupSnapshot(spaceId);
             log.info("successfully initiated snapshot cleanup on DuraCloud for snapshotId = "
@@ -197,6 +226,43 @@ public class SnapshotManagerImpl implements SnapshotManager {
             throw new SnapshotManagerException(e.getMessage());
         }
     }
+
+    /**
+     * @param snapshotId
+     * @param snapshotDir
+     * @return
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    private File zipMetadata(String snapshotId, File snapshotDir)
+        throws FileNotFoundException,
+            IOException {
+
+        File zipFile = new File(snapshotDir, snapshotId+".zip");
+        
+        FileOutputStream fileOutputStream = new FileOutputStream(zipFile);
+        ZipOutputStream zipOs = new ZipOutputStream(fileOutputStream);
+        
+        for(String file : METADATA_FILENAMES) {
+            IOUtil.addFileToZipOutputStream(new File(snapshotDir, file), zipOs);
+        }
+
+        zipOs.close();
+        return zipFile;
+    }
+
+    /**
+     * @param source
+     * @return
+     */
+    private ContentStore getContentStore(DuracloudEndPointConfig source) {
+        ContentStore store =
+            storeClientHelper.create(source,
+                                     bridgeConfig.getDuracloudUsername(),
+                                     bridgeConfig.getDuracloudPassword());
+        return store;
+    }
+
 
     /**
      * Build the snapshot task client - for communicating with the DuraCloud snapshot
@@ -260,10 +326,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
             this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();
-            ContentStore store =
-                storeClientHelper.create(source,
-                                         bridgeConfig.getDuracloudUsername(),
-                                         bridgeConfig.getDuracloudPassword());
+            ContentStore store = getContentStore(source);
             try {
                 String spaceId = source.getSpaceId();
                 Iterator<String> it  = store.getSpaceContents(spaceId);

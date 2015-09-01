@@ -16,6 +16,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,11 +31,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
+import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.ManifestFormat;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.common.util.DateUtil;
 import org.duracloud.common.util.DateUtil.DateFormat;
+import org.duracloud.manifest.impl.TsvManifestFormatter;
+import org.duracloud.mill.db.model.ManifestItem;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.ContentStream;
@@ -126,33 +131,50 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testSingleThreaded() throws IOException, SnapshotException {
+    public void testSingleThreaded() throws Exception {
         test(1);
     }
 
     @Test
-    public void testMultiThreaded() throws IOException, SnapshotException {
+    public void testMultiThreaded() throws Exception {
         test(10);
     }
 
     
-    private void test(int threads) throws IOException, SnapshotException {
+    @Test
+    public void testManifestVerificationFailure() throws Exception {
+        test(10,false);
+    }
+
+    private void test(int threads) throws Exception {
+        test(threads, true);
+    }
+    private void test(int threads, boolean manifestVerificationSuccessful) throws Exception {
         outputWriter = new CSVFileOutputWriter(workDir);
         BufferedWriter propsWriter =
             createWriter(contentDir, "properties.json");
-        BufferedWriter md5Writer = createWriter(contentDir, MD5_MANIFEST_TXT_FILE_NAME);
+        File md5File = new File(contentDir, MD5_MANIFEST_TXT_FILE_NAME);
+        BufferedWriter md5Writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(md5File)));
         BufferedWriter sha256Writer =
             createWriter(contentDir, SHA256_MANIFEST_TXT_FILE_NAME);
-
+        
+        
         String spaceId = "space-id";
         String contentId = "content-id";
         List<ContentItem> items = new ArrayList<>();
         
+        ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             sourceFiles.add(setupContentItem(items, spaceId, contentId + i));
         }
 
+        int toIndex = items.size();
+        if(!manifestVerificationSuccessful){
+            toIndex = items.size()-1;
+        }
+        expect(contentStore.getManifest(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items.subList(0, toIndex)));
+        
         Collections.sort(sourceFiles, new Comparator<File>(){
             /* (non-Javadoc)
              * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
@@ -168,12 +190,14 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             /* (non-Javadoc)
              * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
              */
-            @Override
+            @Override   
             public int compare(ContentItem o1, ContentItem o2) {
                  return o1.getContentId().compareTo(o2.getContentId());
             }
         });
 
+        
+        
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
         replayAll();
@@ -184,12 +208,15 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 outputWriter,
                                 propsWriter,
                                 md5Writer,
+                                md5File, 
                                 sha256Writer,
-                                snapshotManager);
+                                snapshotManager, 
+                                contentStore, 
+                                spaceId);
 
         writer.beforeStep(stepExecution);
         writeItems(items, threads);
-        writer.afterStep(stepExecution);
+        ExitStatus status = writer.afterStep(stepExecution);
 
         List<String> md5Lines = getLines(MD5_MANIFEST_TXT_FILE_NAME);
         
@@ -228,6 +255,34 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             assertTrue(shaLine.contains(shaChecksum));
         }
 
+        if(manifestVerificationSuccessful){
+            assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
+        }else{
+            assertEquals(ExitStatus.FAILED.getExitCode(), status.getExitCode());
+        }
+        
+    }
+
+    /**
+     * @param items
+     * @return
+     */
+    private InputStream createManifestInputStream(List<ContentItem> items) throws Exception{
+        File file = File.createTempFile("manifest", "tsv");
+        file.deleteOnExit();
+        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+        TsvManifestFormatter formatter = new TsvManifestFormatter();
+        writer.write(formatter.getHeader() + "\n");
+        for(ContentItem item : items){
+            ManifestItem manifestItem  = new ManifestItem();
+            manifestItem.setContentId(item.getContentId());
+            manifestItem.setContentChecksum("checksum");
+            writer.write(formatter.formatLine(manifestItem)+"\n");
+        }
+        
+        writer.close();
+        
+        return new FileInputStream(file);
     }
 
     /**

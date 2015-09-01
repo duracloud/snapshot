@@ -7,6 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Writer;
 import java.text.MessageFormat;
@@ -14,6 +17,7 @@ import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 
 /**
@@ -56,6 +60,49 @@ public class ManifestFileHelper {
                                      MANIFEST_LINE_PATTERN.pattern()),
                                      0);
         }
+    }
+    
+    /**
+     * @param manifestFile
+     * @return
+     */
+    public static WriteOnlyStringSet loadManifestSetFromFile(File manifestFile) throws Exception{
+        int count = 0;
+        WriteOnlyStringSet manifestSet;
+        try(
+            BufferedReader breader =
+                new BufferedReader(new FileReader(manifestFile))){
+            while(breader.readLine() != null){
+                count++;
+            }
+        }catch(Exception ex){
+            throw new RuntimeException(ex);
+        }
+
+        manifestSet = new WriteOnlyStringSet(count);
+
+        DpnManifestReader reader = new DpnManifestReader(manifestFile);
+        
+        ManifestEntry entry = null;
+        while((entry = reader.read()) != null){
+            manifestSet.add(formatManifestSetString(entry.getContentId(), 
+                                                         entry.getChecksum()));
+        }
+        
+        return manifestSet;
+
+    }
+    
+    /**
+     * @param contentId
+     * @param checksum
+     * @return
+     */
+    public static String formatManifestSetString(String contentId, String checksum) {
+        return new StringBuilder().append(contentId)
+                                  .append(":")
+                                  .append(checksum)
+                                  .toString();
     }
     
 }

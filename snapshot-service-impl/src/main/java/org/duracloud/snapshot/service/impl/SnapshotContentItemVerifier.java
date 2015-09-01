@@ -96,28 +96,10 @@ public class SnapshotContentItemVerifier
     public void beforeStep(StepExecution stepExecution) {
 
         if(this.manifestSet == null){
-            int count = 0;
-            
-            try(
-                BufferedReader breader =
-                    new BufferedReader(new FileReader(this.manifestFile))){
-                while(breader.readLine() != null){
-                    count++;
-                }
-            }catch(Exception ex){
-                throw new RuntimeException(ex);
-            }
-
-            this.manifestSet = new WriteOnlyStringSet(count);
 
             try {
-                DpnManifestReader reader = new DpnManifestReader(this.manifestFile);
-                
-                ManifestEntry entry = null;
-                while((entry = reader.read()) != null){
-                    this.manifestSet.add(formatManifestSetString(entry.getContentId(), 
-                                                                 entry.getChecksum()));
-                }
+                this.manifestSet = ManifestFileHelper.loadManifestSetFromFile(this.manifestFile);
+
             
                 new Retrier().execute(new Retriable(){
                     /* (non-Javadoc)
@@ -143,17 +125,9 @@ public class SnapshotContentItemVerifier
         }
     }
 
-    /**
-     * @param contentId
-     * @param checksum
-     * @return
-     */
-    private String formatManifestSetString(String contentId, String checksum) {
-        return new StringBuilder().append(contentId)
-                                  .append(":")
-                                  .append(checksum)
-                                  .toString();
-    }
+
+
+
 
     /* (non-Javadoc)
      * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.springframework.batch.core.StepExecution)
@@ -218,7 +192,7 @@ public class SnapshotContentItemVerifier
             
             //verify that manifest contains every item from the database except SNAPSHOT_PROPS_FILENAME
             if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
-                if(!this.manifestSet.contains(formatManifestSetString(contentId,checksum))){
+                if(!this.manifestSet.contains(ManifestFileHelper.formatManifestSetString(contentId,checksum))){
                     errors.add(
                         MessageFormat.format(
                             "Content item {0} with checksum {1} not found in manifest " +

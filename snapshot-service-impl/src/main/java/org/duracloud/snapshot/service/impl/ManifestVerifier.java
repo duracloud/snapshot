@@ -30,7 +30,8 @@ import org.springframework.batch.item.ItemWriter;
 /**
  * This class verifies the manifest entry against the local file system.
  * 
- * @author Daniel Bernstein Date: Jul 28, 2015
+ * @author Daniel Bernstein 
+ *         Date: Jul 28, 2015
  */
 public class ManifestVerifier implements ItemWriter<ManifestEntry>,
                                          StepExecutionListener,

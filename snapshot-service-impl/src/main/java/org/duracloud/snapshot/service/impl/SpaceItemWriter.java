@@ -7,20 +7,29 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.common.constant.Constants;
+import org.duracloud.common.constant.ManifestFormat;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.util.ChecksumUtil;
+import org.duracloud.manifest.ManifestFormatter;
+import org.duracloud.manifest.impl.TsvManifestFormatter;
+import org.duracloud.manifeststitch.StitchedManifestGenerator;
+import org.duracloud.mill.db.model.ManifestItem;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
@@ -52,9 +61,12 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private RetrievalSource retrievalSource;
     private File contentDir;
     private OutputWriter outputWriter;
+    private File md5Manifest; 
     private BufferedWriter propsWriter;
     private BufferedWriter md5Writer;
     private BufferedWriter sha256Writer;
+    private ContentStore contentStore;
+    private String spaceId;
     private ChecksumUtil sha256ChecksumUtil;
     private ContentItem snapshotPropsContentItem;
     private SnapshotManager snapshotManager;
@@ -66,19 +78,25 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                            OutputWriter outputWriter,
                            BufferedWriter propsWriter,
                            BufferedWriter md5Writer,
+                           File md5Manifest,
                            BufferedWriter sha256Writer, 
-                           SnapshotManager snapshotManager) {
+                           SnapshotManager snapshotManager, 
+                           ContentStore contentStore,
+                           String spaceId) {
         this.snapshot = snapshot;
         this.retrievalSource = retrievalSource;
         this.contentDir = contentDir;
         this.outputWriter = outputWriter;
         this.propsWriter = propsWriter;
         this.md5Writer = md5Writer;
+        this.md5Manifest = md5Manifest;
         this.sha256Writer = sha256Writer;
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
         this.snapshotManager = snapshotManager;
         this.errors = new LinkedList<>();
+        this.contentStore = contentStore;
+        this.spaceId = spaceId;
     }
 
     @Override
@@ -262,6 +280,10 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                              "manifest BufferedWriter: ", ioe);
         }
         
+        if(errors.size() == 0){
+            verifySpaceManifestAgainstDpnManifest();
+        }
+        
         ExitStatus status = stepExecution.getExitStatus();
         
         if(errors.size() > 0){
@@ -271,6 +293,55 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             }
         }
         return status;
+    }
+
+    /**
+     * 
+     */
+    private void verifySpaceManifestAgainstDpnManifest() {
+
+        try {
+            WriteOnlyStringSet dpnManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
+            StitchedManifestGenerator generator = new StitchedManifestGenerator(contentStore);
+           
+            BufferedReader reader =
+                new BufferedReader(new InputStreamReader(generator.generate(spaceId,
+                                                                            ManifestFormat.TSV)));
+            ManifestFormatter formatter = new TsvManifestFormatter();
+            //skip header
+            if(formatter.getHeader() != null){
+                reader.readLine();
+            }
+
+            String line = null;
+            int stitchedManifestCount = 0;
+            while((line = reader.readLine()) != null){
+                ManifestItem item = formatter.parseLine(line);
+                String contentId = item.getContentId();
+                if(contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME))
+                if(!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId, item.getContentChecksum()))){
+                    errors.add("DPN manifest does not contain content id/checksum combination ("
+                        + contentId + ", " + item.getContentChecksum());
+                }
+                
+                stitchedManifestCount++;
+
+            }
+            
+            int dpnCount = dpnManifest.size();
+            if(stitchedManifestCount != dpnCount){
+                errors.add("DPN Manifest size ("
+                    + dpnCount + ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")");
+            }
+            
+        } catch (Exception e) {
+            String message = "Failed to verify space manifest against dpn manifest:" + e.getMessage();
+            errors.add(message);
+            log.error(message, e);
+            throw new RuntimeException(e);
+        }
+
+
     }
 
     @Override

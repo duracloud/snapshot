@@ -59,7 +59,7 @@ public class SpaceItemWriterThreadTest {
         BufferedWriter sha256Writer = new BufferedWriter(stringWriter);
         SpaceItemWriter itemWriter =
             new SpaceItemWriter(null, null, null, null,
-                                null, null, sha256Writer, null);
+                                null, null, null, sha256Writer, null, null, null);
 
         ExecutorService execService = Executors.newFixedThreadPool(20);
 

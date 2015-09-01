@@ -121,8 +121,12 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             BufferedWriter propsWriter =
                 createWriter(contentDir,
                              SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
+            
+            
+            File md5File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
             BufferedWriter md5Writer =
                 createWriter(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
+            
             BufferedWriter sha256Writer =
                 createWriter(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
@@ -133,8 +137,11 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                                     new LoggingOutputWriter(),
                                     propsWriter,
                                     md5Writer,
+                                    md5File,
                                     sha256Writer,
-                                    snapshotManager);
+                                    snapshotManager,
+                                    contentStore,
+                                    source.getSpaceId());
 
             SimpleStepFactoryBean<ContentItem, File> stepFactory =
                 new SimpleStepFactoryBean<>();
@@ -196,9 +203,13 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
      */
     private BufferedWriter createWriter(File contentDir, String file)
         throws IOException {
-        Path propsPath = getPath(contentDir, file);
+        Path path = getPath(contentDir, file);
+        return createWriter(path);
+    }
+    
+    private BufferedWriter createWriter(Path path) throws IOException{
         BufferedWriter propsWriter =
-            Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
+            Files.newBufferedWriter(path, StandardCharsets.UTF_8);
         return propsWriter;
     }
 

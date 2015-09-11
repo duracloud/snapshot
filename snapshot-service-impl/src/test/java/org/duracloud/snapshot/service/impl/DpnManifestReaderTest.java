@@ -49,7 +49,7 @@ public class DpnManifestReaderTest extends EasyMockSupport{
     public void testRead() throws Exception {
         File manifestFile = File.createTempFile("test", "txt");
         
-        List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile, 100);
+        List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile, 100, "checksum", "contentid");
         
         replayAll();
         DpnManifestReader reader = new DpnManifestReader(manifestFile){

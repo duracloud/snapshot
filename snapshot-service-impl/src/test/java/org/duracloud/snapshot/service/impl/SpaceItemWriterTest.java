@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -178,7 +179,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         if(!manifestVerificationSuccessful){
             toIndex = items.size()-2;
         }
-        expect(contentStore.getManifest(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items.subList(0, toIndex), sourceFiles));
         
         Collections.sort(sourceFiles, new Comparator<File>(){
             /* (non-Javadoc)
@@ -208,6 +208,12 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
+        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+
+        expect(spaceManifestVerifier.verify()).andReturn(manifestVerificationSuccessful);
+        if(!manifestVerificationSuccessful){
+            expect(spaceManifestVerifier.getErrors()).andReturn(Arrays.asList("error"));
+        }
         replayAll();
         writer =
             new SpaceItemWriter(snapshot,
@@ -216,11 +222,9 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 outputWriter,
                                 propsWriter,
                                 md5Writer,
-                                md5File, 
                                 sha256Writer,
                                 snapshotManager, 
-                                contentStore, 
-                                spaceId);
+                                spaceManifestVerifier);
 
         writer.beforeStep(stepExecution);
         writeItems(items, threads);
@@ -274,33 +278,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         
     }
 
-    /**
-     * @param items
-     * @param sourceFiles 
-     * @return
-     */
-    private InputStream createManifestInputStream(List<ContentItem> items, List<File> sourceFiles) throws Exception{
-        File file = File.createTempFile("manifest", "tsv");
-        file.deleteOnExit();
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
-        TsvManifestFormatter formatter = new TsvManifestFormatter();
-        writer.write(formatter.getHeader() + "\n");
-        ChecksumUtil util = new ChecksumUtil(Algorithm.MD5);
-        for(int i = 0; i < items.size();i++){
-            ContentItem item = items.get(i);
-            if(item.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
-                continue;
-            }
-            ManifestItem manifestItem  = new ManifestItem();
-            manifestItem.setContentId(item.getContentId());
-            manifestItem.setContentChecksum(util.generateChecksum(sourceFiles.get(i)));
-            writer.write(formatter.formatLine(manifestItem)+"\n");
-        }
-        
-        writer.close();
-        
-        return new FileInputStream(file);
-    }
+
 
     /**
      * @param string

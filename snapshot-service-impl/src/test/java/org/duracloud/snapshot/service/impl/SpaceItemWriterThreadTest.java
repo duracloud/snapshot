@@ -7,10 +7,7 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import org.duracloud.common.model.ContentItem;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -20,8 +17,10 @@ import java.io.StringWriter;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.duracloud.common.model.ContentItem;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This test was added because of a bug which caused the sha256 checksums
@@ -58,8 +57,7 @@ public class SpaceItemWriterThreadTest {
         StringWriter stringWriter = new StringWriter(100);
         BufferedWriter sha256Writer = new BufferedWriter(stringWriter);
         SpaceItemWriter itemWriter =
-            new SpaceItemWriter(null, null, null, null,
-                                null, null, null, sha256Writer, null, null, null);
+            new SpaceItemWriter(null, null, null, null, null, null, sha256Writer, null, null);
 
         ExecutorService execService = Executors.newFixedThreadPool(20);
 

@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.model.ContentItem;
+import org.duracloud.manifeststitch.StitchedManifestGenerator;
 import org.duracloud.retrieval.mgmt.LoggingOutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
@@ -130,6 +131,10 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             BufferedWriter sha256Writer =
                 createWriter(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
+            SpaceManifestDpnManifestVerifier verifier =
+                new SpaceManifestDpnManifestVerifier(md5File,
+                                                     new StitchedManifestGenerator(contentStore),
+                                                     source.getSpaceId());
             ItemWriter itemWriter =
                 new SpaceItemWriter(snapshot,
                                     retrievalSource,
@@ -137,11 +142,9 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
                                     new LoggingOutputWriter(),
                                     propsWriter,
                                     md5Writer,
-                                    md5File,
                                     sha256Writer,
                                     snapshotManager,
-                                    contentStore,
-                                    source.getSpaceId());
+                                    verifier);
 
             SimpleStepFactoryBean<ContentItem, File> stepFactory =
                 new SimpleStepFactoryBean<>();

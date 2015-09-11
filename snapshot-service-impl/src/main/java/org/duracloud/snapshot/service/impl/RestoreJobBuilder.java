@@ -10,6 +10,7 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.manifeststitch.StitchedManifestGenerator;
 import org.duracloud.retrieval.util.StoreClientUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
@@ -167,8 +168,14 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         File md5Manifest = getRestoreMd5Manifest(restoreDir);
 
         DpnManifestReader reader = new DpnManifestReader(md5Manifest);
-
-        SpaceVerifier writer = new SpaceVerifier(restoreId, contentStore, destinationSpaceId, restoreManager);
+        SpaceManifestDpnManifestVerifier spaceManifestVerifier =
+            new SpaceManifestDpnManifestVerifier(md5Manifest,
+                                                 new StitchedManifestGenerator(contentStore),
+                                                 destinationSpaceId);
+        SpaceVerifier writer = new SpaceVerifier(restoreId, 
+                                                 spaceManifestVerifier, 
+                                                 destinationSpaceId, 
+                                                 restoreManager);
 
         SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);

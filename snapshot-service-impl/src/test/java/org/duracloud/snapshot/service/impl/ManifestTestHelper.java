@@ -16,8 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Daniel Bernstein 
- *         Date: Jul 30, 2015
+ * @author Daniel Bernstein Date: Jul 30, 2015
  */
 public class ManifestTestHelper {
 
@@ -25,13 +24,16 @@ public class ManifestTestHelper {
      * @param manifestFile
      * @return
      */
-    public static List<ManifestEntry> setupManifestFile(File manifestFile, int manifestSize) throws IOException{
+    public static List<ManifestEntry> setupManifestFile(File manifestFile,
+                                                        int manifestSize,
+                                                        String checksum,
+                                                        String contentIdPrefix) throws IOException {
         Writer writer = new BufferedWriter(new FileWriter(manifestFile));
         int count = manifestSize;
         List<ManifestEntry> list = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
-            ManifestEntry entry = new ManifestEntry("checksum" + i, "contentid" + i);
+            ManifestEntry entry = new ManifestEntry(checksum, contentIdPrefix + i);
             list.add(entry);
             ManifestFileHelper.writeManifestEntry(writer, entry.getContentId(), entry.getChecksum());
         }

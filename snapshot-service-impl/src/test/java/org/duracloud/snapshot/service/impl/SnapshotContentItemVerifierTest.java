@@ -188,7 +188,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
      * @throws IOException
      */
     private List<ManifestEntry> setupManifestFile() throws IOException {
-        return ManifestTestHelper.setupManifestFile(this.manifestFile, itemCount);
+        return ManifestTestHelper.setupManifestFile(this.manifestFile, itemCount, "checksum", "contentid");
     }
     
     private void setupStepExecution() throws Exception{

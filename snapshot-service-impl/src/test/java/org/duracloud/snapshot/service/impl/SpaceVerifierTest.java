@@ -37,27 +37,26 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ExecutionContext;
 
 /**
- * @author Daniel Bernstein
- *         Date: Jul 29, 2015
+ * @author Daniel Bernstein Date: Jul 29, 2015
  */
 @RunWith(EasyMockRunner.class)
 public class SpaceVerifierTest extends EasyMockSupport {
-    
+
     private SpaceVerifier verifier;
     private String correctChecksum = "correct-checksum";
     private String spaceId = "spaceId";
     private String contentId = "contentId";
     @Mock
     private StepExecution stepExecution;
-    
-    @Mock
-    private ContentStore contentStore;
-    
+
     @Mock
     private RestoreManager restoreManager;
-    
+
+    @Mock
+    private SpaceManifestDpnManifestVerifier spaceManifestVerifier;
+
     private String restoreId = "restore-id";
-    
+
     /**
      * @throws java.lang.Exception
      */
@@ -69,7 +68,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
      * 
      */
     private void setupTestSubject() {
-        this.verifier = new SpaceVerifier(restoreId, contentStore, spaceId, restoreManager);
+        this.verifier = new SpaceVerifier(restoreId, spaceManifestVerifier, spaceId, restoreManager);
     }
 
     /**
@@ -83,36 +82,22 @@ public class SpaceVerifierTest extends EasyMockSupport {
     @Test
     public void testSuccessfulRun() throws Exception {
         setupStepExecution();
-        setupGetContentProperties(true);
-        setupGetStoreId();
-        setupGetSpaceContents(Arrays.asList(contentId));
+        expect(this.spaceManifestVerifier.verify()).andReturn(true);
         replayAll();
         setupTestSubject();
         simulateStepExecution(ExitStatus.COMPLETED);
     }
-  
-     @Test
-    public void testFailedRunCountDoesNotMatch() throws Exception {
-        setupStepExecution(1);
-        setupStepExecutionFailure();
-        setupGetContentProperties(true);
-        setupGetStoreId();
-        setupGetSpaceContents(Arrays.asList(contentId, "mystery-content-id"));
-        replayAll();
-        setupTestSubject();
-        simulateStepExecution(ExitStatus.FAILED);
-    }    
 
     @Test
-    public void testFailedRunBadChecksum() throws Exception {
-        setupStepExecution(1);
+    public void testFailedRun() throws Exception {
+        setupStepExecution(2);
         setupStepExecutionFailure();
-        setupGetContentProperties(false);
-        setupGetStoreId();
+        expect(this.spaceManifestVerifier.verify()).andReturn(false);
+        expect(this.spaceManifestVerifier.getErrors()).andReturn(Arrays.asList("error"));
         replayAll();
         setupTestSubject();
         simulateStepExecution(ExitStatus.FAILED);
-    }    
+    }
 
     /**
      * @param expectedStatus
@@ -124,42 +109,29 @@ public class SpaceVerifierTest extends EasyMockSupport {
         verifier.beforeWrite(items);
         try {
             verifier.write(items);
-        }catch(Exception ex){
+        } catch (Exception ex) {
             verifier.onWriteError(ex, items);
         }
         verifier.afterWrite(items);
         assertEquals(expectedStatus.getExitCode(), verifier.afterStep(stepExecution).getExitCode());
     }
 
-    /**
-     * @param contentIds
-     * @throws ContentStoreException
-     */
-    private void setupGetSpaceContents(List<String> contentIds) throws ContentStoreException {
-        expect(contentStore.getSpaceContents(spaceId)).andReturn(contentIds.iterator());
-    }
 
-    private void setupStepExecution() throws Exception{
+    private void setupStepExecution() throws Exception {
         setupStepExecution(0);
     }
-    
-    private void setupStepExecution(int errorCount) throws Exception{
+
+    private void setupStepExecution(int errorCount) throws Exception {
         ExecutionContext context = createMock(ExecutionContext.class);
-        expect(context.getLong(isA(String.class), anyLong())).andReturn(0l);
-        expect(context.getLong(isA(String.class), anyLong())).andReturn(1l).anyTimes();
-
-        context.putLong(isA(String.class), eq(1l));
-        expectLastCall().atLeastOnce();
-
         List<String> errors = new LinkedList<>();
         expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
         expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
-        
-        if(errorCount > 0){
+
+        if (errorCount > 0) {
             context.put(isA(String.class), eq(errors));
             expectLastCall().times(errorCount);
         }
-        
+
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.EXECUTING);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
@@ -175,25 +147,5 @@ public class SpaceVerifierTest extends EasyMockSupport {
         expectLastCall();
         stepExecution.upgradeStatus(BatchStatus.FAILED);
         expectLastCall();
-     }
-    
-    /**
-     * 
-     */
-    private void setupGetStoreId() {
-        expect(contentStore.getStoreId()).andReturn("store-id").atLeastOnce();
     }
-
-    /**
-     * @throws ContentStoreException
-     */
-    private void setupGetContentProperties(boolean checksumOk) throws ContentStoreException {
-        Map<String,String> props = new HashMap<>();
-        props.put(ContentStore.CONTENT_CHECKSUM, checksumOk ?correctChecksum : "incorrect-checksum");
-        IExpectationSetters setter = expect(contentStore.getContentProperties(spaceId, contentId)).andReturn(props);
-        if(!checksumOk){
-            setter.times(4);
-        }
-    }
-
 }

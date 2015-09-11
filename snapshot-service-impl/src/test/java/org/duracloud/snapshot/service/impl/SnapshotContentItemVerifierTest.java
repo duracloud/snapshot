@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
 
 /**
  * @author Daniel Bernstein
@@ -53,6 +55,8 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     private File manifestFile;
     
     private String restoreId = "restore-id";
+    
+    private int itemCount = 100;
     /**
      * @throws java.lang.Exception
      */
@@ -92,7 +96,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
 
     @Test
     public void testFailureMissingManifestItem() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1, itemCount);
         setupStepExecutionFailure();
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
@@ -112,7 +116,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
 
     @Test
     public void testFailureChecksumMismatch() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1, itemCount);
         setupStepExecutionFailure();
 
         List<ManifestEntry> list = setupManifestFile();
@@ -126,7 +130,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
 
     @Test
     public void testFailureMissingSnapshotItem() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1, itemCount-1);
         setupStepExecutionFailure();
 
         List<ManifestEntry> list = setupManifestFile();
@@ -184,11 +188,14 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
      * @throws IOException
      */
     private List<ManifestEntry> setupManifestFile() throws IOException {
-        return ManifestTestHelper.setupManifestFile(this.manifestFile);
+        return ManifestTestHelper.setupManifestFile(this.manifestFile, itemCount);
     }
     
+    private void setupStepExecution() throws Exception{
+        setupStepExecution(0, itemCount);
+    }
     
-    private void setupStepExecution() throws Exception {
+    private void setupStepExecution(int errorCount, int itemCount) throws Exception {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
@@ -197,6 +204,21 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
                                                       eq(RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));
 
+    
+        ExecutionContext context = createMock(ExecutionContext.class);
+        expect(context.getLong(isA(String.class), anyLong())).andReturn((long)itemCount).anyTimes();
+
+        context.putLong(isA(String.class), anyLong());
+        expectLastCall().atLeastOnce();
+
+        List<String> errors = new LinkedList<>();
+        expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
+        expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
+        
+        if(errorCount > 0){
+            context.put(isA(String.class), eq(errors));
+            expectLastCall().times(errorCount);
+        }
     }
     
     /**

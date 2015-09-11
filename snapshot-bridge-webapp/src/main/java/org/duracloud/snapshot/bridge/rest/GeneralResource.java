@@ -109,7 +109,7 @@ public class GeneralResource {
             initRestorationResource(initParams);
             initNotificationManager(initParams);
             this.finalizer.initialize(initParams.getFinalizerPeriodMs());
-            
+
             log.info("successfully initialized bridge application.");
 
             return Response.accepted().entity(new ResponseDetails("success!")).build();

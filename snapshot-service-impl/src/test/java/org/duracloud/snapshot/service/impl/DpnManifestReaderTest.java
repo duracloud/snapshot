@@ -12,15 +12,19 @@ import static org.junit.Assert.*;
 import java.io.File;
 import java.util.List;
 
+import org.easymock.EasyMockRunner;
+import org.easymock.EasyMockSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * @author Daniel Bernstein
  *         Date: Jul 29, 2015
  */
-public class DpnManifestReaderTest {
+@RunWith(EasyMockRunner.class)
+public class DpnManifestReaderTest extends EasyMockSupport{
 
     
     /**
@@ -35,6 +39,7 @@ public class DpnManifestReaderTest {
      */
     @After
     public void tearDown() throws Exception {
+        verifyAll();
     }
 
     /**
@@ -44,8 +49,15 @@ public class DpnManifestReaderTest {
     public void testRead() throws Exception {
         File manifestFile = File.createTempFile("test", "txt");
         
-        List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile);
-        DpnManifestReader reader = new DpnManifestReader(manifestFile);
+        List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile, 100);
+        
+        replayAll();
+        DpnManifestReader reader = new DpnManifestReader(manifestFile){
+            protected long getItemsRead() {
+                return 0;
+            };
+        };
+        
         ManifestEntry entry = null;
         int index = 0;
 

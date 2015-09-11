@@ -51,7 +51,13 @@ public class ContentPropertiesFileReaderTest {
         String testJsonFile =
             getClass().getResource("/content-properties.json").getFile();
         ContentPropertiesFileReader reader =
-            new ContentPropertiesFileReader(new File(testJsonFile));
+            new ContentPropertiesFileReader(new File(testJsonFile)){
+            @Override
+            protected long getItemsRead() {
+                return 0;
+            }
+        };
+
         ContentProperties props = null;
         int count = 0;
         while((props = reader.read()) !=null){

@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
@@ -21,10 +22,11 @@ import org.springframework.batch.item.UnexpectedInputException;
  * @author Daniel Bernstein
  *         Date: Jul 28, 2015
  */
-public class DpnManifestReader implements ItemReader<ManifestEntry> {
+public class DpnManifestReader extends StepExecutionSupport implements ItemReader<ManifestEntry> {
 
     private File manifestFile;
     private BufferedReader reader;
+
     /**
      * @param md5Manifest
      */
@@ -43,6 +45,13 @@ public class DpnManifestReader implements ItemReader<ManifestEntry> {
             NonTransientResourceException {
         if(this.reader == null){
             this.reader = new BufferedReader(new FileReader(manifestFile));
+            long linesRead = getItemsRead();
+            
+            if(linesRead > 0){
+                for(long i = 0; i < linesRead; i++){
+                    this.reader.readLine();
+                }
+            }
         }
         
         String line = this.reader.readLine();
@@ -51,6 +60,15 @@ public class DpnManifestReader implements ItemReader<ManifestEntry> {
         }else{
             return null;
         }
+        
     }
-    
+
+    /* (non-Javadoc)
+     * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.springframework.batch.core.StepExecution)
+     */
+    @Override
+    public void beforeStep(StepExecution stepExecution) {
+        super.beforeStep(stepExecution);
+    }
+
 }

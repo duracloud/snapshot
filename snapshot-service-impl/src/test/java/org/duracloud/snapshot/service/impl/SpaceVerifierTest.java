@@ -12,6 +12,7 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.RestoreManager;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
 import org.easymock.EasyMockSupport;
@@ -32,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
 
 /**
  * @author Daniel Bernstein
@@ -90,7 +93,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
   
      @Test
     public void testFailedRunCountDoesNotMatch() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1);
         setupStepExecutionFailure();
         setupGetContentProperties(true);
         setupGetStoreId();
@@ -102,7 +105,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
 
     @Test
     public void testFailedRunBadChecksum() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1);
         setupStepExecutionFailure();
         setupGetContentProperties(false);
         setupGetStoreId();
@@ -119,7 +122,11 @@ public class SpaceVerifierTest extends EasyMockSupport {
         List<ManifestEntry> items = Arrays.asList(new ManifestEntry(correctChecksum, contentId));
         verifier.beforeStep(stepExecution);
         verifier.beforeWrite(items);
-        verifier.write(items);
+        try {
+            verifier.write(items);
+        }catch(Exception ex){
+            verifier.onWriteError(ex, items);
+        }
         verifier.afterWrite(items);
         assertEquals(expectedStatus.getExitCode(), verifier.afterStep(stepExecution).getExitCode());
     }
@@ -132,10 +139,27 @@ public class SpaceVerifierTest extends EasyMockSupport {
         expect(contentStore.getSpaceContents(spaceId)).andReturn(contentIds.iterator());
     }
 
-    /**
-     * 
-     */
     private void setupStepExecution() throws Exception{
+        setupStepExecution(0);
+    }
+    
+    private void setupStepExecution(int errorCount) throws Exception{
+        ExecutionContext context = createMock(ExecutionContext.class);
+        expect(context.getLong(isA(String.class), anyLong())).andReturn(0l);
+        expect(context.getLong(isA(String.class), anyLong())).andReturn(1l).anyTimes();
+
+        context.putLong(isA(String.class), eq(1l));
+        expectLastCall().atLeastOnce();
+
+        List<String> errors = new LinkedList<>();
+        expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
+        expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
+        
+        if(errorCount > 0){
+            context.put(isA(String.class), eq(errors));
+            expectLastCall().times(errorCount);
+        }
+        
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.EXECUTING);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();

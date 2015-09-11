@@ -18,13 +18,15 @@ import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Daniel Bernstein Date: Jul 16, 2014
+ * @author Daniel Bernstein     
+ *         Date: Jul 16, 2014
  */
-public class ContentPropertiesFileReader implements ItemReader<ContentProperties> {
+public class ContentPropertiesFileReader extends StepExecutionSupport implements ItemReader<ContentProperties> {
     private final Logger log =
         LoggerFactory.getLogger(ContentPropertiesFileReader.class);
 
@@ -52,8 +54,22 @@ public class ContentPropertiesFileReader implements ItemReader<ContentProperties
             JsonFactory jfactory = new JsonFactory();
             jParser = jfactory.createJsonParser(this.propertiesFile);
             jParser.nextToken(); //skips the first [
+            
+            //skip properties already read.
+            int itemsRead = (int)getItemsRead();
+            for(int i = 0; i < itemsRead; i++){
+                doRead();
+            }
         }
         
+        return doRead();
+    }
+
+    /**
+     * @return
+     * @throws IOException
+     */
+    private ContentProperties doRead() throws IOException {
         //once parser is closed, always return null.
        if(jParser.isClosed()){
             return null;

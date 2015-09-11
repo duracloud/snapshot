@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.batch.runtime.JobExecution;
@@ -37,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
 
 /**
  * @author Daniel Bernstein Date: Jul 29, 2015
@@ -59,6 +61,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
 
     private String restoreId = "restore-id";
 
+    private int itemCount = 100;
     /**
      * @throws java.lang.Exception
      */
@@ -97,7 +100,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
 
     @Test
     public void testBadChecksum() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1, itemCount);
         setupStepExecutionFailure();
         List<ManifestEntry> list = setupManifestFileAndContentDir();
         list.get(list.size() - 1).setChecksum("badChecksum");
@@ -108,7 +111,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
 
     @Test
     public void testContentInManifestButNotOnDisk() throws Exception {
-        setupStepExecution();
+        setupStepExecution(1, itemCount);
         setupStepExecutionFailure();
 
         List<ManifestEntry> list = setupManifestFileAndContentDir();
@@ -133,11 +136,11 @@ public class ManifestVerifierTest extends EasyMockSupport {
      */
     private List<ManifestEntry> setupManifestFileAndContentDir() throws IOException {
         Writer writer = new BufferedWriter(new FileWriter(manifestFile));
-        int count = 100;
-        List<ManifestEntry> list = new ArrayList<>(count);
+
+        List<ManifestEntry> list = new ArrayList<>(itemCount);
         ChecksumUtil util = new ChecksumUtil(Algorithm.MD5);
 
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < itemCount; i++) {
             String contentId = "contentid" + i;
             String content = "content-" + i;
             File contentFile = new File(this.restoreDir, contentId);
@@ -153,8 +156,13 @@ public class ManifestVerifierTest extends EasyMockSupport {
         writer.close();
         return list;
     }
+    
+    private void setupStepExecution() throws Exception{
+        setupStepExecution(0, itemCount);
+    }
 
-    private void setupStepExecution() throws Exception {
+
+    private void setupStepExecution(int errorCount, int itemCount) throws Exception {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.EXECUTING);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
@@ -162,6 +170,21 @@ public class ManifestVerifierTest extends EasyMockSupport {
         expect(restoreManager.transitionRestoreStatus(eq(restoreId),
                                                       eq(RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));
+        
+        ExecutionContext context = createMock(ExecutionContext.class);
+        expect(context.getLong(isA(String.class), anyLong())).andReturn((long)itemCount).anyTimes();
+
+        context.putLong(isA(String.class), anyLong());
+        expectLastCall().atLeastOnce();
+
+        List<String> errors = new LinkedList<>();
+        expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
+        expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
+        
+        if(errorCount > 0){
+            context.put(isA(String.class), eq(errors));
+            expectLastCall().times(errorCount);
+        }
     }
 
     /**

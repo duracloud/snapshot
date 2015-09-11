@@ -11,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
@@ -71,7 +70,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private ContentItem snapshotPropsContentItem;
     private SnapshotManager snapshotManager;
     private Snapshot snapshot;
-    private List<String> errors;
+    private List<String> errors = new LinkedList<String>();
     
     public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
                            File contentDir,
@@ -94,7 +93,6 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         this.sha256ChecksumUtil =
             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
         this.snapshotManager = snapshotManager;
-        this.errors = new LinkedList<>();
         this.contentStore = contentStore;
         this.spaceId = spaceId;
     }
@@ -243,8 +241,10 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                              ioe);
             }
         } else {
-            log.error("No snapshot properties file found. (" +
-                             Constants.SNAPSHOT_PROPS_FILENAME + ")");
+            String message = "No snapshot properties file found. (" +
+                Constants.SNAPSHOT_PROPS_FILENAME + ")";
+            log.error(message);
+            errors.add(message);
         }
     }
 
@@ -255,13 +255,18 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         try {
             md5Writer.close();
         } catch (IOException ioe) {
-            log.error("Error closing MD5 manifest BufferedWriter: ", ioe);
+            String message = "Error closing MD5 manifest BufferedWriter: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
         }
 
         try {
             sha256Writer.close();
         } catch (IOException ioe) {
-            log.error("Error closing SHA-256 manifest BufferedWriter: ", ioe);
+            String message = "Error closing SHA-256 manifest BufferedWriter: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
+
         }
 
         retrieveSnapshotProperties();
@@ -269,15 +274,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             synchronized (propsWriter) {
                 propsWriter.write("]\n");
             }
-        } catch (IOException ioe) {
-            log.error("Error writing end of content property " +
-                             "manifest: ", ioe);
-        }
-        try {
+
             propsWriter.close();
+
         } catch (IOException ioe) {
-            log.error("Error closing content property " +
-                             "manifest BufferedWriter: ", ioe);
+            String message = "Error writing end of content property manifest: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
         }
         
         if(errors.size() == 0){
@@ -318,14 +321,13 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
             while((line = reader.readLine()) != null){
                 ManifestItem item = formatter.parseLine(line);
                 String contentId = item.getContentId();
-                if(contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME))
-                if(!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId, item.getContentChecksum()))){
-                    errors.add("DPN manifest does not contain content id/checksum combination ("
-                        + contentId + ", " + item.getContentChecksum());
+                if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                    if(!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId, item.getContentChecksum()))){
+                        errors.add("DPN manifest does not contain content id/checksum combination ("
+                            + contentId + ", " + item.getContentChecksum());
+                    }
+                    stitchedManifestCount++;
                 }
-                
-                stitchedManifestCount++;
-
             }
             
             int dpnCount = dpnManifest.size();
@@ -347,7 +349,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     @Override
     public void beforeStep(StepExecution stepExecution) {
         try {
-            this.errors.clear();
+            errors.clear();
             synchronized (propsWriter) {
                 propsWriter.write("[\n");
             }

@@ -23,13 +23,14 @@ import org.springframework.batch.item.UnexpectedInputException;
  * @author Daniel Bernstein
  *         Date: Jul 16, 2014
  */
-public class FileSystemReader implements ItemReader<File>{
+public class FileSystemReader extends StepExecutionSupport implements ItemReader<File>{
     
     private SimpleDirectoryWalker walker;
+    private File rootDirectory = null;
     public FileSystemReader(File rootDirectory){
-        this.walker = new SimpleDirectoryWalker(rootDirectory);
-        this.walker.start();
+        this.rootDirectory = rootDirectory;
     }
+
     /* (non-Javadoc)
      * @see org.springframework.batch.item.ItemReader#read()
      */
@@ -39,6 +40,19 @@ public class FileSystemReader implements ItemReader<File>{
             UnexpectedInputException,
             ParseException,
             NonTransientResourceException {
+    
+        if(walker == null){
+            this.walker = new SimpleDirectoryWalker(rootDirectory);
+            this.walker.start();
+            //skip ahead if items have already been processed.
+            long itemsRead = getItemsRead();
+            if(itemsRead > 0){
+                for(int i = 0; i < itemsRead; i++){
+                    this.walker.next();
+                }
+            }
+        }
+
         return this.walker.next();
     }
     

@@ -66,7 +66,11 @@ public class SnapshotRepoManifestReaderTest extends EasyMockSupport {
         setupRepo(count);
 
         replayAll();
-        SnapshotRepoManifestReader reader = new SnapshotRepoManifestReader(repo, snapshotName);
+        SnapshotRepoManifestReader reader = new SnapshotRepoManifestReader(repo, snapshotName){
+            protected long getItemsRead() {
+                return 0;
+            };
+        };
         
         for(int i = 0; i < count;i++){
             assertNotNull(reader.read());

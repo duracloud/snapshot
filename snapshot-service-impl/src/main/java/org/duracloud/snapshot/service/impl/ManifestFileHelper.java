@@ -81,13 +81,22 @@ public class ManifestFileHelper {
 
         manifestSet = new WriteOnlyStringSet(count);
 
-        DpnManifestReader reader = new DpnManifestReader(manifestFile);
         
-        ManifestEntry entry = null;
-        while((entry = reader.read()) != null){
-            manifestSet.add(formatManifestSetString(entry.getContentId(), 
-                                                         entry.getChecksum()));
+        try(
+            BufferedReader breader =
+                new BufferedReader(new FileReader(manifestFile))){
+
+            String line = null;
+            while((line = breader.readLine()) != null){
+                ManifestEntry entry =  ManifestFileHelper.parseManifestEntry(line);
+                manifestSet.add(formatManifestSetString(entry.getContentId(), 
+                                                             entry.getChecksum()));
+            }
+
+        }catch(Exception ex){
+            throw new RuntimeException(ex);
         }
+        
         
         return manifestSet;
 

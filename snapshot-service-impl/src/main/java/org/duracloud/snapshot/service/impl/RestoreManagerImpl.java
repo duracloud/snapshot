@@ -22,7 +22,6 @@ import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.dto.SnapshotStatus;
-import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.InvalidStateTransitionException;
 import org.duracloud.snapshot.service.NoRestorationInProcessException;

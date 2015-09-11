@@ -25,9 +25,9 @@ public class ManifestTestHelper {
      * @param manifestFile
      * @return
      */
-    public static List<ManifestEntry> setupManifestFile(File manifestFile) throws IOException{
+    public static List<ManifestEntry> setupManifestFile(File manifestFile, int manifestSize) throws IOException{
         Writer writer = new BufferedWriter(new FileWriter(manifestFile));
-        int count = 100;
+        int count = manifestSize;
         List<ManifestEntry> list = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {

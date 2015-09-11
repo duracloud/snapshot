@@ -7,9 +7,12 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.easymock.EasyMock.*;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.duracloud.client.ContentStore;
@@ -24,13 +27,12 @@ import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.sync.endpoint.MonitoredFile;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.duracloud.sync.endpoint.SyncResultType;
-import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Test;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
-
+import org.springframework.batch.item.ExecutionContext;
 /**
  * @author Daniel Bernstein
  *         Date: Jul 17, 2014
@@ -97,8 +99,8 @@ public class SyncWriterTest extends SnapshotTestBase{
         }
 
         
-        EasyMock.expect(endpoint.syncFileAndReturnDetailedResult(EasyMock.isA(MonitoredFile.class),
-                                                                 EasyMock.isA(File.class)))
+        expect(endpoint.syncFileAndReturnDetailedResult(isA(MonitoredFile.class),
+                                                                 isA(File.class)))
                 .andReturn(SyncResultType.ADDED)
                 .times(count);
         replayAll();
@@ -108,14 +110,14 @@ public class SyncWriterTest extends SnapshotTestBase{
     
     @Test
     public void testBeforeStep() throws Exception {
-        EasyMock.expect(contentStore.getSpace(EasyMock.isA(String.class),
-                                              EasyMock.isNull(String.class),
-                                              EasyMock.anyInt(),
-                                              EasyMock.isNull(String.class)))
+        expect(contentStore.getSpace(isA(String.class),
+                                              isNull(String.class),
+                                              anyInt(),
+                                              isNull(String.class)))
                 .andThrow(new NotFoundException("not found"));
         
-        contentStore.createSpace(EasyMock.isA(String.class));
-        EasyMock.expectLastCall();
+        contentStore.createSpace(isA(String.class));
+        expectLastCall();
 
         setupBeforeTransition();
         replayAll();
@@ -128,21 +130,25 @@ public class SyncWriterTest extends SnapshotTestBase{
     @Test
     public void testAfterStep() throws Exception {
         
-        EasyMock.expect(this.restoreManager.transitionRestoreStatus(EasyMock.eq(restorationId),
-                                                                    EasyMock.eq(RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE),
-                                                                    EasyMock.isA(String.class)))
+        expect(this.restoreManager.transitionRestoreStatus(eq(restorationId),
+                                                                    eq(RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE),
+                                                                    isA(String.class)))
                 .andReturn(restoration);
         
-        EasyMock.expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
-        EasyMock.expect(endpoint.syncFileAndReturnDetailedResult(EasyMock.isA(MonitoredFile.class),
-                                                                 EasyMock.isA(File.class)))
+        expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
+        expect(endpoint.syncFileAndReturnDetailedResult(isA(MonitoredFile.class),
+                                                                 isA(File.class)))
                 .andReturn(SyncResultType.ADDED);
+        
+        ExecutionContext context = createMock(ExecutionContext.class);
+        expect(context.get(isA(String.class))).andReturn(new LinkedList<String>());
+        expect(stepExecution.getExecutionContext()).andReturn(context);
         replayAll();
         
         this.writer.afterStep(stepExecution);
         
     }
-
+    
     /**
      * @throws InvalidStateTransitionException
      * @throws RestorationNotFoundException
@@ -150,9 +156,9 @@ public class SyncWriterTest extends SnapshotTestBase{
     private void setupBeforeTransition()
         throws InvalidStateTransitionException,
             RestorationNotFoundException {
-        EasyMock.expect(this.restoreManager.transitionRestoreStatus(EasyMock.eq(restorationId),
-                                                                    EasyMock.eq(RestoreStatus.TRANSFERRING_TO_DURACLOUD),
-                                                                    EasyMock.isA(String.class)))
+        expect(this.restoreManager.transitionRestoreStatus(eq(restorationId),
+                                                                    eq(RestoreStatus.TRANSFERRING_TO_DURACLOUD),
+                                                                    isA(String.class)))
                 .andReturn(restoration);
     }
     
@@ -163,10 +169,10 @@ public class SyncWriterTest extends SnapshotTestBase{
         Space space = new Space();
         space.setContentIds(new ArrayList<String>());
 
-        EasyMock.expect(contentStore.getSpace(EasyMock.isA(String.class),
-                                              EasyMock.isNull(String.class),
-                                              EasyMock.anyInt(),
-                                              EasyMock.isNull(String.class)))
+        expect(contentStore.getSpace(isA(String.class),
+                                              isNull(String.class),
+                                              anyInt(),
+                                              isNull(String.class)))
                 .andReturn(space);
         
         
@@ -183,13 +189,13 @@ public class SyncWriterTest extends SnapshotTestBase{
         Space space = new Space();
         space.setContentIds(new ArrayList<String>(Arrays.asList(new String[]{"test"})));
         
-        EasyMock.expect(contentStore.getSpace(EasyMock.isA(String.class),
-                                              EasyMock.isNull(String.class),
-                                              EasyMock.anyInt(),
-                                              EasyMock.isNull(String.class)))
+        expect(contentStore.getSpace(isA(String.class),
+                                              isNull(String.class),
+                                              anyInt(),
+                                              isNull(String.class)))
                 .andReturn(space);
         
-        stepExecution.addFailureException(EasyMock.isA(Throwable.class));
+        stepExecution.addFailureException(isA(Throwable.class));
         
         replayAll();
         

@@ -37,7 +37,7 @@ import org.springframework.util.CollectionUtils;
  * 
  * @author Daniel Bernstein Date: Jul 17, 2014
  */
-public class SyncWriter implements ItemWriter<File>, StepExecutionListener, ItemWriteListener<File> {
+public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>, ItemWriteListener<File> {
     private static Logger log = LoggerFactory.getLogger(SyncWriter.class);
 
     private SyncEndpoint endpoint;
@@ -46,7 +46,6 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
     private String destinationSpaceId;
     private RestoreManager restoreManager;
     private String restorationId;
-    private List<String> errors;
 
     /**
      * @param restorationId
@@ -69,7 +68,6 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
         this.destinationSpaceId = destinationSpaceId;
         this.restoreManager = restoreManager;
         this.restorationId = restorationId;
-        this.errors = new LinkedList<>();
     }
 
     // StepExecution Interface
@@ -82,7 +80,9 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = stepExecution.getExitStatus();
-        if (this.errors.isEmpty()) {
+        
+        List<String> errors = getErrors();
+        if (errors.isEmpty()) {
             try {
                 RestoreStatus newStatus = RestoreStatus.TRANSFER_TO_DURACLOUD_COMPLETE;
                 restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
@@ -99,10 +99,11 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
             }
 
         } else {
+            
             status = status.and(ExitStatus.FAILED);
             status.addExitDescription("Transfer to DuraCloud failed: " +
-                                      this.errors.size() + " items failed.");
-            for (String error : this.errors) {
+                                      errors.size() + " items failed.");
+            for (String error : errors) {
                 status.addExitDescription(error);
             }
             
@@ -118,8 +119,8 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
+        super.beforeStep(stepExecution);
         try {
-            this.errors.clear();
             RestoreStatus newStatus = RestoreStatus.TRANSFERRING_TO_DURACLOUD;
             restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
             Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
@@ -131,9 +132,11 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
             try {
                 this.contentStore.createSpace(destinationSpaceId);
             } catch (ContentStoreException e) {
+                addError(ex.getMessage());
                 stepExecution.addFailureException(e);
             }
         } catch (Exception ex) {
+            addError(ex.getMessage());
             stepExecution.addFailureException(ex);
         }
     }
@@ -191,7 +194,7 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
                 }
             });
         } catch (Exception ex) {
-            this.errors.add(ex.getMessage());
+            addError(ex.getMessage());
         }
     }
 
@@ -204,6 +207,7 @@ public class SyncWriter implements ItemWriter<File>, StepExecutionListener, Item
      */
     @Override
     public void afterWrite(List<? extends File> items) {
+        addToItemsRead(items.size());
     }
 
     // ItemWriteListener

@@ -9,7 +9,6 @@ package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
 import java.text.MessageFormat;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.duracloud.common.retry.Retriable;
@@ -24,7 +23,6 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
 /**
@@ -33,17 +31,14 @@ import org.springframework.batch.item.ItemWriter;
  * @author Daniel Bernstein 
  *         Date: Jul 28, 2015
  */
-public class ManifestVerifier implements ItemWriter<ManifestEntry>,
-                                         StepExecutionListener,
+public class ManifestVerifier extends StepExecutionSupport implements ItemWriter<ManifestEntry>,
                                          ItemWriteListener<ManifestEntry> {
 
     private Logger log = LoggerFactory.getLogger(ManifestVerifier.class);
     private String restorationId;
     private File contentDir;
-    private List<String> errors;
     private ChecksumUtil checksumUtil = new ChecksumUtil(Algorithm.MD5);
     private RestoreManager restoreManager;
-
     /**
      * @param restorationId
      * @param contentDir
@@ -52,10 +47,10 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
     public ManifestVerifier(String restorationId,
                             File contentDir,
                             RestoreManager restorationManager) {
+        super();
         this.restorationId = restorationId;
         this.contentDir = contentDir;
         this.restoreManager = restorationManager;
-        this.errors = new LinkedList<>();
     }
 
     /*
@@ -78,6 +73,7 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
      */
     @Override
     public void afterWrite(List<? extends ManifestEntry> items) {
+        addToItemsRead(items.size());
     }
 
     /*
@@ -99,27 +95,28 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        errors.clear();
+        super.beforeStep(stepExecution);
+        
         try {
-            new Retrier().execute(new Retriable(){
-                /* (non-Javadoc)
+            new Retrier().execute(new Retriable() {
+                /*
+                 * (non-Javadoc)
+                 * 
                  * @see org.duracloud.common.retry.Retriable#retry()
                  */
                 @Override
                 public Object retry() throws Exception {
-                    RestoreStatus newStatus =
-                        RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER;
+                    RestoreStatus newStatus = RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER;
                     restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
                     return null;
                 }
             });
-        }catch(Exception ex){
-            this.errors.add("failed to transition status to " +
-                RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER + ": " + 
-                ex.getMessage());
+        } catch (Exception ex) {
+            addError("failed to transition status to "
+                + RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER + ": " + ex.getMessage());
             stepExecution.addFailureException(ex);
-        }
-        
+            failExecution();
+        }   
     }
 
     /*
@@ -131,7 +128,8 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = stepExecution.getExitStatus();
-        if (this.errors.size() > 0) {
+        List<String> errors =  getErrors();
+        if (errors.size() > 0) {
             status = status.and(ExitStatus.FAILED);
             for(String error:errors){
                 status = status.addExitDescription(error);
@@ -172,28 +170,27 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
                 String contentId = entry.getContentId();
                 String checksum = entry.getChecksum();
 
-                File file = new File(this.contentDir.getAbsolutePath() +
-                                     File.separator + contentId);
+                File file = new File(this.contentDir,contentId);
                 if (!file.exists()) {
                     String message =
-                        MessageFormat.format("content (\"{0}\") not found in " +
+                        MessageFormat.format("content ({0}) not found in " +
                                              "path ({1}) for restore ({2})",
                                              contentId,
                                              file.getAbsolutePath(),
                                              restorationId);
                     log.error(message);
-                    errors.add(message);
+                   addError(message);
                 } else {
                     String fileChecksum = checksumUtil.generateChecksum(file);
                     if (!checksum.equals(fileChecksum)) {
                         String message =
-                            MessageFormat.format("content id's (\"{0}\") manifest " +
+                            MessageFormat.format("content id's ({0}) manifest " +
                                                  "checksum ({1}) does not match " +
                                                  "file's checksum",
                                                  contentId,
                                                  file.getAbsolutePath());
                         log.error(message);
-                        errors.add(message);
+                        addError(message);
                     } else {
                         log.debug("successfully verified entry {}", entry);
                     }
@@ -202,7 +199,7 @@ public class ManifestVerifier implements ItemWriter<ManifestEntry>,
             }catch(Exception ex){
                 String message = "failed to verify " + entry + ": " + ex.getMessage();
                 log.error(message, ex);
-                errors.add(message);
+                addError(message);
             }
         }
     }

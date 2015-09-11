@@ -31,23 +31,21 @@ import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
 /**
- * This class verifies that the manifest entry's checksum matches the checksum of the item
- * in the destination space.
+ * This class verifies that the manifest entry's checksum matches the checksum
+ * of the item in the destination space.
  * 
  * @author Daniel Bernstein 
  *         Date: Jul 29, 2015
  */
-public class SpaceVerifier implements ItemWriter<ManifestEntry>,
-                                      StepExecutionListener,
-                                      ItemWriteListener<ManifestEntry> {
+public class SpaceVerifier extends StepExecutionSupport
+    implements ItemWriter<ManifestEntry>, ItemWriteListener<ManifestEntry> {
 
     private Logger log = LoggerFactory.getLogger(SpaceVerifier.class);
     private ContentStore contentStore;
     private String spaceId;
-    private AtomicLong manifestEntryCount = new AtomicLong(0);
-    private List<String> errors = new LinkedList<>();
     private RestoreManager restoreManager;
     private String restoreId;
+
     /**
      * 
      * @param contentStore
@@ -67,7 +65,8 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
      * List)
      */
     @Override
-    public void beforeWrite(List<? extends ManifestEntry> items) {}
+    public void beforeWrite(List<? extends ManifestEntry> items) {
+    }
 
     /*
      * (non-Javadoc)
@@ -77,7 +76,9 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
      * List)
      */
     @Override
-    public void afterWrite(List<? extends ManifestEntry> items) {}
+    public void afterWrite(List<? extends ManifestEntry> items) {
+        addToItemsRead(items.size());
+    }
 
     /*
      * (non-Javadoc)
@@ -87,7 +88,10 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
      * Exception, java.util.List)
      */
     @Override
-    public void onWriteError(Exception exception, List<? extends ManifestEntry> items) {}
+    public void onWriteError(Exception ex, List<? extends ManifestEntry> items) {
+        addError(ex.getMessage());
+
+    }
 
     /*
      * (non-Javadoc)
@@ -97,11 +101,12 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
      */
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        this.manifestEntryCount.set(0);
-        this.errors.clear();
+        super.beforeStep(stepExecution);
         try {
-            new Retrier().execute(new Retriable(){
-                /* (non-Javadoc)
+            new Retrier().execute(new Retriable() {
+                /*
+                 * (non-Javadoc)
+                 * 
                  * @see org.duracloud.common.retry.Retriable#retry()
                  */
                 @Override
@@ -112,9 +117,8 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
                 }
             });
         } catch (Exception ex) {
-            this.errors.add("failed to transition status to " +
-                RestoreStatus.VERIFYING_TRANSFERRED_CONTENT + ": " + 
-                ex.getMessage());
+            addError("failed to transition status to "
+                + RestoreStatus.VERIFYING_TRANSFERRED_CONTENT + ": " + ex.getMessage());
             stepExecution.addFailureException(ex);
         }
     }
@@ -127,7 +131,7 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        if (errors.size() == 0) {
+        if (getErrors().size() == 0) {
             try {
                 long spaceCount = new Retrier().execute(new Retriable() {
                     @Override
@@ -137,9 +141,10 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
                         try {
                             String contentId = null;
                             while ((contentId = iterator.next()) != null) {
-                                //do not count the snapshot prop file because it is not 
-                                //written in the manifest.
-                                if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                                // do not count the snapshot prop file because
+                                // it is not
+                                // written in the manifest.
+                                if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                                     count++;
                                 }
                             }
@@ -149,57 +154,52 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
                     }
                 });
 
-                if (spaceCount != manifestEntryCount.get()) {
-                    errors.add(
-                        MessageFormat.format(
-                            "counts do not match: step_execution_id={0} " +
-                            "job_execution_id={1} store_id={2} spaceId={3} " +
-                            "manifest_count={4} space_count={5}",
-                        stepExecution.getId(),
-                        stepExecution.getJobExecutionId(),
-                        contentStore.getStoreId(),
-                        spaceId,
-                        manifestEntryCount.get(),
-                        spaceCount));
+                long linesRead = getItemsRead();
+                if (spaceCount != linesRead) {
+                    addError(MessageFormat.format("counts do not match: step_execution_id={0} "
+                        + "job_execution_id={1} store_id={2} spaceId={3} " + "manifest_count={4} space_count={5}",
+                                                    stepExecution.getId(),
+                                                    stepExecution.getJobExecutionId(),
+                                                    contentStore.getStoreId(),
+                                                    spaceId,
+                                                    linesRead,
+                                                    spaceCount));
                 }
 
             } catch (Exception ex) {
-                errors.add(
-                    MessageFormat.format(
-                        "failed to count items in space:  step_execution_id={0} " +
-                        "job_execution_id={1} store_id={2} spaceId={3} message=\"{4}\"",
-                    stepExecution.getId(),
-                    stepExecution.getJobExecutionId(),
-                    contentStore.getStoreId(),
-                    spaceId,
-                    ex.getMessage()));
+                addError(MessageFormat.format("failed to count items in space:  step_execution_id={0} "
+                    + "job_execution_id={1} store_id={2} spaceId={3} message=\"{4}\"",
+                                                stepExecution.getId(),
+                                                stepExecution.getJobExecutionId(),
+                                                contentStore.getStoreId(),
+                                                spaceId,
+                                                ex.getMessage()));
             }
         }
 
         ExitStatus status = stepExecution.getExitStatus();
-        
-        if(errors.size() > 0){
+        List<String> errors = getErrors();
+        if (errors.size() > 0) {
             status = status.and(ExitStatus.FAILED);
-            
-            for(String error: errors){
+
+            for (String error : errors) {
                 status = status.addExitDescription(error);
             }
-            
-            stepExecution.upgradeStatus(BatchStatus.FAILED);
-            stepExecution.setTerminateOnly();
-            
-            log.error("space verification step finished: step_execution_id={} " +
-                      "job_execution_id={} store_id={} spaceId={} status=\"{}\"",
+
+            failExecution();
+
+            log.error("space verification step finished: step_execution_id={} "
+                + "job_execution_id={} store_id={} spaceId={} status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       contentStore.getStoreId(),
                       spaceId,
                       status);
-        }else {
-            
+        } else {
+
             status = status.and(ExitStatus.COMPLETED);
-            log.info("space verification step finished: step_execution_id={} " +
-                     "job_execution_id={} store_id={} spaceId={} exit_status={} ",
+            log.info("space verification step finished: step_execution_id={} "
+                + "job_execution_id={} store_id={} spaceId={} exit_status={} ",
                      stepExecution.getId(),
                      stepExecution.getJobExecutionId(),
                      contentStore.getStoreId(),
@@ -218,41 +218,30 @@ public class SpaceVerifier implements ItemWriter<ManifestEntry>,
     @Override
     public void write(List<? extends ManifestEntry> items) throws Exception {
         for (final ManifestEntry item : items) {
-            try {
                 new Retrier().execute(new Retriable() {
                     @Override
                     public Object retry() throws Exception {
                         String contentId = item.getContentId();
-                        Map<String, String> props =
-                            contentStore.getContentProperties(spaceId, contentId);
-                        String remoteItemChecksum =
-                            props.get(ContentStore.CONTENT_CHECKSUM);
+                        Map<String, String> props = contentStore.getContentProperties(spaceId, contentId);
+                        String remoteItemChecksum = props.get(ContentStore.CONTENT_CHECKSUM);
                         String manifestChecksum = item.getChecksum();
                         if (!manifestChecksum.equals(remoteItemChecksum)) {
-                            throw new Exception(
-                                MessageFormat.format(
-                                    "Checksums do not match: store_id={0}, spaceId={1}, " +
-                                    "contentId={2}, manifest_checksum={3}, " +
-                                    "content_checksum_property={4}",
-                                contentStore.getStoreId(),
-                                spaceId,
-                                contentId,
-                                manifestChecksum,
-                                remoteItemChecksum));
+                            throw new Exception(MessageFormat.format("Checksums do not match: store_id={0}, spaceId={1}, "
+                                + "contentId={2}, manifest_checksum={3}, " + "content_checksum_property={4}",
+                                                                     contentStore.getStoreId(),
+                                                                     spaceId,
+                                                                     contentId,
+                                                                     manifestChecksum,
+                                                                     remoteItemChecksum));
                         }
 
                         log.debug("Checksums match: store_id={}, spaceId={}, contentId={}",
                                   contentStore.getStoreId(),
                                   spaceId,
                                   contentId);
-                        manifestEntryCount.incrementAndGet();
                         return null;
                     }
                 });
-
-            } catch (Exception ex) {
-                errors.add(ex.getMessage());
-            }
         }
     }
 }

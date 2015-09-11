@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.constant.ManifestFormat;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.util.ChecksumUtil;
@@ -44,7 +45,9 @@ import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.ContentStream;
 import org.duracloud.retrieval.source.RetrievalSource;
+import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -166,14 +169,16 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            sourceFiles.add(setupContentItem(items, spaceId, contentId + i));
+            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i)));
         }
 
+        setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME);
+        
         int toIndex = items.size();
         if(!manifestVerificationSuccessful){
-            toIndex = items.size()-1;
+            toIndex = items.size()-2;
         }
-        expect(contentStore.getManifest(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items.subList(0, toIndex)));
+        expect(contentStore.getManifest(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items.subList(0, toIndex), sourceFiles));
         
         Collections.sort(sourceFiles, new Comparator<File>(){
             /* (non-Javadoc)
@@ -181,7 +186,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
              */
             @Override
             public int compare(File o1, File o2) {
-                 return o1.getName().compareTo(o2.getName());
+                return o1.getName().compareTo(o2.getName());
             }
         });
 
@@ -192,6 +197,9 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
              */
             @Override   
             public int compare(ContentItem o1, ContentItem o2) {
+                 if(o1.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                     return 1;
+                 }
                  return o1.getContentId().compareTo(o2.getContentId());
             }
         });
@@ -227,12 +235,15 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             String md5Checksum = md5.generateChecksum(file);
             String md5Line = md5Lines.get(i);
             String contentId2 = content.getContentId();
+            if(contentId2.equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                continue;
+            }
             log.debug("md5 line: \"{}\", md5Checksum={}, filename={}, contentId={}",
                       md5Line,
                       md5Checksum,
                       file.getName(),
                       contentId2);
-            assertTrue(md5Line.contains(contentId2));
+            assertTrue("\"" +md5Line +"\" does not contain "+ contentId2, md5Line.contains(contentId2));
             assertTrue(md5Line.contains(md5Checksum));
         }
 
@@ -265,18 +276,24 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
     /**
      * @param items
+     * @param sourceFiles 
      * @return
      */
-    private InputStream createManifestInputStream(List<ContentItem> items) throws Exception{
+    private InputStream createManifestInputStream(List<ContentItem> items, List<File> sourceFiles) throws Exception{
         File file = File.createTempFile("manifest", "tsv");
         file.deleteOnExit();
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
         TsvManifestFormatter formatter = new TsvManifestFormatter();
         writer.write(formatter.getHeader() + "\n");
-        for(ContentItem item : items){
+        ChecksumUtil util = new ChecksumUtil(Algorithm.MD5);
+        for(int i = 0; i < items.size();i++){
+            ContentItem item = items.get(i);
+            if(item.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                continue;
+            }
             ManifestItem manifestItem  = new ManifestItem();
             manifestItem.setContentId(item.getContentId());
-            manifestItem.setContentChecksum("checksum");
+            manifestItem.setContentChecksum(util.generateChecksum(sourceFiles.get(i)));
             writer.write(formatter.formatLine(manifestItem)+"\n");
         }
         

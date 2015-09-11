@@ -8,7 +8,6 @@
 package org.duracloud.snapshot.service;
 
 import org.duracloud.snapshot.dto.RestoreStatus;
-import static org.duracloud.snapshot.dto.RestoreStatus.*;
 
 /**
  * @author Daniel Bernstein
@@ -19,7 +18,7 @@ public class RestorationStateTransitionValidator {
         throws InvalidStateTransitionException{
 
         if(from.equals(to)) {
-            throw new InvalidStateTransitionException(from.name(), to.name());
+//            throw new InvalidStateTransitionException(from.name(), to.name());
         }
     }
 }

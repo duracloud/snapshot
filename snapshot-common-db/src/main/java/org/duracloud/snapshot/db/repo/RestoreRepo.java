@@ -12,6 +12,7 @@ import java.util.List;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -47,4 +48,7 @@ public interface RestoreRepo extends JpaRepository<Restoration, Long> {
      * @return
      */
     public List<Restoration> findByStatus(RestoreStatus status);
+    
+    @Query("select r from Restoration r where r.status not in ('RESTORATION_COMPLETE','RESTORATION_EXPIRED','ERROR')")
+    public List<Restoration> findRunning();
 }

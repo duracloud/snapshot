@@ -22,7 +22,7 @@ import org.springframework.data.domain.Pageable;
  * @author Daniel Bernstein
  *         Date: Jul 28, 2015
  */
-public class SnapshotRepoManifestReader  implements ItemReader<SnapshotContentItem>{
+public class SnapshotRepoManifestReader extends StepExecutionSupport  implements ItemReader<SnapshotContentItem>{
         
     private SnapshotContentItemRepo repo;
     private StreamingIterator<SnapshotContentItem> items;
@@ -52,7 +52,9 @@ public class SnapshotRepoManifestReader  implements ItemReader<SnapshotContentIt
                         return repo.findBySnapshotName(snapshotName, pageable);
                     }
                 });
+            skipLinesAlreadyRead(this.items);
         }
         return this.items.hasNext() ? this.items.next() : null;
     }
+
 }

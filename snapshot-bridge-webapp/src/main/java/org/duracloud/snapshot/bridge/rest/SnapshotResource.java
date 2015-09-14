@@ -36,6 +36,7 @@ import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.duracloud.snapshot.db.model.SnapshotHistory;
 import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.SnapshotHistoryItem;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeParameters;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -306,10 +308,26 @@ public class SnapshotResource {
             if(alternateIds != null && !alternateIds.isEmpty()) {
                 // add alternate id's
                 this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds);
+
+                StringBuilder history = new StringBuilder();
+                history.append("{\"alternateIds\":[");
+                boolean first = true;
+                for(String id : alternateIds){
+                    if(!first){
+                        history.append(",");
+                    }
+
+                    history.append("\"" + id + "\"");
+                    first = false;
+                }
+                history.append("]}");
+                snapshot = this.snapshotManager.updateHistory(snapshot, history.toString());
+
             }
 
             snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
 
+            
             log.info("successfully processed snapshot complete notification from DPN: {}",
                      snapshot);
 
@@ -405,10 +423,11 @@ public class SnapshotResource {
 
             List<org.duracloud.snapshot.dto.SnapshotHistoryItem> historyItems =
                 new ArrayList<>();
+
             for(SnapshotHistory item : items) {
-                org.duracloud.snapshot.dto.SnapshotHistoryItem historyItem =
+                SnapshotHistoryItem historyItem =
                     new org.duracloud.snapshot.dto.SnapshotHistoryItem();
-                historyItem.setHistory((item.getHistory()));
+                historyItem.setHistory(item.getHistory());
                 historyItem.setHistoryDate(item.getHistoryDate());
                 historyItems.add(historyItem);
             }
@@ -417,7 +436,6 @@ public class SnapshotResource {
                 new GetSnapshotHistoryBridgeResult();
             result.setHistoryItems(historyItems);
             result.setTotalCount((long) historyItems.size());
-
             log.debug("returning results: {}", result);
             return Response.ok(null)
                            .entity(result)

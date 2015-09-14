@@ -230,17 +230,24 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     public void testComplete() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-name";
         List<String> snapshotAlternateIds = new ArrayList<String>();
-        snapshotAlternateIds.add("alternate-name-1");
-        snapshotAlternateIds.add("alternate-name-2");
+        String altId1 = "alternate-name-1";
+        String altId2 = "alternate-name-2";
+        
+        snapshotAlternateIds.add(altId1);
+        snapshotAlternateIds.add(altId2);
+
         CompleteSnapshotBridgeParameters params =
             new CompleteSnapshotBridgeParameters(snapshotAlternateIds);
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
-        this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds);
+        expect(this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds)).andReturn(snapshot);
+        expect(this.snapshotManager.updateHistory(snapshot,
+                                                  "{\"alternateIds\":[\""+altId1+"\",\""+altId2+"\"]}"))
+        .andReturn(snapshot);
+
         expect(this.snapshotManager.transferToDpnNodeComplete(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
         expect(snapshot.getStatusText()).andReturn("ok");
-        expectLastCall();
         replayAll();
         Response response = resource.complete(snapshotId, params);
         assertTrue(response.getEntity() instanceof CompleteSnapshotBridgeResult);

@@ -32,9 +32,10 @@ public interface SnapshotManager {
      * Adds a list of snapshot alternate Id's to a snapshot. To map DPN Bag Id's to Duracloud Snapshot Id's
      * @param snapshot
      * @param alternateId
+     * @return 
      * @throws AlternateIdAlreadyExistsException 
      */
-    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
+    public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
         throws AlternateIdAlreadyExistsException;
 
     /**

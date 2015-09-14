@@ -162,7 +162,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     @Override
     @Transactional
-    public void addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) throws AlternateIdAlreadyExistsException {
+    public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) throws AlternateIdAlreadyExistsException {
         
         for(String altId : alternateIds){
             Snapshot altSnapshot = this.snapshotRepo.findBySnapshotAlternateIds(altId);
@@ -172,7 +172,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
             }
         }
         snapshot.addSnapshotAlternateIds(alternateIds);
-        this.snapshotRepo.save(snapshot);
+        return this.snapshotRepo.save(snapshot);
     }
 
     // Allows use of the non-thread-safe ChecksumUtil in a threaded environment

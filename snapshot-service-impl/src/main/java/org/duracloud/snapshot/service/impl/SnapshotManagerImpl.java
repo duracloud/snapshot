@@ -205,15 +205,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
             
             ensureMetadataSpaceExists(store); 
             
-            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);            
-            store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
-                             zipFile.getName(),
-                             new FileInputStream(zipFile),
-                             zipFile.length(),
-                             "application/zip",
-                             zipChecksum,
-                             null);
-            
+            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);
+
+            try(FileInputStream zipStream = new FileInputStream(zipFile)) {
+                store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
+                                 zipFile.getName(),
+                                 zipStream,
+                                 zipFile.length(),
+                                 "application/zip",
+                                 zipChecksum,
+                                 null);
+            }
+
             zipFile.delete();
             
             FileUtils.deleteDirectory(snapshotDir);

@@ -41,6 +41,8 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
@@ -334,6 +336,37 @@ public class SnapshotResource {
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
                                                                     snapshot.getStatusText()))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /**
+     * Notifies the bridge that the snapshot process is not able to continue
+     * due to an error which cannot be resolved by the system processing the
+     * snapshot data.
+     *
+     * @param snapshotId
+     * @param params
+     * @return
+     */
+    @Path("{snapshotId}/error")
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response error(@PathParam("snapshotId") String snapshotId,
+                          SnapshotErrorBridgeParameters params) {
+        try {
+            Snapshot snapshot =
+                snapshotManager.transferError(snapshotId, params.getError());
+            log.info("Processed snapshot error notification from DPN: {}", snapshot);
+
+            return Response.ok(new SnapshotErrorBridgeResult(snapshot.getStatus(),
+                                                             snapshot.getStatusText()))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);

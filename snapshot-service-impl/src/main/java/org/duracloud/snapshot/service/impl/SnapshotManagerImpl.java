@@ -130,9 +130,8 @@ public class SnapshotManagerImpl implements SnapshotManager {
     /*
      * (non-Javadoc)
      * 
-     * @see
-     * org.duracloud.snapshot.service.SnapshotManager#addContentItem(org.duracloud
-     * .snapshot.db.model.Snapshot, java.lang.String, java.util.Map)
+     * @see org.duracloud.snapshot.service.SnapshotManager#addContentItem(
+     *  org.duracloud.snapshot.db.model.Snapshot, java.lang.String, java.util.Map)
      */
     @Override
     @Transactional
@@ -181,7 +180,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(org.duracloud.snapshot.db.model.Snapshot)
+     * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(java.lang.String)
      */
     @Override
     @Transactional
@@ -191,6 +190,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
             Snapshot snapshot = getSnapshot(snapshotId);
 
             snapshot.setStatus(SnapshotStatus.CLEANING_UP);
+            snapshot.setStatusText("");
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
 
             File snapshotDir =
@@ -205,15 +205,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
             
             ensureMetadataSpaceExists(store); 
             
-            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);            
-            store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
-                             zipFile.getName(),
-                             new FileInputStream(zipFile),
-                             zipFile.length(),
-                             "application/zip",
-                             zipChecksum,
-                             null);
-            
+            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);
+
+            try(FileInputStream zipStream = new FileInputStream(zipFile)) {
+                store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
+                                 zipFile.getName(),
+                                 zipStream,
+                                 zipFile.length(),
+                                 "application/zip",
+                                 zipChecksum,
+                                 null);
+            }
+
             zipFile.delete();
             
             FileUtils.deleteDirectory(snapshotDir);
@@ -227,6 +230,45 @@ public class SnapshotManagerImpl implements SnapshotManager {
             return snapshot;
         } catch (Exception e) {
             String message = "failed to initiate snapshot clean up: " + e.getMessage();
+            log.error(message, e);
+            throw new SnapshotManagerException(e.getMessage());
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.SnapshotManager#transferError(java.lang.String)
+     */
+    @Override
+    @Transactional
+    public Snapshot transferError(String snapshotId, String errorDetails)
+        throws SnapshotException {
+        try {
+            Snapshot snapshot = getSnapshot(snapshotId);
+
+            // Set snapshot state in the db
+            snapshot.setStatus(SnapshotStatus.ERROR);
+            snapshot.setStatusText(errorDetails);
+            snapshot = this.snapshotRepo.saveAndFlush(snapshot);
+
+            // Send email to duracloud administrators
+            String subject = "Snapshot ERROR: " + snapshotId;
+            String message = "A snapshot process has been halted and set to the " +
+                             "error state.\n\nSnapshot ID: " + snapshotId +
+                             "\nReported Error: " + errorDetails;
+            String[] recipients = bridgeConfig.getDuracloudEmailAddresses();
+            notificationManager.sendNotification(NotificationType.EMAIL,
+                                                 subject,
+                                                 message,
+                                                 recipients);
+
+            log.info("successfully set snapshot " + snapshotId +
+                     " into error state based on the following error details: " +
+                     errorDetails);
+
+            return snapshot;
+        } catch (Exception e) {
+            String message = "failed to set snapshot into error state due to: " +
+                             e.getMessage();
             log.error(message, e);
             throw new SnapshotManagerException(e.getMessage());
         }

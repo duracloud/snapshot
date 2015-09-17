@@ -140,6 +140,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         snapshot.setStatus(SnapshotStatus.CLEANING_UP);
         expectLastCall();
+        snapshot.setStatusText(isA(String.class));
+        expectLastCall();
 
         expect(snapshot.getName()).andReturn(snapshotId);
 
@@ -201,6 +203,35 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testTransferError() throws SnapshotException {
+        String snapshotId = "snapshot-name";
+        String errorDetails = "error-details";
+
+        // Set state
+        expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
+        snapshot.setStatus(SnapshotStatus.ERROR);
+        expectLastCall();
+        snapshot.setStatusText(errorDetails);
+        expect(snapshotRepo.saveAndFlush(snapshot)).andReturn(snapshot);
+
+        // Send email
+        String add1 = "add-1";
+        String add2 = "add-2";
+        String[] addresses = {add1,add2};
+        expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(addresses);
+        notificationManager.sendNotification(eq(NotificationType.EMAIL),
+                                             isA(String.class),
+                                             isA(String.class),
+                                             eq(add1),
+                                             eq(add2));
+
+        replayAll();
+
+        Snapshot snapshot = manager.transferError(snapshotId, errorDetails);
+        assertNotNull(snapshot);
     }
 
     @Test

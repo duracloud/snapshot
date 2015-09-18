@@ -8,12 +8,15 @@
 package org.duracloud.snapshot.bridge.rest;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -28,8 +31,12 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang.StringUtils;
 import org.duracloud.appconfig.domain.NotificationConfig;
+import org.duracloud.common.error.DuraCloudRuntimeException;
+import org.duracloud.common.json.JaxbJsonSerializer;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.util.EncryptionUtil;
+import org.duracloud.common.util.IOUtil;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.BridgeConfiguration;
@@ -43,7 +50,9 @@ import org.duracloud.snapshot.service.impl.RestoreJobExecutionListener;
 import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -54,6 +63,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Path("/")
+@Lazy(value=false)
 public class GeneralResource {
     
     private static Logger log = LoggerFactory.getLogger(GeneralResource.class);
@@ -93,8 +103,15 @@ public class GeneralResource {
         this.notificationManager = notificationManager;
         this.finalizer = finalizer;
         this.bridgeConfiguration = bridgeConfiguration;
+        
     }    
+
+    @PostConstruct()
+    public void init(){
+        initFromStoreInitConfig();
+    }
     
+
     @Path("init")
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -110,6 +127,11 @@ public class GeneralResource {
             initNotificationManager(initParams);
             this.finalizer.initialize(initParams.getFinalizerPeriodMs());
 
+            //set the clean variable to false to ensure that on restart
+            //the database is not reset automatically.
+            initParams.setClean(false);
+            writeInitConfigToDisk(initParams);
+
             log.info("successfully initialized bridge application.");
 
             return Response.accepted().entity(new ResponseDetails("success!")).build();
@@ -118,6 +140,74 @@ public class GeneralResource {
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
         }
+    }
+
+    /**
+     * @param initParams
+     */
+    private void writeInitConfigToDisk(InitParams initParams) {
+        EncryptionUtil encryptionUtil = getEncryptionUtil();
+        try (FileWriter writer = new FileWriter(getStoreInitFile())) {
+            String serialized = getInitSerializer().serialize(initParams);
+            String encrypted = encryptionUtil.encrypt(serialized);
+            writer.write(encrypted);
+        } catch (IOException e) {
+            log.error("failed to write init config: " + e.getMessage(), e);
+        }
+    }
+    
+    private void initFromStoreInitConfig() {
+        File storedInitFile = getStoreInitFile();
+        if(!storedInitFile.exists()){
+            log.info("The encrypted stored init file ({})does not exist. Ignoring...",
+                     storedInitFile.getAbsolutePath());
+        }
+        try {
+            log.info("Initializing from stored encrypted file ({}). Ignoring...",
+                     storedInitFile.getAbsolutePath());
+
+            init(getStoredInitParams());
+        } catch (IOException e) {
+            log.error("failed to initialize from stored config: " + e.getMessage(), e);
+        } 
+    }
+    
+    protected InitParams getStoredInitParams() throws IOException {
+        File storedInitFile = getStoreInitFile();
+        try (InputStream is = new FileInputStream(storedInitFile)) {
+            String encryptedString = IOUtil.readStringFromStream(is);
+            String decryptedString = getEncryptionUtil().decrypt(encryptedString);
+            return getInitSerializer().deserialize(decryptedString);
+        }
+    }
+
+    /**
+     * @return
+     */
+    private EncryptionUtil getEncryptionUtil() {
+        String pw = System.getProperty("root.password");
+        if(pw == null){
+            throw new DuraCloudRuntimeException(
+                    "The initialization process depends on the"
+                    + " presence of a 'root.password' system property.");
+        }
+        return new EncryptionUtil(pw);
+    }
+
+    /**
+     * @return
+     */
+    protected File getStoreInitFile() {
+       return  new File(System.getProperty("java.io.tmpdir"), "duracloud-vault-init.dat");
+    }
+
+    /**
+     * @return
+     */
+    private JaxbJsonSerializer<InitParams> getInitSerializer() {
+        JaxbJsonSerializer<InitParams> serializer =
+            new JaxbJsonSerializer<>(InitParams.class);
+        return serializer;
     }
 
     /**

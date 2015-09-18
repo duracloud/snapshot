@@ -5,7 +5,7 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.rest;
+package org.duracloud.snapshot.bridge.rest;
 
 import static org.junit.Assert.assertNotNull;
 

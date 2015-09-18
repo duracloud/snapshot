@@ -5,9 +5,9 @@
  *
  *     http://duracloud.org/license/
  */
-package org.duracloud.snapshot.rest;
+package org.duracloud.snapshot.bridge.rest;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +38,7 @@ import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -113,7 +114,14 @@ public class GeneralResourceTest extends SnapshotTestBase {
     }
     
     @Test
-    public void testInit() {
+    public void testInit() throws Exception {
+        
+        File file = resource.getStoreInitFile();
+        if(file.exists()){
+            file.delete();
+        }
+        
+        System.setProperty("root.password", "test");
         Capture<DatabaseConfig> dbConfigCapture = new Capture<>();
         initializer.init(EasyMock.capture(dbConfigCapture));
         EasyMock.expectLastCall();
@@ -156,8 +164,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         InitParams initParams = createInitParams();
         
-        resource.init(initParams);
-
+        Response response = resource.init(initParams);
+        assertEquals(202, response.getStatus());
         DatabaseConfig dbConfig = dbConfigCapture.getValue();
         assertEquals(databaseUser, dbConfig.getUsername());
         assertEquals(databasePassword, dbConfig.getPassword());
@@ -198,6 +206,14 @@ public class GeneralResourceTest extends SnapshotTestBase {
                      restorationConfig.getDuracloudEmailAddresses()[0]);
         assertEquals(dpnEmailAddresses[0],
                      restorationConfig.getDpnEmailAddresses()[0]);
+        
+        InitParams params = resource.getStoredInitParams();
+        
+        //verify that the state was saved successfully 
+        //and that the database clean flag was flipped to false.
+        assertNotNull(params);
+        assertEquals(false, params.isClean());
+        
     }
     
     @Test

@@ -62,4 +62,11 @@ public interface SnapshotJobManager  {
     public BatchStatus executeRestoration(String restorationId)
         throws SnapshotException;
 
+    
+    /**
+     * Cancels a snapshot
+     * @param snapshotId
+     * @throws SnapshotException
+     */
+    public void cancelSnapshot(String snapshotId) throws SnapshotException;
 }

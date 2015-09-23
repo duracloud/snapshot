@@ -23,7 +23,6 @@ import org.duracloud.manifeststitch.StitchedManifestGenerator;
 import org.duracloud.retrieval.mgmt.LoggingOutputWriter;
 import org.duracloud.retrieval.source.DuraStoreStitchingRetrievalSource;
 import org.duracloud.retrieval.source.RetrievalSource;
-import org.duracloud.retrieval.util.StoreClientUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -65,19 +64,22 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     private PlatformTransactionManager transactionManager;
     private TaskExecutor taskExecutor;
     private SnapshotManager snapshotManager;
+    private StoreClientHelper storeClientHelper;
     
     @Autowired
     public SnapshotJobBuilder(SnapshotJobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
                               TaskExecutor taskExecutor,
-                              SnapshotManager snapshotManager) {
+                              SnapshotManager snapshotManager,
+                              StoreClientHelper storeClientHelper) {
 
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
         this.snapshotManager = snapshotManager;
+        this.storeClientHelper = storeClientHelper;
     }
 
     /* (non-Javadoc)
@@ -91,15 +93,10 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
         try {
             
             DuracloudEndPointConfig source = snapshot.getSource();
-            StoreClientUtil clientUtil = new StoreClientUtil();
 
             ContentStore contentStore =
-                clientUtil.createContentStore(source.getHost(),
-                                              source.getPort(),
-                                              SnapshotServiceConstants.DURASTORE_CONTEXT,
-                                              config.getDuracloudUsername(),
-                                              config.getDuracloudPassword(),
-                                              source.getStoreId());
+                storeClientHelper.create(source,config.getDuracloudUsername(),
+                                              config.getDuracloudPassword());
 
             List<String> spaces = new ArrayList<>();
             spaces.add(source.getSpaceId());

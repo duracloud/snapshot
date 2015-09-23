@@ -47,4 +47,9 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
      * @return
      */
     public Snapshot findBySnapshotAlternateIds(String alternateId);
+
+    /**
+     * @param snapshotId
+     */
+    public void deleteByName(String snapshotId);
 }

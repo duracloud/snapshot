@@ -77,4 +77,6 @@ public interface SnapshotManager {
      * @return the altered snapshot
      */
 	public Snapshot updateHistory(Snapshot snapshot, String history);
+	
+	public void deleteSnapshot(String snapshotId);
 }

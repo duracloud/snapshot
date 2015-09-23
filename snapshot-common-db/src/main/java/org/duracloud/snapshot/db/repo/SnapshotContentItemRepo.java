@@ -48,5 +48,10 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
      */
     public SnapshotContentItem findBySnapshotAndContentIdHash(Snapshot snapshot, String contentIdHash);
 
+    /**
+     * @param snapshotId
+     */
+    public void deleteBySnapshotName(String snapshotId);
+
  
 }

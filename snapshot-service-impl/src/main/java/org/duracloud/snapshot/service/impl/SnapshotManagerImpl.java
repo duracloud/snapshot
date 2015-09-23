@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -425,6 +426,20 @@ public class SnapshotManagerImpl implements SnapshotManager {
      */
     public void setStoreClientHelper(StoreClientHelper storeClientHelper) {
         this.storeClientHelper = storeClientHelper;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.SnapshotManager#deleteSnapshot(java.lang.String)
+     */
+    @Override
+    @Transactional
+    public void deleteSnapshot(String snapshotId) {
+        //delete the snapshot
+        snapshotContentItemRepo.deleteBySnapshotName(snapshotId);
+        snapshotRepo.deleteByName(snapshotId);
+        log.info("successfully deleted snapshot: {}", snapshotId);
+
+        
     }
 
 }

@@ -39,10 +39,9 @@ import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotHistoryItem;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CancelSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
-import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
-import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
@@ -50,6 +49,8 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
+import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
@@ -61,7 +62,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -224,6 +224,51 @@ public class SnapshotResource {
 
     }
     
+    
+    @Path("{snapshotId}/cancel")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cancel(@PathParam("snapshotId") final String snapshotId) throws SnapshotException{
+        log.debug("attempting cancellation of snapshot " + snapshotId);
+
+        Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
+        if (snapshot == null) {
+            throw new SnapshotNotFoundException(snapshotId);
+        }
+
+        log.debug("snapshot {} found.", snapshot);
+        SnapshotStatus status = snapshot.getStatus();
+        
+        if( status.equals(SnapshotStatus.CLEANING_UP)){
+            String message= "Snapshot cannot be cancelled in the cleaning up phase ( snapshot=" + snapshot + ")";
+            throw new SnapshotException(message,null);
+        }
+        
+
+        new Thread(new Runnable(){
+            /* (non-Javadoc)
+             * @see java.lang.Runnable#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    
+                    Snapshot snapshot = snapshotRepo.findByName(snapshotId);
+                    jobManager.cancelSnapshot(snapshotId);
+                    snapshotManager.deleteSnapshot(snapshotId);
+                } catch (Exception ex) {
+                    log.error("cancellation did not complete successfully: "+ ex.getMessage(), ex);
+                }
+
+            }
+        }).start();
+
+        CancelSnapshotBridgeResult result =
+            new CancelSnapshotBridgeResult(SnapshotStatus.CANCELLING, "Cancellation request received.");
+        return Response.ok().entity(result).build();
+
+
+    }
     
     @Path("{snapshotId}")
     @PUT

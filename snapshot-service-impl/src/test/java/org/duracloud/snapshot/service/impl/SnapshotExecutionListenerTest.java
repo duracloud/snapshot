@@ -74,7 +74,7 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
 
     
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         
         Map<String, JobParameter> jobParamMap = new HashMap<>();

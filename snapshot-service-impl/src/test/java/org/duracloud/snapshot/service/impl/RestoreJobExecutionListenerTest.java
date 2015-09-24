@@ -81,7 +81,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     private JobParameters jobParams;
     
     @Before
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         
         Map<String, JobParameter> jobParamMap = new HashMap<>();

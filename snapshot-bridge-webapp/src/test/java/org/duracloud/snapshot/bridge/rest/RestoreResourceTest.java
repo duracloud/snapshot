@@ -44,7 +44,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         resource = new RestoreResource(manager);
     }

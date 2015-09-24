@@ -39,6 +39,7 @@ import org.duracloud.common.util.EncryptionUtil;
 import org.duracloud.common.util.IOUtil;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
+import org.duracloud.snapshot.service.AlreadyInitializedException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.Finalizer;
 import org.duracloud.snapshot.service.RestoreManager;
@@ -118,6 +119,9 @@ public class GeneralResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
+            
+            checkIfAlreadyInitialized();
+
             initBridgeConfiguration(initParams);
             initializeLocalDirectories(initParams); 
             initDatabase(initParams);
@@ -139,6 +143,12 @@ public class GeneralResource {
             return Response.serverError()
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
+        }
+    }
+
+    private void checkIfAlreadyInitialized() throws AlreadyInitializedException{
+        if(this.jobManager.isInitialized()){
+            throw new AlreadyInitializedException("The bridge has already been initialized.");
         }
     }
 
@@ -288,7 +298,7 @@ public class GeneralResource {
     /**
      * @param initParams
      */
-    private void initJobManager(InitParams initParams) {
+    private void initJobManager(InitParams initParams) throws AlreadyInitializedException{
         if(StringUtils.isBlank(initParams.getWorkDir()))       {
             throw new IllegalArgumentException("workDir must not be blank.");
         }

@@ -90,7 +90,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      * @see org.duracloud.snapshot.common.test.SnapshotTestBase#setup()
      */
     @Override
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         setupManager();
     }

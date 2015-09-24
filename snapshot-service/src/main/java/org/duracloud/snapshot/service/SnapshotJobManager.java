@@ -29,10 +29,16 @@ public interface SnapshotJobManager  {
      * Lazily initializes the component.  The data source must be fully configured
      * when this method is called; otherwise it will fail.
      * @param duracloudCredential
+     * @throws AlreadyInitializedException if the service is already initialized.
      */
-    void init(SnapshotJobManagerConfig duracloudCredential);
+    void init(SnapshotJobManagerConfig duracloudCredential) throws AlreadyInitializedException;
 
 
+    /**
+     * 
+     * @return true if the service is already initialized. 
+     */
+    boolean isInitialized();
     /**
      * This method creates an underlying job and executes it. 
      * @param snapshotId

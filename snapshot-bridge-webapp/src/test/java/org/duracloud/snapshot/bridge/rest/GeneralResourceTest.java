@@ -18,15 +18,13 @@ import javax.ws.rs.core.Response;
 
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
-import org.duracloud.snapshot.bridge.rest.GeneralResource;
-import org.duracloud.snapshot.bridge.rest.InitParams;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.Finalizer;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
-import org.duracloud.snapshot.service.Finalizer;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
@@ -38,7 +36,6 @@ import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParseException;
@@ -100,7 +97,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
-    public void setup() {
+    public void setup() throws Exception{
         super.setup();
         resource =
             new GeneralResource(manager,
@@ -137,6 +134,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         finalizer.initialize(finalizerPeriodMs);
         EasyMock.expectLastCall();
+
+        EasyMock.expect(manager.isInitialized()).andReturn(false);
 
         Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
         manager.init(EasyMock.capture(duracloudConfigCapture));
@@ -213,7 +212,18 @@ public class GeneralResourceTest extends SnapshotTestBase {
         //and that the database clean flag was flipped to false.
         assertNotNull(params);
         assertEquals(false, params.isClean());
-        
+    }
+
+    @Test
+    public void testAlreadyInitialized(){
+        EasyMock.expect(manager.isInitialized()).andReturn(true);
+        replayAll();
+        InitParams initParams = createInitParams();
+        Response response = resource.init(initParams);
+        assertEquals(500, response.getStatus());
+        assertTrue(((ResponseDetails) 
+                        response.getEntity()).getMessage()
+                                             .contains("already"));
     }
     
     @Test
@@ -256,18 +266,4 @@ public class GeneralResourceTest extends SnapshotTestBase {
         return initParams;
     }
 
-    /**
-     * 
-     */
-    private void setupInitialize() {
-        initializer.init(EasyMock.isA(DatabaseConfig.class));
-        EasyMock.expectLastCall();
-
-        snapshotJobListener.init(EasyMock.isA(ExecutionListenerConfig.class));
-        EasyMock.expectLastCall();
-
-        manager.init(EasyMock.isA(SnapshotJobManagerConfig.class));
-        EasyMock.expectLastCall();
-
-    }
 }

@@ -93,7 +93,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         resource =
             new SnapshotResource(jobManager,

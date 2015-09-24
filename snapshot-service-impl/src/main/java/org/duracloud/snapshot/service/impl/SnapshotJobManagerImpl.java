@@ -28,6 +28,7 @@ import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CompleteCancelSnapshotTaskParameters;
+import org.duracloud.snapshot.service.AlreadyInitializedException;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
@@ -97,11 +98,10 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
      * .snapshot.rest.InitParams)
      */
     @Override
-    public void init(SnapshotJobManagerConfig config) {
+    public void init(SnapshotJobManagerConfig config) throws AlreadyInitializedException {
 
         if (isInitialized()) {
-            log.warn("Already initialized. Ignorning");
-            return;
+            throw new AlreadyInitializedException("Already initialized!");
         }
 
         this.config = config;
@@ -177,10 +177,11 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     }
 
-    /**
-     * 
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.SnapshotJobManager#isInitialized()
      */
-    private boolean isInitialized() {
+    @Override
+    public boolean isInitialized() {
         return this.config != null;
     }
 

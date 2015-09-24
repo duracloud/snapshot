@@ -67,7 +67,7 @@ public class SyncWriterTest extends SnapshotTestBase{
      * @see org.duracloud.snapshot.common.test.SnapshotTestBase#setup()
      */
     @Override
-    public void setup() {
+    public void setup() throws Exception  {
         super.setup();
         watchDir = new File(System.getProperty("java.io.tmpdir") + File.separator + System.currentTimeMillis());
         watchDir.mkdirs();

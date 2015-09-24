@@ -105,7 +105,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
      */
     @Before
     @Override
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         contentDir = createDirectory("content" + System.currentTimeMillis());
         workDir = createDirectory("work" + System.currentTimeMillis());

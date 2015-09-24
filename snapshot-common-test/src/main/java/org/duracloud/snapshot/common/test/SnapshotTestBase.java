@@ -24,7 +24,7 @@ import org.junit.runner.RunWith;
 public class SnapshotTestBase extends EasyMockSupport{
  
     @Before
-    public void setup() {
+    public void setup() throws Exception{
     }
 
     

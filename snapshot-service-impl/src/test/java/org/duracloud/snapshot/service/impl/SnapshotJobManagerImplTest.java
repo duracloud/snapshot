@@ -104,7 +104,9 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     private StoreClientHelper storeHelper;
     
     @Before
-    public void setup() {
+    @Override
+    public void setup() throws Exception {
+        super.setup();
         manager =
             new SnapshotJobManagerImpl(snapshotRepo,
                                        restoreRepo,

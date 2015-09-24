@@ -91,7 +91,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
      */
     @Before
     @Override
-    public void setup() {
+    public void setup() throws Exception {
         super.setup();
         manager = new SnapshotManagerImpl();
         manager.setBridgeConfig(bridgeConfig);

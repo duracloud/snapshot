@@ -169,11 +169,12 @@ public class GeneralResource {
     private void initFromStoreInitConfig() {
         File storedInitFile = getStoreInitFile();
         if(!storedInitFile.exists()){
-            log.info("The encrypted stored init file ({})does not exist. Ignoring...",
+            log.info("The encrypted stored init file ({}) does not exist. Ignoring...",
                      storedInitFile.getAbsolutePath());
+            return;
         }
         try {
-            log.info("Initializing from stored encrypted file ({}). Ignoring...",
+            log.info("Initializing from stored encrypted file ({})...",
                      storedInitFile.getAbsolutePath());
 
             init(getStoredInitParams());
@@ -208,7 +209,10 @@ public class GeneralResource {
      * @return
      */
     protected File getStoreInitFile() {
-       return  new File(System.getProperty("java.io.tmpdir"), "duracloud-vault-init.dat");
+      String dir = System.getProperty("duracloud.vault.workdir",  
+                                System.getProperty("user.home"));
+       
+       return  new File(dir, "duracloud-vault-init.dat");
     }
 
     /**

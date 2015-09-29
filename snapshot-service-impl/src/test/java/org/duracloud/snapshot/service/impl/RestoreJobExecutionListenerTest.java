@@ -77,7 +77,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     private String restorationId = "restorationId";
     private String snapshotName = "snapshot-name";
     private String contentDir = "content-dir";
-    private int daysToExpire = 42;
+    private int daysToExpire = 2;
     private JobParameters jobParams;
     
     @Before
@@ -195,6 +195,11 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         assertTrue(message.contains("failed"));
     }
 
+    // Note: This test is impacted by the move on/off daylight savings
+    //       time. Using 2 as the "daysToExpire" value means the impact
+    //       should be limited to the two days before a time swap. At
+    //       those times, swapping to GMT locally should also resolve
+    //       the issue.
     @Test
     public void testGetExpirationDate() {
         Date currentDate = new Date();

@@ -33,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.error.DuraCloudRuntimeException;
 import org.duracloud.common.json.JaxbJsonSerializer;
+import org.duracloud.common.model.RootUserCredential;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.EncryptionUtil;
@@ -196,13 +197,8 @@ public class GeneralResource {
      * @return
      */
     private EncryptionUtil getEncryptionUtil() {
-        String pw = System.getProperty("root.password");
-        if(pw == null){
-            throw new DuraCloudRuntimeException(
-                    "The initialization process depends on the"
-                    + " presence of a 'root.password' system property.");
-        }
-        return new EncryptionUtil(pw);
+        RootUserCredential rootCredential = new RootUserCredential();
+        return new EncryptionUtil(rootCredential.getPassword());
     }
 
     /**

@@ -28,6 +28,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
@@ -279,6 +280,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         ExitStatus status = stepExecution.getExitStatus();
         
         if(errors.size() > 0){
+            stepExecution.upgradeStatus(BatchStatus.FAILED);
             status = status.and(ExitStatus.FAILED);
             for(String error : errors){
                 status = status.addExitDescription(error);

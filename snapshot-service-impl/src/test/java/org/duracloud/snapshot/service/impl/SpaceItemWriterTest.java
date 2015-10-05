@@ -34,21 +34,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
-import org.duracloud.common.constant.ManifestFormat;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.common.util.DateUtil;
 import org.duracloud.common.util.DateUtil.DateFormat;
-import org.duracloud.manifest.impl.TsvManifestFormatter;
-import org.duracloud.mill.db.model.ManifestItem;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
 import org.duracloud.retrieval.mgmt.OutputWriter;
 import org.duracloud.retrieval.source.ContentStream;
 import org.duracloud.retrieval.source.RetrievalSource;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -60,6 +55,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 
@@ -162,7 +158,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         BufferedWriter sha256Writer =
             createWriter(contentDir, SHA256_MANIFEST_TXT_FILE_NAME);
         
-        
         String spaceId = "space-id";
         String contentId = "content-id";
         List<ContentItem> items = new ArrayList<>();
@@ -208,11 +203,16 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
+        
+        
+        
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(manifestVerificationSuccessful);
         if(!manifestVerificationSuccessful){
             expect(spaceManifestVerifier.getErrors()).andReturn(Arrays.asList("error"));
+            stepExecution.upgradeStatus(BatchStatus.FAILED);
+            expectLastCall();
         }
         replayAll();
         writer =

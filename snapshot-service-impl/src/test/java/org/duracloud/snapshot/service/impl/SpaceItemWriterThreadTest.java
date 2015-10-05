@@ -96,7 +96,7 @@ public class SpaceItemWriterThreadTest {
 
         public void run() {
             try {
-                itemWriter.writeSHA256Checksum(contentItem, localFile);
+                itemWriter.writeSHA256Checksum(contentItem.getContentId(), localFile);
             } catch(Exception e) {
                 fail("Exception writing checksum: " + e.getMessage());
             }

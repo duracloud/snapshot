@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.duracloud.chunk.util.ChunkUtil;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -62,6 +63,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
     private Snapshot snapshot;
     private List<String> errors = new LinkedList<String>();
     private SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier;
+    private ChunkUtil chunkUtil = new ChunkUtil();
     
     
     public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
@@ -128,14 +130,14 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                  contentItem.getContentId(),
                  contentItem.getSpaceId(),
                  md5Checksum);
-
+        String contentId = chunkUtil.preChunkedContentId(contentItem.getContentId());
         if(localFile.exists() && md5Checksum != null) {
             if(writeChecksums) {
-                writeMD5Checksum(contentItem, md5Checksum);
-                writeSHA256Checksum(contentItem, localFile);
+                writeMD5Checksum(contentId, md5Checksum);
+                writeSHA256Checksum(contentId, localFile);
             }
-            writeToSnapshotManager(contentItem, props);
-            writeContentProperties(contentItem, props, lastItem);
+            writeToSnapshotManager(contentId, props);
+            writeContentProperties(contentId, props, lastItem);
         } else {
             // There was a problem! Throw a meaningful exception:
             String baseError =
@@ -158,44 +160,44 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
      * @param contentItem
      * @param props
      */
-    private void writeToSnapshotManager(final ContentItem contentItem,
+    private void writeToSnapshotManager(final String contentId,
                                         final Map<String, String> props) throws IOException{
         try {
             new Retrier().execute(new Retriable() {
                 @Override
                 public Object retry() throws Exception {
-                    snapshotManager.addContentItem(snapshot, contentItem.getContentId(), props);
+                    snapshotManager.addContentItem(snapshot, contentId, props);
                     return null;
                 }
 
             });
         } catch (Exception e) {
             log.error("failed to add snapshot content item: "
-                + contentItem + ": " + e.getMessage(), e);
+                + contentId + " to snapshot " + snapshot + ": " + e.getMessage(), e);
             throw new IOException(e);
         }
     }
 
-    protected void writeMD5Checksum(ContentItem contentItem,
+    protected void writeMD5Checksum(String contentId,
                                     String md5Checksum) throws IOException {
         synchronized (md5Writer) {
             ManifestFileHelper.writeManifestEntry(md5Writer, 
-                                                    contentItem.getContentId(), 
+                                                    contentId, 
                                                     md5Checksum);
         }
     }
 
 
 
-    protected synchronized void writeSHA256Checksum(ContentItem contentItem,
+    protected synchronized void writeSHA256Checksum(String contentId,
                                        File localFile) throws IOException {
         String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
         ManifestFileHelper.writeManifestEntry(sha256Writer, 
-                                                contentItem.getContentId(), 
+                                                contentId, 
                                                 sha256Checksum);
     }
 
-    protected void writeContentProperties(ContentItem contentItem,
+    protected void writeContentProperties(String contentId,
                                           Map<String,String> props,
                                           boolean lastItem)
             throws IOException {
@@ -203,7 +205,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         
         Set<String> propKeys = props.keySet();
         StringBuffer sb = new StringBuffer(100);
-        sb.append("{\n  \"" + contentItem.getContentId() + "\": {\n");
+        sb.append("{\n  \"" + contentId + "\": {\n");
         for(String propKey: propKeys) {
             sb.append("    \"" + propKey + "\": \"" + props.get(propKey) + "\",\n");
         }

@@ -239,11 +239,14 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         String altTestId = "alt-test";
         List<String> alternateIds = Arrays.asList(new String[]{altTestId});
         String snapshotId = "test";
+        expect(snapshot.getId()).andReturn(1l);
+        expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
+
         expect(snapshot.getName()).andReturn(snapshotId).times(2);
         expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot);
         this.snapshot.addSnapshotAlternateIds(alternateIds);
         expectLastCall();
-        expect(this.snapshotRepo.save(snapshot)).andReturn(snapshot);
+        expect(this.snapshotRepo.saveAndFlush(snapshot)).andReturn(snapshot);
         replayAll();
         this.manager.addAlternateSnapshotIds(snapshot, alternateIds);
     }
@@ -254,10 +257,12 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         List<String> alternateIds = Arrays.asList(new String[]{altTestId});
         String snapshotId = "test";
         Snapshot snapshot2 = createMock(Snapshot.class);
-        
         expect(snapshot.getName()).andReturn(snapshotId);
         expect(snapshot2.getName()).andReturn("snapshot2").atLeastOnce();
-        
+
+        expect(snapshot.getId()).andReturn(1l);
+        expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
+
         expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot2);
         replayAll();
         try {

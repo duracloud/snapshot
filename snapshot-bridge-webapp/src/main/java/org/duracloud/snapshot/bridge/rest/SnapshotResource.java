@@ -354,7 +354,7 @@ public class SnapshotResource {
             List<String> alternateIds = params.getAlternateIds();
             if(alternateIds != null && !alternateIds.isEmpty()) {
                 // add alternate id's
-                this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds);
+                snapshot = this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds);
 
                 StringBuilder history = new StringBuilder();
                 history.append("{\"alternateIds\":[");

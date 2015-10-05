@@ -438,8 +438,6 @@ public class SnapshotManagerImpl implements SnapshotManager {
         snapshotContentItemRepo.deleteBySnapshotName(snapshotId);
         snapshotRepo.deleteByName(snapshotId);
         log.info("successfully deleted snapshot: {}", snapshotId);
-
-        
     }
 
 }

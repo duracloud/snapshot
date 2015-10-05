@@ -244,22 +244,15 @@ public class SnapshotResource {
             throw new SnapshotException(message,null);
         }
         
-
         new Thread(new Runnable(){
-            /* (non-Javadoc)
-             * @see java.lang.Runnable#run()
-             */
             @Override
             public void run() {
                 try {
-                    
-                    Snapshot snapshot = snapshotRepo.findByName(snapshotId);
                     jobManager.cancelSnapshot(snapshotId);
                     snapshotManager.deleteSnapshot(snapshotId);
                 } catch (Exception ex) {
                     log.error("cancellation did not complete successfully: "+ ex.getMessage(), ex);
                 }
-
             }
         }).start();
 

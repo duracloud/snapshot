@@ -24,7 +24,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  *         Date: May 19, 2015
  */
 @Entity
-@Table (name="snapshot_history", uniqueConstraints=@UniqueConstraint(columnNames={"snapshot_id","historyDate" }))
+@Table (name="snapshot_history")
 public class SnapshotHistory extends BaseEntity implements Comparator<SnapshotHistory> {
     
 	private Date historyDate = new Date();

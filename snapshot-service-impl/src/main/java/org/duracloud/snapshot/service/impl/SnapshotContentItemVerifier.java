@@ -17,6 +17,7 @@ import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
+import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.RestoreManager;
@@ -77,7 +78,14 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
      */
     @Override
     public void afterWrite(List<? extends SnapshotContentItem> items) {
-        addToItemsRead(items.size());
+        //be sure not to count snapshot prop file.
+        int size = items.size();
+        for(SnapshotContentItem item : items){
+            if(item.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                size -= 1;
+            }
+        }
+        addToItemsRead(size);
     }
 
     /*

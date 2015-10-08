@@ -69,6 +69,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
      */
     private void setupTestSubject() {
         this.verifier = new SpaceVerifier(restoreId, spaceManifestVerifier, spaceId, restoreManager);
+        this.verifier.setIsTest();
     }
 
     /**

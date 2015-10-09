@@ -57,9 +57,6 @@ public class SpaceManifestDpnManifestVerifier {
      *         be obtained by calling getErrors() after execution completes.
      */
     public boolean verify() {
-        if (this.errors != null) {
-            return getResult(this.errors);
-        }
 
         this.errors = new LinkedList<>();
         try {

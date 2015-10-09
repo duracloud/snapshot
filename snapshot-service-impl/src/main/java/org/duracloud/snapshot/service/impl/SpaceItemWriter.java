@@ -44,8 +44,7 @@ import org.springframework.batch.item.ItemWriter;
  * @author Erik Paulsson
  *         Date: 2/7/14
  */
-public class SpaceItemWriter implements ItemWriter<ContentItem>,
-                                        StepExecutionListener,
+public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<ContentItem>,
                                         ItemWriteListener<ContentItem> {
 
     private static final Logger log =
@@ -74,6 +73,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
                            BufferedWriter sha256Writer, 
                            SnapshotManager snapshotManager, 
                            SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier) {
+        super();
         this.snapshot = snapshot;
         this.retrievalSource = retrievalSource;
         this.contentDir = contentDir;
@@ -240,6 +240,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        ExitStatus status = super.afterStep(stepExecution);
         log.debug("Step complete with status: {}",
                      stepExecution.getExitStatus());
         try {
@@ -274,12 +275,8 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
         }
         
         if(errors.size() == 0){
-            if(!this.spaceManifestDpnManifestVerifier.verify()){
-               errors.addAll(this.spaceManifestDpnManifestVerifier.getErrors());
-            }
+           errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
         }
-        
-        ExitStatus status = stepExecution.getExitStatus();
         
         if(errors.size() > 0){
             stepExecution.upgradeStatus(BatchStatus.FAILED);
@@ -294,6 +291,7 @@ public class SpaceItemWriter implements ItemWriter<ContentItem>,
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
+        super.beforeStep(stepExecution);
         try {
             errors.clear();
             synchronized (propsWriter) {

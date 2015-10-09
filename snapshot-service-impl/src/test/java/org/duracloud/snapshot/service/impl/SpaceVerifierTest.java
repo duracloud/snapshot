@@ -84,6 +84,8 @@ public class SpaceVerifierTest extends EasyMockSupport {
     public void testSuccessfulRun() throws Exception {
         setupStepExecution();
         expect(this.spaceManifestVerifier.verify()).andReturn(true);
+        expect(this.spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
+
         replayAll();
         setupTestSubject();
         simulateStepExecution(ExitStatus.COMPLETED);
@@ -94,6 +96,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
         setupStepExecution(2);
         setupStepExecutionFailure();
         expect(this.spaceManifestVerifier.verify()).andReturn(false);
+        expect(this.spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
         expect(this.spaceManifestVerifier.getErrors()).andReturn(Arrays.asList("error"));
         replayAll();
         setupTestSubject();

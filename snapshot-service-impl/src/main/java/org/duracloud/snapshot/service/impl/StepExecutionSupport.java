@@ -7,10 +7,13 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.text.MessageFormat;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -30,6 +33,7 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
     private StepExecution stepExecution;
     private static String ITEMS_READ_KEY = "lines.read";
     private static final String ERRORS_KEY = "errors";
+    private boolean test = false;
 
     protected ExecutionContext getExecutionContext() {
         return this.stepExecution.getExecutionContext();
@@ -139,6 +143,58 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
         }
 
     }
+
+    /**
+     * @param stepExecution
+     */
+    protected List<String> verifySpace(final SpaceManifestDpnManifestVerifier verifier){
+        List<String> errors = new LinkedList<>();
+        String spaceId = verifier.getSpaceId();
+        try {
+            boolean verified = new Retrier(4, 60000, 2).execute(new Retriable() {
+                @Override
+                public Object retry() throws Exception {
+                    boolean result = verifier.verify();
+                    if (!result && !test) {
+                        String message = "verification failed.  Retrying...";
+                        log.warn(message);
+                        throw new Exception(message);
+                    }
+                    return result;
+                }
+            });
+
+            if (!verified) {
+                for (String error : verifier.getErrors()) {
+                    errors.add(error);
+                }
+
+                errors.add(MessageFormat.format("space manifest doesn't match the dpn manifest: step_execution_id={0} "
+                    + "job_execution_id={1}  spaceId={2}",
+                                              stepExecution.getId(),
+                                              stepExecution.getJobExecutionId(),
+                                              spaceId));
+            }
+
+        } catch (Exception e) {
+            String message =
+                MessageFormat.format("unexpected error during space verification: step_execution_id={0} "
+                    + "job_execution_id={1}  spaceId={2}: message={3}",
+                                     stepExecution.getId(),
+                                     stepExecution.getJobExecutionId(),
+                                     spaceId,
+                                     e.getMessage());
+            log.error(message);
+            errors.add(message);
+        }
+        
+        return errors;
+    }
+    
+    public void setIsTest(){
+        this.test = true;
+    }
+
 
 
 }

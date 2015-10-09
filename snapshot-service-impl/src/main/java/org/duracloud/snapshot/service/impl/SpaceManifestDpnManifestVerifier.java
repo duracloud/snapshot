@@ -48,6 +48,9 @@ public class SpaceManifestDpnManifestVerifier {
         this.spaceId = spaceId;
     }
 
+    public String getSpaceId(){
+        return this.spaceId;
+    }
     /**
      * Performs the verification.
      * @return true if verification was a success. Otherwise false. Errors can

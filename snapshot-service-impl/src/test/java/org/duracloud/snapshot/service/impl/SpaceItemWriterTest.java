@@ -209,7 +209,11 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(manifestVerificationSuccessful);
+        expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
+
         if(!manifestVerificationSuccessful){
+            expect(stepExecution.getId()).andReturn(1l);
+            expect(stepExecution.getJobExecutionId()).andReturn(1l);
             expect(spaceManifestVerifier.getErrors()).andReturn(Arrays.asList("error"));
             stepExecution.upgradeStatus(BatchStatus.FAILED);
             expectLastCall();
@@ -225,7 +229,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 sha256Writer,
                                 snapshotManager, 
                                 spaceManifestVerifier);
-
+        writer.setIsTest();
         writer.beforeStep(stepExecution);
         writeItems(items, threads);
         ExitStatus status = writer.afterStep(stepExecution);

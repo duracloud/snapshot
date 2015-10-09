@@ -46,7 +46,6 @@ public class SpaceVerifier extends StepExecutionSupport
     private RestoreManager restoreManager;
     private String restoreId;
     private SpaceManifestDpnManifestVerifier verifier;
-    private boolean test = false;
     /**
      * 
      * @param contentStore
@@ -94,9 +93,6 @@ public class SpaceVerifier extends StepExecutionSupport
         }
     }
 
-    public void setIsTest(){
-        this.test = true;
-    }
     /*
      * (non-Javadoc)
      * 
@@ -106,59 +102,9 @@ public class SpaceVerifier extends StepExecutionSupport
     @Override
     public ExitStatus afterStep(final StepExecution stepExecution) {
         if (getErrors().size() == 0) {
-            try {
-                final int retries = 4;
-                boolean verified = new Retrier(retries).execute(new Retriable(){
-                    private int count = 0;
-
-                    /* (non-Javadoc)
-                     * @see org.duracloud.common.retry.Retriable#retry()
-                     */
-                    @Override
-                    public Object retry() throws Exception {
-                        count++;
-                        long sleep = 0;
-                        if(count == (retries - 2)){
-                            sleep = 60*1000;
-                        }else if(count == (retries-1)){
-                            sleep = 5*60*1000;
-                        }else if(count == retries){
-                            sleep = 10*60*1000;
-                        }
-                        
-                        if(count > 1){
-                            log.info("Pausing " + sleep + " milliseconds to let mill catch up...");
-                        }
-                        
-                        Thread.sleep(sleep);
-                        
-                        boolean result = verifier.verify();
-                        
-                        if(!result && count < retries && !test){
-                            String message = "verification failed on attempt number " + count + ".  Retrying...";
-                            log.warn(message);
-                            throw new Exception(message);
-                        }
-
-                        return result;
-                    }
-                });
-                
-                if(!verified){
-                    for(String error : verifier.getErrors()){
-                        addError(error);
-                    }
-
-                    addError(MessageFormat.format("space manifest doesn't match the dpn manifest: step_execution_id={0} "
-                        + "job_execution_id={1}  spaceId={3}",
-                                                    stepExecution.getId(),
-                                                    stepExecution.getJobExecutionId(),
-                                                    spaceId));
-
-                }
-
-            } catch (Exception e) {
-                
+            List<String> verifyErrors = verifySpace(verifier);
+            for(String error : verifyErrors){
+                addError(error);
             }
         }
 
@@ -192,5 +138,6 @@ public class SpaceVerifier extends StepExecutionSupport
 
         return status;
     }
+
 
 }

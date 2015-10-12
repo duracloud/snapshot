@@ -12,6 +12,8 @@ import java.io.IOException;
 
 import javax.annotation.Priority;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ReaderInterceptor;
 import javax.ws.rs.ext.ReaderInterceptorContext;
 
@@ -39,10 +41,16 @@ public class MissingJsonBodyInterceptor implements ReaderInterceptor{
         }catch(Exception ex){
             log.error("request failed: " + ex.getCause().getMessage(), ex.getCause());
             if(ex.getCause() instanceof EOFException){
-                return new WebApplicationException("JSON body expected.", HttpStatus.SC_BAD_REQUEST);
+                WebApplicationException exception =
+                    new WebApplicationException(Response.status(HttpStatus.SC_BAD_REQUEST)
+                                                        .entity(new ResponseDetails("JSON body expected."))
+                                                        .type(MediaType.APPLICATION_JSON)
+                                                        .build());
+                throw exception;
             }else{
                 throw ex;
             }
         }
     }
+    
 }

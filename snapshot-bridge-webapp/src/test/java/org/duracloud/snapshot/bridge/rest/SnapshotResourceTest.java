@@ -19,6 +19,7 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.SnapshotException;
@@ -33,6 +34,7 @@ import org.duracloud.snapshot.db.repo.SnapshotContentItemRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CancelSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CompleteSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
@@ -251,6 +253,39 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         replayAll();
         Response response = resource.complete(snapshotId, params);
         assertTrue(response.getEntity() instanceof CompleteSnapshotBridgeResult);
+    }
+    
+    @Test
+    public void testCancel() throws SnapshotException, JSONException {
+        String snapshotId = "snapshot-name";
+        
+
+        expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
+        expect(snapshot.getStatus()).andReturn(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD);
+
+        this.snapshotManager.deleteSnapshot(snapshotId);
+        expectLastCall();
+        this.jobManager.cancelSnapshot(snapshotId);
+        expectLastCall();
+        replayAll();
+        Response response = resource.cancel(snapshotId);
+        assertTrue(response.getEntity() instanceof CancelSnapshotBridgeResult);
+    }
+
+    @Test
+    public void testCancelFailure() throws SnapshotException, JSONException {
+        String snapshotId = "snapshot-name";
+        
+
+        expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
+        expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
+
+        replayAll();
+        Response response = resource.cancel(snapshotId);
+        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+        assertTrue(response.getEntity() instanceof ResponseDetails);
+        assertNotNull(((ResponseDetails)response.getEntity()).getMessage());
+
     }
 
     @Test

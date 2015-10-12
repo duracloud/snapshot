@@ -241,23 +241,14 @@ public class SnapshotResource {
         
         if( status.equals(SnapshotStatus.CLEANING_UP)){
             String message= "Snapshot cannot be cancelled in the cleaning up phase ( snapshot=" + snapshot + ")";
-            throw new SnapshotException(message,null);
+            return Response.serverError().entity(new ResponseDetails(message)).build();
         }
         
-        new Thread(new Runnable(){
-            @Override
-            public void run() {
-                try {
-                    jobManager.cancelSnapshot(snapshotId);
-                    snapshotManager.deleteSnapshot(snapshotId);
-                } catch (Exception ex) {
-                    log.error("cancellation did not complete successfully: "+ ex.getMessage(), ex);
-                }
-            }
-        }).start();
+        jobManager.cancelSnapshot(snapshotId);
+        snapshotManager.deleteSnapshot(snapshotId);
 
         CancelSnapshotBridgeResult result =
-            new CancelSnapshotBridgeResult(SnapshotStatus.CANCELLING, "Cancellation request received.");
+            new CancelSnapshotBridgeResult(SnapshotStatus.CANCELLED, "Cancellation succeeded.  Snapshot and all metadata has been deleted.");
         return Response.ok().entity(result).build();
 
 

@@ -29,7 +29,8 @@ public class Application extends ResourceConfig{
                 SnapshotResource.class,
                 RestoreResource.class,
                 SnapshotObjectMapperProvider.class,
-                JacksonFeature.class);
+                JacksonFeature.class, 
+                MissingJsonBodyInterceptor.class);
             
         }
         

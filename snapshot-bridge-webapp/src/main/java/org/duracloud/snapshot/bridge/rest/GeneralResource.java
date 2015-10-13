@@ -85,6 +85,13 @@ public class GeneralResource {
     private BridgeConfiguration bridgeConfiguration;
     private Finalizer finalizer;
     
+    static {
+        //override root credential system property keys.
+        RootUserCredential.overrideSystemPropertyKeys("duracloud.bridge.root.username",
+                                                      "duracloud.bridge.root.password",
+                                                      "duracloud.bridge.root.email");
+    }
+    
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
                             RestoreManager restorationManager,

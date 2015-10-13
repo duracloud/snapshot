@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BridgeConfiguration {
-    public static final String DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY = "duracloud.vault.workdir";
+    public static final String DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY = "duracloud.bridge.workdir";
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;
@@ -67,12 +67,12 @@ public class BridgeConfiguration {
      * @return the contentRootDir
      */
     public static File getWorkDir() {
-        String rootDir =  System.getProperty(DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY);
+        String rootDir =  System.getProperty(DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY);
         if(rootDir == null){
             throw new RuntimeException("Unable to locate  workdir directory because the "
-                + DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY
+                + DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY
                 + " system property was not set.  Please specify a java command line parameter (e.g. -D"
-                + DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY + "=/path/to/workdir)");
+                + DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY + "=/path/to/workdir)");
         }
         File file =  createDirectoryIfNotExists(rootDir);
         if(!file.exists()){

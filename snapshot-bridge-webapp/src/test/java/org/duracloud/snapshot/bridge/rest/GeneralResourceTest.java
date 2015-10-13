@@ -109,7 +109,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 finalizer,
                                 bridgeConfiguration);
         
-        System.setProperty(BridgeConfiguration.DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY,
+        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY,
                            this.workDir.getAbsolutePath());
     }
     
@@ -159,7 +159,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         bridgeConfiguration.setDuracloudEmailAddresses(duracloudEmailAddresses);
         EasyMock.expectLastCall();
-        System.setProperty(BridgeConfiguration.DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
+        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
 
         replayAll();
 

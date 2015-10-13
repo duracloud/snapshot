@@ -148,7 +148,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         File root = new File(System.getProperty("java.io.tmpdir") + 
                              File.separator + System.currentTimeMillis());
 
-        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY,
+        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY,
                            root.getAbsolutePath());
 
         File dir = new File(ContentDirUtils.getDestinationPath(snapshotId, BridgeConfiguration.getContentRootDir()));

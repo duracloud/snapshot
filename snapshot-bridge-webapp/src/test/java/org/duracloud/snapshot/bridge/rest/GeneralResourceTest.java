@@ -64,8 +64,6 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private int daysToExpire = 42;
     private File workDir = new File(System.getProperty("java.io.tmpdir"),
         "snapshot-work");
-    private File contentRoot = new File(workDir,
-        "snapshot-content");
     
     private boolean clean = true;
 
@@ -109,7 +107,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 finalizer,
                                 bridgeConfiguration);
         
-        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY,
+        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY,
                            this.workDir.getAbsolutePath());
     }
     
@@ -159,7 +157,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         bridgeConfiguration.setDuracloudEmailAddresses(duracloudEmailAddresses);
         EasyMock.expectLastCall();
-        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
+        System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
 
         replayAll();
 
@@ -199,7 +197,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         assertEquals(duracloudUsername, jobManagerConfig.getDuracloudUsername());
         assertEquals(duracloudPassword, jobManagerConfig.getDuracloudPassword());
-        assertEquals(BridgeConfiguration.getWorkDir(), jobManagerConfig.getWorkDir());
+        assertEquals(BridgeConfiguration.getBridgeWorkDir(), jobManagerConfig.getWorkDir());
         assertEquals(new File(this.workDir,"content"), jobManagerConfig.getContentRootDir());
         
         RestoreManagerConfig restorationConfig = restorationConfigCapture.getValue();

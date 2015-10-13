@@ -121,7 +121,6 @@ public class GeneralResource {
             checkIfAlreadyInitialized();
 
             initBridgeConfiguration(initParams);
-            initializeLocalDirectories(initParams); 
             initDatabase(initParams);
             initExecutionListener(initParams);
             initJobManager(initParams);
@@ -202,7 +201,7 @@ public class GeneralResource {
      * @return
      */
     protected File getStoreInitFile() {
-       return  new File(BridgeConfiguration.getWorkDir(), "duracloud-vault-init.dat");
+       return  new File(BridgeConfiguration.getBridgeRootDir(), "duracloud-bridge-init.dat");
     }
 
     /**
@@ -221,6 +220,7 @@ public class GeneralResource {
         this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         this.bridgeConfiguration.setDuracloudUsername(initParams.getDuracloudUsername());
         this.bridgeConfiguration.setDuracloudPassword(initParams.getDuracloudPassword());
+        assert(BridgeConfiguration.getBridgeRootDir().exists());
     }
 
     /**
@@ -293,21 +293,15 @@ public class GeneralResource {
     private void initJobManager(InitParams initParams) throws AlreadyInitializedException{
 
 
-        File workDir = BridgeConfiguration.getWorkDir();
-        workDir.mkdirs();
+        
         SnapshotJobManagerConfig jobManagerConfig = new SnapshotJobManagerConfig();
         jobManagerConfig.setDuracloudUsername(initParams.getDuracloudUsername());
         jobManagerConfig.setDuracloudPassword(initParams.getDuracloudPassword());
         jobManagerConfig.setContentRootDir(BridgeConfiguration.getContentRootDir());
-        jobManagerConfig.setWorkDir(workDir);
+        jobManagerConfig.setWorkDir(BridgeConfiguration.getBridgeWorkDir());
         this.jobManager.init(jobManagerConfig);
     }   
     
-    private void initializeLocalDirectories(InitParams initParams)  {
-        
-    }
-
- 
 
     /**
      * Returns a list of snapshots.

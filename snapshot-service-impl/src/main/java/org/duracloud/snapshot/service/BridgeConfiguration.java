@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BridgeConfiguration {
-    public static final String DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY = "duracloud.bridge.workdir";
+    public static final String DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY = "duracloud.bridge.rootdir";
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;
@@ -64,15 +64,15 @@ public class BridgeConfiguration {
     }
 
     /**
-     * @return the contentRootDir
+     * @return the bridge root dir.
      */
-    public static File getWorkDir() {
-        String rootDir =  System.getProperty(DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY);
+    public static File getBridgeRootDir() {
+        String rootDir =  System.getProperty(DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY);
         if(rootDir == null){
-            throw new RuntimeException("Unable to locate  workdir directory because the "
-                + DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY
+            throw new RuntimeException("Unable to locate  bridge root directory because the "
+                + DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY
                 + " system property was not set.  Please specify a java command line parameter (e.g. -D"
-                + DURACLOUD_BRIDGE_WORKDIR_SYSTEM_PROPERTY + "=/path/to/workdir)");
+                + DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY + "=/path/to/root/dir)");
         }
         File file =  createDirectoryIfNotExists(rootDir);
         if(!file.exists()){
@@ -105,6 +105,14 @@ public class BridgeConfiguration {
      * @return
      */
     public static File getContentRootDir() {
-        return createDirectoryIfNotExists(new File(getWorkDir(), "content").getAbsolutePath());
+        return createDirectoryIfNotExists(new File(getBridgeRootDir(), "content").getAbsolutePath());
     }
+    
+    /**
+     * @return
+     */
+    public static File getBridgeWorkDir() {
+        return createDirectoryIfNotExists(new File(getBridgeRootDir(), "work").getAbsolutePath());
+    }
+
 }

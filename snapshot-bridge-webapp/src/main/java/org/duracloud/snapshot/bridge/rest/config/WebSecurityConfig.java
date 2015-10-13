@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.bridge.rest.config;
 
+import org.duracloud.common.model.RootUserCredential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -28,9 +29,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        RootUserCredential root = new RootUserCredential();
         auth.inMemoryAuthentication()
-            .withUser(System.getProperty("root.username", "root"))
-            .password(System.getProperty("root.password", "rpw"))
+            .withUser(root.getUsername())
+            .password(root.getPassword())
             .roles("USER");
     }
 }

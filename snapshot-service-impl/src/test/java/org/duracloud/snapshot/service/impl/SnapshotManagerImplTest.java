@@ -147,7 +147,11 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         File root = new File(System.getProperty("java.io.tmpdir") + 
                              File.separator + System.currentTimeMillis());
-        File dir = new File(ContentDirUtils.getDestinationPath(snapshotId, root));
+
+        System.setProperty(BridgeConfiguration.DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY,
+                           root.getAbsolutePath());
+
+        File dir = new File(ContentDirUtils.getDestinationPath(snapshotId, BridgeConfiguration.getContentRootDir()));
         dir.mkdirs();
         assertTrue(dir.exists());
         
@@ -181,7 +185,6 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         setupEndpoint();
 
-        expect(this.bridgeConfig.getContentRootDir()).andReturn(root);
 
         setupTaskClientHelper();
         expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);

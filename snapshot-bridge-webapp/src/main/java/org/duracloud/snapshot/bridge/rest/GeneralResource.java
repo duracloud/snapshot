@@ -29,9 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.lang.StringUtils;
 import org.duracloud.appconfig.domain.NotificationConfig;
-import org.duracloud.common.error.DuraCloudRuntimeException;
 import org.duracloud.common.json.JaxbJsonSerializer;
 import org.duracloud.common.model.RootUserCredential;
 import org.duracloud.common.notification.NotificationManager;
@@ -52,7 +50,6 @@ import org.duracloud.snapshot.service.impl.RestoreJobExecutionListener;
 import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -205,10 +202,7 @@ public class GeneralResource {
      * @return
      */
     protected File getStoreInitFile() {
-      String dir = System.getProperty("duracloud.vault.workdir",  
-                                System.getProperty("user.home"));
-       
-       return  new File(dir, "duracloud-vault-init.dat");
+       return  new File(BridgeConfiguration.getWorkDir(), "duracloud-vault-init.dat");
     }
 
     /**
@@ -227,8 +221,6 @@ public class GeneralResource {
         this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         this.bridgeConfiguration.setDuracloudUsername(initParams.getDuracloudUsername());
         this.bridgeConfiguration.setDuracloudPassword(initParams.getDuracloudPassword());
-        this.bridgeConfiguration.setContentRootDir(new File(initParams.getContentDirRoot()));
-
     }
 
     /**
@@ -254,7 +246,7 @@ public class GeneralResource {
      */
     private void initRestorationResource(InitParams initParams) {
         RestoreManagerConfig config = new RestoreManagerConfig();
-        config.setRestorationRootDir(initParams.getContentDirRoot());
+        config.setRestorationRootDir(BridgeConfiguration.getContentRootDir().getAbsolutePath());
         config.setDpnEmailAddresses(initParams.getDpnEmailAddresses());
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());
@@ -289,7 +281,7 @@ public class GeneralResource {
             initParams.getDpnEmailAddresses());
         notifyConfig.setOriginatorEmailAddress(
             initParams.getOriginatorEmailAddress());
-        notifyConfig.setContentRoot(new File(initParams.getContentDirRoot()));
+        notifyConfig.setContentRoot(BridgeConfiguration.getContentRootDir());
         this.snapshotJobListener.init(notifyConfig);
         this.restoreJobListener.init(notifyConfig, initParams.getDaysToExpireRestore());
     }
@@ -299,23 +291,14 @@ public class GeneralResource {
      * @param initParams
      */
     private void initJobManager(InitParams initParams) throws AlreadyInitializedException{
-        if(StringUtils.isBlank(initParams.getWorkDir()))       {
-            throw new IllegalArgumentException("workDir must not be blank.");
-        }
 
-        if(StringUtils.isBlank(initParams.getContentDirRoot()))       {
-            throw new IllegalArgumentException("contentDirRoot must not be blank.");
-        }
 
-        File workDir =
-            createDirectoryIfNotExists(initParams.getWorkDir());
-        File contentDirRoot =
-            createDirectoryIfNotExists(initParams.getContentDirRoot());
-
+        File workDir = BridgeConfiguration.getWorkDir();
+        workDir.mkdirs();
         SnapshotJobManagerConfig jobManagerConfig = new SnapshotJobManagerConfig();
         jobManagerConfig.setDuracloudUsername(initParams.getDuracloudUsername());
         jobManagerConfig.setDuracloudPassword(initParams.getDuracloudPassword());
-        jobManagerConfig.setContentRootDir(contentDirRoot);
+        jobManagerConfig.setContentRootDir(BridgeConfiguration.getContentRootDir());
         jobManagerConfig.setWorkDir(workDir);
         this.jobManager.init(jobManagerConfig);
     }   
@@ -324,25 +307,7 @@ public class GeneralResource {
         
     }
 
-    /**
-     * @param path
-     * @return
-     */
-    private File createDirectoryIfNotExists(String path) {
-        File wdir = new File(path);
-        if(!wdir.exists()){
-            if (!wdir.mkdirs()) {
-                throw new RuntimeException("failed to initialize "
-                    + path + ": directory could not be created.");
-            }
-        }
-        
-        if(!wdir.canWrite()){
-            throw new RuntimeException(wdir.getAbsolutePath() + " must be writable.");
-        }
-
-        return wdir;
-    }
+ 
 
     /**
      * Returns a list of snapshots.

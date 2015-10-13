@@ -64,7 +64,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private int daysToExpire = 42;
     private File workDir = new File(System.getProperty("java.io.tmpdir"),
         "snapshot-work");
-    private File contentDirRoot = new File(System.getProperty("java.io.tmpdir"),
+    private File contentRoot = new File(workDir,
         "snapshot-content");
     
     private boolean clean = true;
@@ -108,6 +108,9 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 notificationManager,
                                 finalizer,
                                 bridgeConfiguration);
+        
+        System.setProperty(BridgeConfiguration.DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY,
+                           this.workDir.getAbsolutePath());
     }
     
     @Test
@@ -156,8 +159,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         bridgeConfiguration.setDuracloudEmailAddresses(duracloudEmailAddresses);
         EasyMock.expectLastCall();
-        bridgeConfiguration.setContentRootDir(EasyMock.eq(this.contentDirRoot));
-        EasyMock.expectLastCall();
+        System.setProperty(BridgeConfiguration.DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
 
         replayAll();
 
@@ -197,8 +199,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         assertEquals(duracloudUsername, jobManagerConfig.getDuracloudUsername());
         assertEquals(duracloudPassword, jobManagerConfig.getDuracloudPassword());
-        assertEquals(contentDirRoot, jobManagerConfig.getContentRootDir());
-        assertEquals(workDir, jobManagerConfig.getWorkDir());
+        assertEquals(BridgeConfiguration.getWorkDir(), jobManagerConfig.getWorkDir());
+        assertEquals(new File(this.workDir,"content"), jobManagerConfig.getContentRootDir());
         
         RestoreManagerConfig restorationConfig = restorationConfigCapture.getValue();
         assertEquals(duracloudEmailAddresses[0],
@@ -259,8 +261,6 @@ public class GeneralResourceTest extends SnapshotTestBase {
         initParams.setDpnEmailAddresses(dpnEmailAddresses);
         initParams.setDuracloudUsername(duracloudUsername);
         initParams.setDuracloudPassword(duracloudPassword);
-        initParams.setWorkDir(workDir.getAbsolutePath());
-        initParams.setContentDirRoot(contentDirRoot.getAbsolutePath());
         initParams.setFinalizerPeriodMs(finalizerPeriodMs);
         initParams.setDaysToExpireRestore(daysToExpire);
         return initParams;

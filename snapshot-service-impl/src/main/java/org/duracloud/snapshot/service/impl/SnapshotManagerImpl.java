@@ -196,7 +196,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
             File snapshotDir =
                 new File(ContentDirUtils.getDestinationPath(snapshot.getName(),
-                                                            bridgeConfig.getContentRootDir()));
+                                                            BridgeConfiguration.getContentRootDir()));
 
              File zipFile = zipMetadata(snapshotId, snapshotDir);
             

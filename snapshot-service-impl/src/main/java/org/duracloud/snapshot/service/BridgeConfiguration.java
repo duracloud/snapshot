@@ -17,10 +17,10 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BridgeConfiguration {
+    public static final String DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY = "duracloud.vault.workdir";
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;
-    private File contentRootDir;
     /**
      * @return the duracloudUsername
      */
@@ -66,16 +66,45 @@ public class BridgeConfiguration {
     /**
      * @return the contentRootDir
      */
-    public File getContentRootDir() {
-        return contentRootDir;
+    public static File getWorkDir() {
+        String rootDir =  System.getProperty(DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY);
+        if(rootDir == null){
+            throw new RuntimeException("Unable to locate  workdir directory because the "
+                + DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY
+                + " system property was not set.  Please specify a java command line parameter (e.g. -D"
+                + DURACLOUD_VAULT_WORKDIR_SYSTEM_PROPERTY + "=/path/to/workdir)");
+        }
+        File file =  createDirectoryIfNotExists(rootDir);
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        return file;
+    }
+    
+    /**
+     * @param path
+     * @return
+     */
+    private static File createDirectoryIfNotExists(String path) {
+        File wdir = new File(path);
+        if(!wdir.exists()){
+            if (!wdir.mkdirs()) {
+                throw new RuntimeException("failed to initialize "
+                    + path + ": directory could not be created.");
+            }
+        }
+        
+        if(!wdir.canWrite()){
+            throw new RuntimeException(wdir.getAbsolutePath() + " must be writable.");
+        }
+
+        return wdir;
     }
 
     /**
-     * @param contentRootDir the contentRootDir to set
+     * @return
      */
-    public void setContentRootDir(File contentRootDir) {
-        this.contentRootDir = contentRootDir;
+    public static File getContentRootDir() {
+        return createDirectoryIfNotExists(new File(getWorkDir(), "content").getAbsolutePath());
     }
-    
-    
 }

@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BridgeConfiguration {
-    public static final String DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY = "duracloud.bridge.rootdir";
+    public static final String DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY = "duracloud.bridge.root.dir";
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;

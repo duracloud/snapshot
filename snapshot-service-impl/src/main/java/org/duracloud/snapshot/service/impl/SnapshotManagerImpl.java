@@ -414,6 +414,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Override
     @Transactional
     public Snapshot updateHistory(Snapshot snapshot, String history) {
+        snapshot = this.snapshotRepo.getOne(snapshot.getId());
         SnapshotHistory newHistory = new SnapshotHistory();
         newHistory.setHistory(history);
         newHistory.setSnapshot(snapshot);

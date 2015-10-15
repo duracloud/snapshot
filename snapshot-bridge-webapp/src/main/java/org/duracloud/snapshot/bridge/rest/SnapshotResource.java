@@ -54,6 +54,7 @@ import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
+import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
@@ -353,18 +354,22 @@ public class SnapshotResource {
                 }
                 history.append("]}");
                 snapshot = this.snapshotManager.updateHistory(snapshot, history.toString());
-
             }
 
             snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
 
-            
+
             log.info("successfully processed snapshot complete notification from DPN: {}",
                      snapshot);
 
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
                                                                     snapshot.getStatusText()))
+                           .build();
+        } catch (AlternateIdAlreadyExistsException ex) {
+            log.warn(ex.getMessage());
+            return Response.status(HttpStatus.SC_BAD_REQUEST)
+                           .entity(new ResponseDetails(ex.getMessage()))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);

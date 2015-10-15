@@ -45,6 +45,7 @@ import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
+import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
@@ -226,7 +227,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         assertNotNull(result);
 
     }
-    
 
     @Test
     public void testComplete() throws SnapshotException, JSONException {
@@ -252,9 +252,34 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshot.getStatusText()).andReturn("ok");
         replayAll();
         Response response = resource.complete(snapshotId, params);
+        assertEquals(200, response.getStatus());
         assertTrue(response.getEntity() instanceof CompleteSnapshotBridgeResult);
     }
-    
+
+    @Test
+    public void testCompleteDuplicateAltId() throws SnapshotException, JSONException {
+        String snapshotId = "snapshot-name";
+        List<String> snapshotAlternateIds = new ArrayList<String>();
+        String altId1 = "alternate-name-1";
+        String altId2 = "alternate-name-2";
+
+        snapshotAlternateIds.add(altId1);
+        snapshotAlternateIds.add(altId2);
+
+        CompleteSnapshotBridgeParameters params =
+            new CompleteSnapshotBridgeParameters(snapshotAlternateIds);
+
+        expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
+        expect(this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds))
+            .andThrow(new AlternateIdAlreadyExistsException("Duplicate ID"));
+
+        replayAll();
+
+        Response response = resource.complete(snapshotId, params);
+        assertEquals(400, response.getStatus());
+        assertNotNull(response.getEntity());
+    }
+
     @Test
     public void testCancel() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-name";

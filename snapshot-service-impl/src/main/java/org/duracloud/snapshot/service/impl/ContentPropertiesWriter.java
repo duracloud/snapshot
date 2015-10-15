@@ -7,11 +7,15 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.duracloud.chunk.manifest.ChunksManifest;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
+import org.duracloud.error.ContentStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -138,13 +142,34 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
                 @Override
                 public Object retry() throws Exception {
+                    try {
                     contentStore.setContentProperties(destinationSpaceId, props.getContentId(), props.getProperties());
-                    log.debug("wrote content properties ({}) " + "to space ({}) on store ({}/{}):",
+                    log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
                               props,
                               destinationSpaceId,
                               storeId,
                               storageProviderType);
                     return null;
+                    }catch(ContentStoreException ex){
+                        log.warn("failed to update content properties ({}) to space({}); on store({}/{}). Trying with chunk manifest extension.",
+                                 props,
+                                 destinationSpaceId,
+                                 storeId,
+                                 storageProviderType);
+
+                        //make sure the chunk manifest's properties are layed on top of the stitched file 
+                        //properties to ensure that mutable "system-ish" properties such as content type are not
+                        //overwritten.
+                        String manifestId = props.getContentId() + ChunksManifest.manifestSuffix;
+                        Map<String,String> properties = new HashMap<>(props.getProperties());
+                        Map<String, String> chunkManifestProperties =
+                            contentStore.getContentProperties(destinationSpaceId, manifestId);
+                        properties.putAll(chunkManifestProperties);
+                        contentStore.setContentProperties(destinationSpaceId,
+                                                          manifestId,
+                                                          properties);                        
+                        return null;
+                    }
                 }
             });
         }

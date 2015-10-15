@@ -11,10 +11,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import static org.easymock.EasyMock.*;
 
+import org.duracloud.chunk.manifest.ChunksManifest;
 import org.duracloud.client.ContentStore;
+import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
-import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.junit.Test;
 
@@ -36,11 +38,33 @@ public class ContentPropertiesWriterTest extends SnapshotTestBase{
         String destinationSpaceId = "space-id";
         String contentId = "content-id";
         Map<String,String> props = new HashMap<>();
-        EasyMock.expect(contentStore.getStoreId()).andReturn("store-id");
-        EasyMock.expect(contentStore.getStorageProviderType()).andReturn("store-type");
+        props.put("content-type", "stitched-file-value");
+        props.put("non-system-prop", "value");
 
-        contentStore.setContentProperties(EasyMock.eq(destinationSpaceId), EasyMock.eq(contentId), EasyMock.eq(props));
-        EasyMock.expectLastCall();
+        Map<String,String> manifestProps = new HashMap<>();
+        manifestProps.put("content-type", "original-manifest-value");
+
+        Map<String,String> combinedProps = new HashMap<>();
+        combinedProps.putAll(props);
+        combinedProps.putAll(manifestProps);
+        
+        
+        expect(contentStore.getStoreId()).andReturn("store-id");
+        expect(contentStore.getStorageProviderType()).andReturn("store-type");
+
+        contentStore.setContentProperties(eq(destinationSpaceId), eq(contentId), eq(props));
+        expectLastCall().andThrow(new ContentStoreException("test"));
+
+        
+        expect(contentStore.getContentProperties(eq(destinationSpaceId),
+                                          eq(contentId + ChunksManifest.manifestSuffix))).andReturn(manifestProps);
+
+        
+        contentStore.setContentProperties(eq(destinationSpaceId),
+                                          eq(contentId + ChunksManifest.manifestSuffix),
+                                          eq(combinedProps));
+        expectLastCall();
+        
         ContentProperties properties = new ContentProperties(contentId, props);
         List<ContentProperties> list = new ArrayList<>();
         list.add(properties);

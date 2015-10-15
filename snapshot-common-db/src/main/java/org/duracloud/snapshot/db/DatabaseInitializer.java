@@ -50,14 +50,6 @@ public class DatabaseInitializer implements ApplicationContextAware{
         dataSource.setUrl(databaseConfig.getUrl());
         dataSource.setUsername(databaseConfig.getUsername());
         dataSource.setPassword(databaseConfig.getPassword());
-        dataSource.setInitialSize(5);
-        dataSource.setMaxIdle(5);
-        dataSource.setMaxTotal(50);
-        dataSource.setMaxConnLifetimeMillis(14400);
-        dataSource.setTimeBetweenEvictionRunsMillis(60*1000*15);
-        dataSource.setTestOnBorrow(true);
-        dataSource.setValidationQuery("SELECT 1");
-        
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(databasePopulator(databaseConfig));
 

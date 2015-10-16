@@ -150,19 +150,20 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         JobParameters params = builder.buildIdentifyingJobParameters(entity);
         JobExecution jobExecution = this.jobRepository.getLastJobExecution(jobName, params);
 
-        BatchStatus status = jobExecution.getStatus();
 
-        if (!status.isRunning()) {
-            return;
-        } else {
-            log.debug("found job execution in running state for {} (job execution = {})", entity, jobExecution);
-            jobExecution.setStatus(BatchStatus.STOPPED);
-            jobExecution.setEndTime(new Date());
-            jobRepository.update(jobExecution);
-            log.info("updated job execution in running state to stopped: {} (job execution = {})",
-                     entity,
-                     jobExecution);
-        }
+        if (jobExecution != null) {
+            if(!jobExecution.getStatus().isRunning()){
+                return;
+            }else{
+                log.debug("found job execution in running state for {} (job execution = {})", entity, jobExecution);
+                jobExecution.setStatus(BatchStatus.STOPPED);
+                jobExecution.setEndTime(new Date());
+                jobRepository.update(jobExecution);
+                log.info("updated job execution in running state to stopped: {} (job execution = {})",
+                         entity,
+                         jobExecution);
+            }
+        } 
 
         try {
             JobExecution execution = jobLauncher.run(job, params);

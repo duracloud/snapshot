@@ -16,7 +16,6 @@ import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -114,7 +113,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
                                        jobRepository,
                                        builderManager,
                                        storeHelper);
-        manager.init(config);
+        manager.init(config, false);
     }
 
     @After
@@ -165,9 +164,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetSnapshotStatus()
-        throws SnapshotNotFoundException,
-            SnapshotException {
+    public void testGetSnapshotStatus() throws SnapshotException {
 
         EasyMock.expect(snapshotJobBuilder.buildIdentifyingJobParameters(snapshot))
                 .andReturn(new JobParameters());

@@ -99,7 +99,11 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
      */
     @Override
     public void init(SnapshotJobManagerConfig config) throws AlreadyInitializedException {
+        init(config, true);
+    }
 
+    protected void init(SnapshotJobManagerConfig config,
+                        boolean attemptRestart) throws AlreadyInitializedException {
         if (isInitialized()) {
             throw new AlreadyInitializedException("Already initialized!");
         }
@@ -108,16 +112,19 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
         log.info("initialized successfully.");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    restartIncompleteJobs();
-                } catch (SnapshotException e) {
-                    log.error("failed to restart all incomplete jobs:" + e.getMessage(), e);
+        if(attemptRestart) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        restartIncompleteJobs();
+                    } catch (SnapshotException e) {
+                        log.error(
+                            "failed to restart all incomplete jobs:" + e.getMessage(), e);
+                    }
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     /**
@@ -136,9 +143,6 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }
     }
 
-    /**
-     * @param snapshot
-     */
     private void resumeJob(String jobName, Object entity) throws SnapshotException {
 
         BatchJobBuilder builder = this.builderManager.getBuilder(entity);

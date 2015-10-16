@@ -105,7 +105,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
         DuracloudEndPointConfig source = createMock(DuracloudEndPointConfig.class);
-        expect(source.getHost()).andReturn("host");
+        expect(source.getHost()).andReturn("host.duracloud.org");
         expect(source.getStoreId()).andReturn("store-id");
         expect(source.getSpaceId()).andReturn("space-id");
         expect(snapshot.getSource()).andReturn(source);
@@ -129,6 +129,14 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
                           emailBody.contains(snapshotName));
         Assert.assertTrue("Expecting restore ID in email body",
                           emailBody.contains(restorationId));
+    }
+    
+    @Test
+    public void testExtractAccountId() {
+        replayAll();
+        Assert.assertEquals("host", manager.extractAccountId("host.duracloud.org"));
+        Assert.assertEquals("localhost", manager.extractAccountId("localhost"));
+
     }
 
     /**

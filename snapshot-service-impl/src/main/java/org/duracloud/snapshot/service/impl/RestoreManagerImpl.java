@@ -193,12 +193,24 @@ public class RestoreManagerImpl  implements RestoreManager{
         String restoreStartDate =
             DateUtil.convertToStringPlain(restoration.getStartDate().getTime());
         DuracloudEndPointConfig source = snapshot.getSource();
-        String restorationId =
-            source.getHost()
-                + "_" + source.getStoreId() + "_" + source.getSpaceId() + "_"
-                + restoreStartDate;
+        
+        String accountId = extractAccountId(source.getHost());
+        
+        String restorationId =  accountId + "_" + 
+                                source.getStoreId() + "_" + 
+                                source.getSpaceId() + "_" +
+                                restoreStartDate;
         restoration.setRestorationId(restorationId);
         return restoration;
+    }
+
+    /**
+     * @param host
+     * @return
+     */
+    protected String extractAccountId(String host) {
+        String accountId = host.split("[.]")[0];
+        return accountId;
     }
     
     /**

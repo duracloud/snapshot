@@ -5,13 +5,13 @@
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>snapshot-common-test</artifactId>
   <packaging>jar</packaging>
-  <version>1.3.0-SNAPSHOT</version>
+  <version>1.3.0</version>
   <name>Duracloud Snapshot Common Test</name>
 
   <parent>
     <groupId>org.duracloud.snapshot</groupId>
     <artifactId>snapshot-parent</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.3.0</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 

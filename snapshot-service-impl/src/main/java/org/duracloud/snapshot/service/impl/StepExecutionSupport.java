@@ -150,8 +150,9 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
     protected List<String> verifySpace(final SpaceManifestDpnManifestVerifier verifier){
         List<String> errors = new LinkedList<>();
         String spaceId = verifier.getSpaceId();
+        boolean verified = false;
         try {
-            boolean verified = new Retrier(4, 60000, 2).execute(new Retriable() {
+            verified = new Retrier(4, 60000, 2).execute(new Retriable() {
                 @Override
                 public Object retry() throws Exception {
                     boolean result = verifier.verify();
@@ -164,17 +165,6 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
                 }
             });
 
-            if (!verified) {
-                for (String error : verifier.getErrors()) {
-                    errors.add(error);
-                }
-
-                errors.add(MessageFormat.format("space manifest doesn't match the dpn manifest: step_execution_id={0} "
-                    + "job_execution_id={1}  spaceId={2}",
-                                              stepExecution.getId(),
-                                              stepExecution.getJobExecutionId(),
-                                              spaceId));
-            }
 
         } catch (Exception e) {
             String message =
@@ -185,9 +175,20 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
                                      spaceId,
                                      e.getMessage());
             log.error(message);
-            errors.add(message);
         }
-        
+
+        if (!verified) {
+            for (String error : verifier.getErrors()) {
+                errors.add(error);
+            }
+
+            errors.add(MessageFormat.format("space manifest doesn't match the dpn manifest: step_execution_id={0} "
+                + "job_execution_id={1}  spaceId={2}",
+                                          stepExecution.getId(),
+                                          stepExecution.getJobExecutionId(),
+                                          spaceId));
+        }
+
         return errors;
     }
     

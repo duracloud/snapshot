@@ -121,19 +121,21 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =
                 "DuraCloud content snapshot failed to complete";
+            
+            String errorDescription = jobExecution.getExitStatus().getExitDescription();
             String message =
                 "A DuraCloud content snapshot has failed to complete.\n" +
                 "\nsnapshot-id=" + snapshot.getName() +
                 "\nsnapshot-path=" + snapshotPath + 
-                "\nerror-description=" + jobExecution.getExitStatus().getExitDescription();
-
+                "\nerror-description=" + errorDescription;
+            
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
             changeSnapshotStatus(snapshot,
                                  SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD,
                                  "batch job did not complete: batch status = "
                                      + status);            
-            
+            log.error("transfer from duracloud failed: " + errorDescription);
         }
     }
 

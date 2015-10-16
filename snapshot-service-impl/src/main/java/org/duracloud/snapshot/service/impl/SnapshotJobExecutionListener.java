@@ -21,6 +21,7 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.JobParameters;
@@ -91,7 +92,6 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         log.debug("entering afterJob()...");
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
-
         String snapshotName = this.parameterMarshaller.unmarshal(jobParams);
 
         Snapshot snapshot = snapshotRepo.findByName(snapshotName);
@@ -124,8 +124,9 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
             String message =
                 "A DuraCloud content snapshot has failed to complete.\n" +
                 "\nsnapshot-id=" + snapshot.getName() +
-                "\nsnapshot-path=" + snapshotPath;
-                // TODO: Add details of failure in message
+                "\nsnapshot-path=" + snapshotPath + 
+                "\nerror-description=" + jobExecution.getExitStatus().getExitDescription();
+
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
             changeSnapshotStatus(snapshot,

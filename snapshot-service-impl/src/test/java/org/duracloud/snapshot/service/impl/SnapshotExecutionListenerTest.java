@@ -1,5 +1,5 @@
 /*
- * The contents of this file are subject to the license and copyright
+  * The contents of this file are subject to the license and copyright
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree and available online at
  *
@@ -36,6 +36,7 @@ import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobInstance;
 import org.springframework.batch.core.JobParameter;
@@ -179,6 +180,9 @@ public class SnapshotExecutionListenerTest extends SnapshotTestBase {
 
         snapshot.setStatus(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD);
         expectLastCall();
+        ExitStatus status = createMock(ExitStatus.class);
+        expect(status.getExitDescription()).andReturn("failure messages.");
+        expect(jobExecution.getExitStatus()).andReturn(status);
         replayAll();
 
         executionListener.afterJob(jobExecution);

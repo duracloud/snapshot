@@ -284,6 +284,8 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             for(String error : errors){
                 status = status.addExitDescription(error);
             }
+            log.error("space item writer failed due to the following error(s): " + 
+                       status.getExitDescription());
         }
         return status;
     }

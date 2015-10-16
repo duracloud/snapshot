@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `snapshot` (
   `user_email` varchar(255) NOT NULL,
   `total_size_in_bytes` bigint(20) DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -52,12 +52,12 @@ CREATE TABLE IF NOT EXISTS `restoration` (
   `status_text` longtext,
   `user_email` varchar(255) NOT NULL,
   `snapshot_id` bigint(20) NOT NULL,
-  `restoration_id` varchar(512) NOT NULL,
+  `restoration_id` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK_RESTORATION_ID` (`restoration_id`),
   KEY `FK_ejb7a5btov5hyhb0pyvo3yeb7` (`snapshot_id`),
   CONSTRAINT `FK_ejb7a5btov5hyhb0pyvo3yeb7` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -93,11 +93,10 @@ CREATE TABLE `snapshot_alternate_ids` (
 CREATE TABLE `snapshot_history` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime DEFAULT NULL,
-  `history` varchar(1024) DEFAULT NULL,
+  `history` longtext DEFAULT NULL,
   `history_date` datetime DEFAULT NULL,
   `snapshot_id` bigint(20) NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `UK_dhmi2bicby06kc40uedw71v49` (`snapshot_id`,`history_date`),
   CONSTRAINT `FK_ff91lsj23rrrs3nuovf3hofwl` FOREIGN KEY (`snapshot_id`) REFERENCES `snapshot` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 

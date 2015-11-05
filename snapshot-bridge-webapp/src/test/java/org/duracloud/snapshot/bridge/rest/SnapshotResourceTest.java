@@ -330,7 +330,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                 .andReturn(snapshotList);
         replayAll();
 
-        Response response = this.resource.list(sourceHost);
+        Response response = this.resource.list(sourceHost, null, null);
 
         GetSnapshotListBridgeResult result =
             (GetSnapshotListBridgeResult) response.getEntity();
@@ -346,7 +346,84 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         assertEquals(description, summary.getDescription());
         assertEquals(status, summary.getStatus());
     }
-    
+
+    @Test
+    public void testListSnapshotsNoParams() {
+        expect(snapshotRepo.findAll())
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(null, null, null);
+    }
+
+    @Test
+    public void testListSnapshotsHost() {
+        String host = "host";
+        expect(snapshotRepo.findBySourceHost(host))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(host, null, null);
+    }
+
+    @Test
+    public void testListSnapshotsHostStoreId() {
+        String host = "host";
+        String storeId = "store-id";
+        expect(snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(host, storeId, null);
+    }
+
+    @Test
+    public void testListSnapshotsHostStoreIdStatus() {
+        String host = "host";
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo
+                   .findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(host, storeId, status);
+    }
+
+    @Test
+    public void testListSnapshotStoreId() {
+        String storeId = "store-id";
+        expect(snapshotRepo.findBySourceStoreId(storeId))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(null, storeId, null);
+    }
+
+    @Test
+    public void testListSnapshotsStatus() {
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findByStatus(status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(null, null, status);
+    }
+
+    @Test
+    public void testListSnapshotsHostStatus() {
+        String host = "host";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findBySourceHostAndStatus(host, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(host, null, status);
+    }
+
+    @Test
+    public void testListSnapshotsStoreIdStatus() {
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findBySourceStoreIdAndStatus(storeId, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.listSnapshots(null, storeId, status);
+    }
+
     @Test
     public void testGetSnapshotContent(){
         String snapshotId = "snapshot-id";

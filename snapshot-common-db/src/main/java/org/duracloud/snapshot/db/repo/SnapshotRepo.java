@@ -22,34 +22,74 @@ import org.springframework.stereotype.Repository;
 public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
 
     /**
-     * 
-     * @param host
-     * @return
+     * @return all snapshots
+     */
+    public List<Snapshot> findAll();
+
+    /**
+     * @param host where snapshot originated
+     * @return all snapshots with the given host
      */
     public List<Snapshot> findBySourceHost(String host);
 
     /**
-     * @param snapshotId
-     * @return
+     * @param storeId storage provider ID
+     * @return all snapshots with the given store ID
      */
-    public Snapshot findByName(String snapshotId);
-    
-    /**
-     * 
-     * @param status
-     * @return
-     */
-    public List<Snapshot> findByStatus(SnapshotStatus status);
-    
+    public List<Snapshot> findBySourceStoreId(String storeId);
 
     /**
-     * @param alternateId
-     * @return
+     * @param host where snapshot originated
+     * @param storeId storage provider ID
+     * @return all snapshots with the given host and store ID
+     */
+    public List<Snapshot> findBySourceHostAndSourceStoreId(String host, String storeId);
+
+    /**
+     * @param status current snapshot status
+     * @return all snapshots with the given status
+     */
+    public List<Snapshot> findByStatus(SnapshotStatus status);
+
+    /**
+     * @param host where snapshot originated
+     * @param status current snapshot status
+     * @return all snapshots with the given host and status
+     */
+    public List<Snapshot> findBySourceHostAndStatus(String host, SnapshotStatus status);
+
+    /**
+     * @param storeId storage provider ID
+     * @param status current snapshot status
+     * @return all snapshots with the given store ID and status
+     */
+    public List<Snapshot> findBySourceStoreIdAndStatus(String storeId,
+                                                       SnapshotStatus status);
+
+    /**
+     * @param host where snapshot originated
+     * @param storeId storage provider ID
+     * @param status current snapshot status
+     * @return all snapshots with the given host, store ID, and status
+     */
+    public List<Snapshot> findBySourceHostAndSourceStoreIdAndStatus(String host,
+                                                                    String storeId,
+                                                                    SnapshotStatus status);
+
+    /**
+     * @param snapshotId ID of snapshot
+     * @return snapshot with the given ID
+     */
+    public Snapshot findByName(String snapshotId);
+
+    /**
+     * @param alternateId alternate snapshot ID (i.e. bag ID)
+     * @return snapshot with the given alternate ID
      */
     public Snapshot findBySnapshotAlternateIds(String alternateId);
 
     /**
-     * @param snapshotId
+     * @param snapshotId ID of snapshot
      */
     public void deleteByName(String snapshotId);
 }

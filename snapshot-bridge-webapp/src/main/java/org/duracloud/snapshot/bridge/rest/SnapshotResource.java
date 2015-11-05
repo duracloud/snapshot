@@ -111,11 +111,11 @@ public class SnapshotResource {
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response list(@QueryParam("host") String host) {
+    public Response list(@QueryParam("host") String host,
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
         try {
-
-            List<Snapshot> snapshots =
-                this.snapshotRepo.findBySourceHost(host);
+            List<Snapshot> snapshots = listSnapshots(host, storeId, status);
 
             List<SnapshotSummary> summaries = new ArrayList<>(snapshots.size());
             for (Snapshot snapshot : snapshots) {
@@ -133,6 +133,40 @@ public class SnapshotResource {
             return Response.serverError()
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();
+        }
+    }
+
+    /*
+     * Returns a list of snapshots. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected List<Snapshot> listSnapshots(String host,
+                                           String storeId,
+                                           SnapshotStatus status) {
+        if(null != host) {
+            if(null != storeId) {
+                if(null != status) { // Host & Store ID & Status
+                    return snapshotRepo
+                        .findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    return snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if(null != status) { // Host & Status
+                return snapshotRepo.findBySourceHostAndStatus(host, status);
+            } else { // Host
+                return snapshotRepo.findBySourceHost(host);
+            }
+        } else if(null != storeId) {
+            if(null != status) { // Store ID & Status
+                return snapshotRepo.findBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                return snapshotRepo.findBySourceStoreId(storeId);
+            }
+        } else if(null != status) { // Status
+            return snapshotRepo.findByStatus(status);
+        } else { // No filters
+            return snapshotRepo.findAll();
         }
     }
 

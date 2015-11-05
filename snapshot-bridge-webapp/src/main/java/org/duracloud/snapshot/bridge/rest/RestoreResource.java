@@ -28,6 +28,8 @@ import org.duracloud.snapshot.dto.bridge.CompleteRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetRestoreBridgeResult;
+import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeParameters;
+import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeResult;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
@@ -92,6 +94,32 @@ public class RestoreResource {
         }
     }
 
+    @Path("/request")
+    @PUT
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response requestRestoreSnapshot(RequestRestoreBridgeParameters  params) {
+        try {
+            DuracloudEndPointConfig destination = new DuracloudEndPointConfig();
+            destination.setHost(params.getHost());
+            destination.setPort(Integer.valueOf(params.getPort()));
+            destination.setStoreId(params.getStoreId());
+            this.restorationManager.requestRestoreSnapshot(params.getSnapshotId(),
+                                                        destination, params.getUserEmail());
+            
+            log.info("executed request restore snapshot:  params=" + params);
+
+            return Response.created(null)
+                           .entity(new RequestRestoreBridgeResult("Your request has been sent."))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+    
     @Path("{restorationId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)

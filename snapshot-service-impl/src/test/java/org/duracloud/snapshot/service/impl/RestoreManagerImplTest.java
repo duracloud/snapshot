@@ -86,6 +86,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
 
     private String userEmail = "user-email";
 
+    private String duracloudEmail = "duracloud-email";
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.common.test.SnapshotTestBase#setup()
      */
@@ -132,6 +133,42 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     }
     
     @Test
+    public void testRequestRestoreSnapshot() throws SnapshotException {
+        expect(snapshotRepo.findByName(snapshotName)).andReturn(snapshot);
+        String host = "host.duracloud.org";
+        int port = 100;
+        String storeId = "store-id";
+        
+        expect(destination.getHost()).andReturn(host);
+        expect(destination.getPort()).andReturn(port);
+        expect(destination.getStoreId()).andReturn(storeId);
+
+        Capture<String> emailBodyCapture = new Capture<>();
+        notificationManager.sendNotification(isA(NotificationType.class),
+                                             isA(String.class),
+                                             capture(emailBodyCapture),
+                                             isA(String.class));
+        expectLastCall();
+        
+        replayAll();
+        manager.requestRestoreSnapshot(snapshotName, destination, userEmail );
+        Assert.assertNotNull(restoration);
+
+        String emailBody = emailBodyCapture.getValue();
+        Assert.assertTrue("Expecting snapshot ID in email body",
+                          emailBody.contains(snapshotName));
+        Assert.assertTrue("Expecting host in email body",
+                          emailBody.contains(host));
+        Assert.assertTrue("Expecting port in email body",
+                          emailBody.contains(String.valueOf(port)));
+        Assert.assertTrue("Expecting storeId ID in email body",
+                          emailBody.contains(storeId));
+        Assert.assertTrue("Expecting user email  body",
+                          emailBody.contains(userEmail));
+
+    }
+    
+    @Test
     public void testExtractAccountId() {
         replayAll();
         Assert.assertEquals("host", manager.extractAccountId("host.duracloud.org"));
@@ -165,7 +202,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
             new RestoreManagerImpl();
         RestoreManagerConfig config = new RestoreManagerConfig();
         config.setDpnEmailAddresses(new String[] {"a"});
-        config.setDuracloudEmailAddresses(new String[]{"b"});
+        config.setDuracloudEmailAddresses(new String[]{duracloudEmail});
         config.setRestorationRootDir(System.getProperty("java.io.tmpdir")
             + File.separator + System.currentTimeMillis());
         manager.init(config, jobManager);

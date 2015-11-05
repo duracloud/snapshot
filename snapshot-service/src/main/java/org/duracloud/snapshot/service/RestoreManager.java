@@ -46,6 +46,19 @@ public interface RestoreManager {
             SnapshotException;
 
     /**
+     * Sends an email request to duracloud admin to restore a space.
+     * @param snapshotId
+     * @param destination The destination where the restore should occur.
+     * @param userEmail email to notify when restore starts and ends.
+     * @return
+     * @throws SnapshotNotFoundException
+     */
+    void requestRestoreSnapshot(String snapshotId,
+                                DuracloudEndPointConfig destination,
+                                String userEmail)
+        throws SnapshotException;
+    
+    /**
      * Called by the process responsible for performing the restoration from 
      * DPN to Bridge Storage upon completion of the transfer.
      * 

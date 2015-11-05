@@ -38,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -151,6 +152,37 @@ public class RestoreManagerImpl  implements RestoreManager{
                                              body,
                                              getAllEMailAddresses(this.config));
         return restoration;
+    }
+
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.RestoreManager#requestRestoreSnapshot(java.lang.String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig, java.lang.String)
+     */
+    @Override
+    public void requestRestoreSnapshot(String snapshotId, DuracloudEndPointConfig destination, String userEmail)
+        throws SnapshotException {
+
+        checkInitialized();
+
+        Snapshot snapshot = getSnapshot(snapshotId);
+
+        String host = destination.getHost();
+        String port = destination.getPort()+"";
+        String storeId = destination.getStoreId();
+        
+        String url =
+            "http"
+                + (port.endsWith("443") ? "s" : "") + "://" + host + ":" + port + "/duradmin/spaces/sm/" + storeId + "/"
+                + snapshotId + "?snapshot=true";
+        // send email to DPN
+        String subject = "Snapshot Restoration Request for Snapshot ID = " + snapshotId;
+        String format =
+            "Please initiate a snapshot restore via the duracloud interface ( {0} ).\n"
+                + "\nSnapshot ID: {1}\nHost:{2}\nPort: {3}\nStore ID: {4}\nRequestor email: {5}";
+        String body = MessageFormat.format(format, url, snapshotId, host,port,storeId,userEmail);
+        String[] duracloudEmailAddresses = this.config.getDuracloudEmailAddresses();
+        notificationManager.sendNotification(NotificationType.EMAIL, subject, body, duracloudEmailAddresses);
+
+        log.info("sent email to {}: message body = {}", duracloudEmailAddresses, body);
     }
 
     /**

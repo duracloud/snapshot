@@ -158,7 +158,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @see org.duracloud.snapshot.service.RestoreManager#requestRestoreSnapshot(java.lang.String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig, java.lang.String)
      */
     @Override
-    public void requestRestoreSnapshot(String snapshotId, DuracloudEndPointConfig destination, String userEmail)
+    public Snapshot requestRestoreSnapshot(String snapshotId, DuracloudEndPointConfig destination, String userEmail)
         throws SnapshotException {
 
         checkInitialized();
@@ -183,6 +183,8 @@ public class RestoreManagerImpl  implements RestoreManager{
         notificationManager.sendNotification(NotificationType.EMAIL, subject, body, duracloudEmailAddresses);
 
         log.info("sent email to {}: message body = {}", duracloudEmailAddresses, body);
+
+        return snapshot;
     }
 
     /**

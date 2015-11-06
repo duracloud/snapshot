@@ -22,8 +22,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.dto.bridge.CompleteRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeResult;
@@ -32,6 +34,7 @@ import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeResult;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManager;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +50,13 @@ import org.springframework.stereotype.Component;
 @Path("/restore")
 public class RestoreResource {
 
-    private static Logger log =
-        LoggerFactory.getLogger(RestoreResource.class);
+    private static Logger log = LoggerFactory.getLogger(RestoreResource.class);
+
+    public static final String RESTORE_ACTION_TITLE = "restore-action";
+    public static final String RESTORE_ACTION_REQUESTED = "RESTORE_REQUESTED";
+    public static final String RESTORE_ACTION_INITIATED = "RESTORE_INITIATED";
+    public static final String RESTORE_USER_TITLE = "initiating-user";
+    public static final String RESTORE_ID_TITLE = "restore-id";
 
     @Context
     HttpServletRequest request;
@@ -61,9 +69,13 @@ public class RestoreResource {
 
     private RestoreManager restorationManager;
 
+    private SnapshotManager snapshotManager;
+
     @Autowired
-    public RestoreResource(RestoreManager restorationManager) {
+    public RestoreResource(RestoreManager restorationManager,
+                           SnapshotManager snapshotManager) {
         this.restorationManager = restorationManager;
+        this.snapshotManager = snapshotManager;
     }
 
     @PUT
@@ -81,6 +93,13 @@ public class RestoreResource {
                                                         destination, params.getUserEmail());
             
             log.info("executed restore snapshot:  params=" + params + ", result = " + result);
+
+            // Add history event
+            String history =
+                "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_INITIATED+"'}," +
+                "{'"+RESTORE_ID_TITLE+"':'"+result.getRestorationId()+"'}," +
+                "{'"+RESTORE_USER_TITLE+"':'"+params.getUserEmail()+"'}]";
+            snapshotManager.updateHistory(result.getSnapshot(), history);
 
             return Response.created(null)
                            .entity(new CreateRestoreBridgeResult(result.getRestorationId(),
@@ -104,10 +123,18 @@ public class RestoreResource {
             destination.setHost(params.getHost());
             destination.setPort(Integer.valueOf(params.getPort()));
             destination.setStoreId(params.getStoreId());
-            this.restorationManager.requestRestoreSnapshot(params.getSnapshotId(),
-                                                        destination, params.getUserEmail());
+            Snapshot snapshot =
+                this.restorationManager.requestRestoreSnapshot(params.getSnapshotId(),
+                                                               destination,
+                                                               params.getUserEmail());
             
             log.info("executed request restore snapshot:  params=" + params);
+
+            // Add history event
+            String history =
+                "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_REQUESTED+"'}," +
+                 "{'"+RESTORE_USER_TITLE+"':'"+params.getUserEmail()+"'}]";
+            snapshotManager.updateHistory(snapshot, history);
 
             return Response.created(null)
                            .entity(new RequestRestoreBridgeResult("Your request has been sent."))
@@ -119,7 +146,7 @@ public class RestoreResource {
                            .build();
         }
     }
-    
+
     @Path("{restorationId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -204,9 +231,7 @@ public class RestoreResource {
     @Path("{restorationId}/complete")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response
-        restoreComplete(@PathParam("restorationId") String restorationId) {
-
+    public Response restoreComplete(@PathParam("restorationId") String restorationId) {
         try {
             Restoration restoration =
                 this.restorationManager.restoreCompleted(restorationId);

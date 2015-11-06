@@ -12,6 +12,7 @@ import org.duracloud.snapshot.SnapshotInProcessException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,10 +51,10 @@ public interface RestoreManager {
      * @param snapshotId
      * @param destination The destination where the restore should occur.
      * @param userEmail email to notify when restore starts and ends.
-     * @return
+     * @return snapshot to be restored
      * @throws SnapshotNotFoundException
      */
-    void requestRestoreSnapshot(String snapshotId,
+    Snapshot requestRestoreSnapshot(String snapshotId,
                                 DuracloudEndPointConfig destination,
                                 String userEmail)
         throws SnapshotException;

@@ -182,7 +182,7 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
                 errors.add(error);
             }
 
-            errors.add(MessageFormat.format("space manifest doesn't match the dpn manifest: step_execution_id={0} "
+            errors.add(MessageFormat.format("space manifest does not match the dpn manifest: step_execution_id={0} "
                 + "job_execution_id={1}  spaceId={2}",
                                           stepExecution.getId(),
                                           stepExecution.getJobExecutionId(),

@@ -51,4 +51,10 @@ public interface RestoreRepo extends JpaRepository<Restoration, Long> {
     
     @Query("select r from Restoration r where r.status not in ('WAITING_FOR_DPN','RESTORATION_COMPLETE','RESTORATION_EXPIRED','ERROR')")
     public List<Restoration> findRunning();
+    
+    /**
+     * Deletes the restore entity
+     * @param restoreId
+     */
+    public void deleteByRestorationId(String restoreId);
 }

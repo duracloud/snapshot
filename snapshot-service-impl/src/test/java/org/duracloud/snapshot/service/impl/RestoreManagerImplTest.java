@@ -221,12 +221,12 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         
         setupGetRestoreStatus();
         expect(restoration.getStatus()).andReturn(RestoreStatus.INITIALIZED);
+        expect(restoration.getRestorationId()).andReturn(restorationId);
 
         restoration.setStatusText(isA(String.class));
         expectLastCall();
         restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
         expectLastCall();
-        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
 
         replayAll();
         
@@ -297,6 +297,37 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         replayAll();
 
         manager.finalizeRestores();
+    }
+    
+    @Test
+    public void testCancel() throws Exception {
+        this.jobManager.cancelRestore(restorationId);
+        expectLastCall();
+        this.restoreRepo.deleteByRestorationId(restorationId);
+        expectLastCall();
+        replayAll();
+        this.manager.cancelRestore(restorationId);
+    }
+
+    
+    @Test
+    public void testRestart() throws Exception {
+        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration).times(2);
+        restoration.setEndDate(null);
+        restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
+        expectLastCall();
+        
+        expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN).times(2);
+        restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expectLastCall();
+        restoration.setStatusText(isA(String.class));
+        expectLastCall();
+
+        expect(restoration.getRestorationId()).andReturn(restorationId);
+        expect(this.jobManager.stopRestore(restorationId)).andReturn(restoration);
+        expect(this.jobManager.executeRestoration(restorationId)).andReturn(BatchStatus.STARTED);
+        replayAll();
+        this.manager.restartRestore(restorationId);
     }
 
 }

@@ -10,8 +10,10 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.manifeststitch.StitchedManifestGenerator;
 import org.duracloud.retrieval.util.StoreClientUtil;
+import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -96,7 +98,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                               destination.getStoreId());
 
             JobBuilderFactory jobBuilderFactory = new JobBuilderFactory(jobRepository);
-            JobBuilder jobBuilder = jobBuilderFactory.get(SnapshotServiceConstants.RESTORE_JOB_NAME);
+            JobBuilder jobBuilder = jobBuilderFactory.get(getJobName());
             SimpleJobBuilder simpleJobBuilder =
                 jobBuilder.start(buildVerifyDpnTransferUsingDpnManifestStep(restoreId, jobManagerConfig))
                           .next(buildVerifyDpnTransferUsingSnapshotRepoStep(restoreId, jobManagerConfig))
@@ -361,5 +363,13 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     @Override
     public JobParameters buildJobParameters(Restoration entity) {
         return buildIdentifyingJobParameters(entity);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.impl.BatchJobBuilder#getJobName()
+     */
+    @Override
+    public String getJobName() {
+        return SnapshotServiceConstants.RESTORE_JOB_NAME;
     }
 }

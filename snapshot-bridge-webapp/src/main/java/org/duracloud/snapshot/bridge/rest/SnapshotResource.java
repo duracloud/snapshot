@@ -221,7 +221,7 @@ public class SnapshotResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response restart(@PathParam("snapshotId") String snapshotId) {
-        log.debug("attempting restart of snapshot " + snapshotId);
+        log.info("attempting restart of snapshot " + snapshotId);
         
         try {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);

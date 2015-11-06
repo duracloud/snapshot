@@ -16,6 +16,8 @@ import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Version;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
  * @author Daniel Bernstein
  *         Date: Jul 21, 2014
@@ -65,5 +67,13 @@ public abstract class BaseEntity implements Identifiable {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+    
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return ToStringBuilder.reflectionToString(this);
     }
 }

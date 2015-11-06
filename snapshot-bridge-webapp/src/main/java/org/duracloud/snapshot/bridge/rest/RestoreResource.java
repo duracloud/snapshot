@@ -7,6 +7,9 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
+import java.text.MessageFormat;
+import java.util.Arrays;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -22,20 +25,25 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.httpclient.HttpStatus;
+import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.dto.bridge.CancelRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CompleteRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetRestoreBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeResult;
+import org.duracloud.snapshot.dto.bridge.RestartRestoreBridgeResult;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
@@ -87,6 +95,71 @@ public class RestoreResource {
                                                                  result.getStatus()))
                            .build();
         } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+    
+    @Path("{restoreId}/restart")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response restart(@PathParam("restoreId") String restoreId) {
+        log.info("attempting restart of restore " + restoreId);
+        
+        try {
+            Restoration restore = this.restorationManager.get(restoreId);
+            
+            log.debug("restore {} found.", restore);
+            RestoreStatus status = restore.getStatus();
+            
+            if(!status.equals(RestoreStatus.ERROR)){
+                String message= "Restore can only be restarted when it has reached " + 
+                                "a failure state. ( restore=" + restore + ")";
+                throw new SnapshotException(message,null);
+            }
+
+            restore = restorationManager.restartRestore(restore.getRestorationId());
+            RestoreStatus restoreStatus = restore.getStatus();
+            String message = MessageFormat.format("successfully restarted restore: {0}", restoreStatus);
+            log.info(message);
+            RestartRestoreBridgeResult result =
+                new RestartRestoreBridgeResult(message, restoreStatus);
+            return Response.accepted().entity(result).build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+
+    }
+    
+    @Path("{restoreId}/cancel")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cancel(@PathParam("restoreId") final String restoreId) throws SnapshotException{
+        log.debug("attempting cancellation of resotre " + restoreId);
+        try{
+
+            Restoration restore = this.restorationManager.get(restoreId);
+            log.debug("restore {} found.", restore);
+            RestoreStatus status = restore.getStatus();
+            if (Arrays.asList(new RestoreStatus[] { RestoreStatus.CLEANING_UP, RestoreStatus.RESTORATION_COMPLETE })
+                      .contains(status)) {
+                String message = "Restore cannot be cancelled in the cleaning up phase ( restoreId=" + restoreId + ")";
+                throw new RuntimeException(message);
+            }
+
+            restorationManager.cancelRestore(restoreId);
+            CancelRestoreBridgeResult result =
+                new CancelRestoreBridgeResult("Cancellation succeeded.  "+
+                                              "The restore process has been stopped and all related metadata has been deleted.",
+                                              RestoreStatus.CANCELLED);
+            return Response.ok().entity(result).build();
+
+        }catch(Exception ex){
             log.error(ex.getMessage(), ex);
             return Response.serverError()
                            .entity(new ResponseDetails(ex.getMessage()))

@@ -28,5 +28,6 @@ public interface BatchJobBuilder<T> {
     JobParameters buildJobParameters(T entity);
 
     JobParameters buildIdentifyingJobParameters(T entity);
-
+    
+    String getJobName();
 }

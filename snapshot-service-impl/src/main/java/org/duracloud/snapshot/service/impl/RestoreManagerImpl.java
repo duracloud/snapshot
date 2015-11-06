@@ -130,7 +130,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         Restoration restoration =
             createRestoration(snapshot, destination, userEmail);
 
-        transitionRestoreStatus(restoration,
+        validateAndSet(restoration,
                                 RestoreStatus.WAITING_FOR_DPN,
                                 "Restoration request issued");
 
@@ -292,8 +292,24 @@ public class RestoreManagerImpl  implements RestoreManager{
         
         Restoration restoration = getRestoration(restorationId);
         
-        RestoreStatus status = restoration.getStatus();
+        return _restoreCompleted(restoration);
         
+    }
+
+    /**
+     * @param restorationId
+     * @param restoration
+     * @return
+     * @throws InvalidStateTransitionException
+     * @throws RestorationNotFoundException
+     * @throws SnapshotException
+     */
+    private Restoration _restoreCompleted(Restoration restoration)
+        throws InvalidStateTransitionException,
+            RestorationNotFoundException,
+            SnapshotException {
+        RestoreStatus status = restoration.getStatus();
+        String restoreId = restoration.getRestorationId();
         if(status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)){
             log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
@@ -301,21 +317,20 @@ public class RestoreManagerImpl  implements RestoreManager{
             log.info("caller has indicated that restoration request {} is complete.",
                      restoration);
             Restoration updatedRestoration =
-                transitionRestoreStatus(restorationId,
-                                        RestoreStatus.DPN_TRANSFER_COMPLETE,
-                                        "Completed restore to bridge storage");
-            this.jobManager.executeRestoration(restorationId);
+                _transitionRestoreStatus(RestoreStatus.DPN_TRANSFER_COMPLETE,
+                                         "Completed restore to bridge storage",
+                                         restoration);
+            this.jobManager.executeRestoration(restoreId);
             
             return updatedRestoration;
         } else{
             String message =
                 "restore status type "
                     + status + " not recognized. (restorationId = "
-                    + restorationId + ")";
+                    + restoreId + ")";
             log.error(message);
             throw new SnapshotException(message,null);
         }
-        
     }
     
     private void checkInitialized() throws SnapshotException {
@@ -389,7 +404,19 @@ public class RestoreManagerImpl  implements RestoreManager{
         throws  InvalidStateTransitionException, RestorationNotFoundException {
         
         Restoration restoration = getRestoration(restorationId);
-        transitionRestoreStatus(restoration, status, message);
+        return _transitionRestoreStatus(status, message, restoration);
+    }
+
+    /**
+     * @param status
+     * @param message
+     * @param restoration
+     * @return
+     * @throws InvalidStateTransitionException
+     */
+    private Restoration _transitionRestoreStatus(RestoreStatus status, String message, Restoration restoration)
+        throws InvalidStateTransitionException {
+        validateAndSet(restoration, status, message);
         restoration = save(restoration);
         
         log.debug("transitioned restore status to {} for {}", status, restoration);
@@ -402,7 +429,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param message
      * @throws InvalidStateTransitionException
      */
-    private void transitionRestoreStatus(Restoration restoration, RestoreStatus status,
+    private void validateAndSet(Restoration restoration, RestoreStatus status,
                                          String message)
         throws InvalidStateTransitionException {
         RestorationStateTransitionValidator.validate(restoration.getStatus(), status);
@@ -438,7 +465,7 @@ public class RestoreManagerImpl  implements RestoreManager{
                         store.deleteSpace(spaceId);
 
                         // Update restore status
-                        transitionRestoreStatus(restoration,
+                        validateAndSet(restoration,
                                                 RestoreStatus.RESTORATION_EXPIRED,
                                                 "Restoration expired");
                         restoration =  save(restoration);
@@ -453,6 +480,29 @@ public class RestoreManagerImpl  implements RestoreManager{
                 }
             }
         }
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.RestoreManager#cancelRestore(java.lang.String)
+     */
+    @Override
+    @Transactional
+    public void cancelRestore(String restoreId) throws SnapshotException {
+        this.jobManager.cancelRestore(restoreId);
+        this.restoreRepo.deleteByRestorationId(restoreId);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.RestoreManager#restartRestore(java.lang.String)
+     */
+    @Override
+    @Transactional
+    public Restoration restartRestore(String restoreId) throws SnapshotException {
+        Restoration restoration = this.jobManager.stopRestore(restoreId);
+        restoration.setEndDate(null);
+        restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
+        restoration = restoreRepo.saveAndFlush(restoration);
+        return this._restoreCompleted(restoration);
     }
 
 }

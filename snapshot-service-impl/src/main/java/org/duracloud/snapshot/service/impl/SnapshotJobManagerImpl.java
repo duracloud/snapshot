@@ -56,6 +56,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -342,7 +343,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }).start();
     }
 
-    @Transactional
+    @Transactional(propagation=Propagation.NESTED)
     @Override
     public void stopRestore(String restoreId) throws SnapshotException {
         _stopRestore(restoreId);

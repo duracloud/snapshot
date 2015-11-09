@@ -343,7 +343,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }).start();
     }
 
-    @Transactional(propagation=Propagation.NESTED)
+    @Transactional
     @Override
     public void stopRestore(String restoreId) throws SnapshotException {
         _stopRestore(restoreId);

@@ -121,4 +121,10 @@ public interface RestoreManager {
      * @throws SnapshotException
      */
     public Restoration restartRestore(String restoreId) throws SnapshotException;
+
+    /**
+     * @param restoreId
+     * @throws SnapshotException
+     */
+     void stopRestore(String restoreId) throws SnapshotException;
 }

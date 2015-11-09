@@ -497,8 +497,16 @@ public class RestoreManagerImpl  implements RestoreManager{
      */
     @Override
     @Transactional
-    public Restoration restartRestore(String restoreId) throws SnapshotException {
+    public void stopRestore(String restoreId) throws SnapshotException {
         this.jobManager.stopRestore(restoreId);
+    }
+
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.RestoreManager#restartRestore(java.lang.String)
+     */
+    @Override
+    @Transactional
+    public Restoration restartRestore(String restoreId) throws SnapshotException {
         Restoration restoration = get(restoreId);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);

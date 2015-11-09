@@ -119,8 +119,8 @@ public class RestoreResource {
                                 "a failure state. ( restore=" + restore + ")";
                 throw new SnapshotException(message,null);
             }
-
-            restore = restorationManager.restartRestore(restore.getRestorationId());
+            restorationManager.stopRestore(restoreId);
+            restore = restorationManager.restartRestore(restoreId);
             RestoreStatus restoreStatus = restore.getStatus();
             String message = MessageFormat.format("successfully restarted restore: {0}", restoreStatus);
             log.info(message);

@@ -324,7 +324,6 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expectLastCall();
 
         expect(restoration.getRestorationId()).andReturn(restorationId);
-        this.jobManager.stopRestore(restorationId);
         expectLastCall();
         expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
         expect(this.jobManager.executeRestoration(restorationId)).andReturn(BatchStatus.STARTED);

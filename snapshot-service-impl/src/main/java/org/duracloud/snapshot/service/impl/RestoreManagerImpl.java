@@ -498,7 +498,8 @@ public class RestoreManagerImpl  implements RestoreManager{
     @Override
     @Transactional
     public Restoration restartRestore(String restoreId) throws SnapshotException {
-        Restoration restoration = this.jobManager.stopRestore(restoreId);
+        this.jobManager.stopRestore(restoreId);
+        Restoration restoration = get(restoreId);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
         restoration = restoreRepo.saveAndFlush(restoration);

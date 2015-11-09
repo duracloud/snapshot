@@ -344,8 +344,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     @Transactional
     @Override
-    public Restoration stopRestore(String restoreId) throws SnapshotException {
-        return _stopRestore(restoreId);
+    public void stopRestore(String restoreId) throws SnapshotException {
+        _stopRestore(restoreId);
     }
     
     @Transactional

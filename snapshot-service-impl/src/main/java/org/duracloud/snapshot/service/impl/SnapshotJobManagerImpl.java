@@ -346,13 +346,13 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     @Transactional
     @Override
     public Restoration stopRestore(String restoreId) throws SnapshotException {
-        return _stopRestore(restoreId);
+        return stopRestoreInternal(restoreId);
     }
     
     @Transactional
     public void cancelRestore(String restoreId) throws SnapshotException {
         checkInitialized();
-        final Restoration restore = _stopRestore(restoreId);
+        final Restoration restore = stopRestoreInternal(restoreId);
         String restoreDir = ContentDirUtils.getSourcePath(restoreId, this.config.getContentRootDir());
         deleteDirectory(restoreDir);
         final DuracloudEndPointConfig destination = restore.getDestination();
@@ -393,7 +393,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
      * @return
      * @throws RestorationNotFoundException
      */
-    private Restoration _stopRestore(String restoreId) throws SnapshotException {
+    private Restoration stopRestoreInternal(String restoreId) throws SnapshotException {
         final Restoration restore = getRestoration(restoreId);
         stop(restore);
         return restore;

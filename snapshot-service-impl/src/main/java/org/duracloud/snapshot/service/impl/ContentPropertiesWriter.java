@@ -68,7 +68,8 @@ public class ContentPropertiesWriter extends StepExecutionSupport
             }
 
             failExecution();
-
+            resetContextState();
+            
             log.error("content properties step finished with errors: step_execution_id={} "
                 + "job_execution_id={} store_id={} status=\"{}\"",
                       stepExecution.getId(),

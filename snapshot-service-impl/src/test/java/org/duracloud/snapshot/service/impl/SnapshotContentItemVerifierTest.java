@@ -218,6 +218,8 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         if(errorCount > 0){
             context.put(isA(String.class), eq(errors));
             expectLastCall().times(errorCount);
+            context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
+            expectLastCall();
         }
     }
     

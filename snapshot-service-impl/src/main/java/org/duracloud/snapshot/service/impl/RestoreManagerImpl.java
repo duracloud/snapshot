@@ -292,7 +292,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         
         Restoration restoration = getRestoration(restorationId);
         
-        return _restoreCompleted(restoration);
+        return restoreCompleted(restoration);
         
     }
 
@@ -304,12 +304,12 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @throws RestorationNotFoundException
      * @throws SnapshotException
      */
-    private Restoration _restoreCompleted(Restoration restoration)
+    private Restoration restoreCompleted(Restoration restoration)
         throws InvalidStateTransitionException,
             RestorationNotFoundException,
             SnapshotException {
         RestoreStatus status = restoration.getStatus();
-        String restoreId = restoration.getRestorationId();
+        final String restoreId = restoration.getRestorationId();
         if(status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)){
             log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
@@ -320,8 +320,20 @@ public class RestoreManagerImpl  implements RestoreManager{
                 _transitionRestoreStatus(RestoreStatus.DPN_TRANSFER_COMPLETE,
                                          "Completed restore to bridge storage",
                                          restoration);
-            this.jobManager.executeRestoration(restoreId);
-            
+
+            new Thread(new Runnable(){
+                /* (non-Javadoc)
+                 * @see java.lang.Runnable#run()
+                 */
+                @Override
+                public void run() {
+                    try {
+                        jobManager.executeRestoration(restoreId);                    
+                    }catch(Exception ex){
+                        log.error("failed to restart restore: " + restoreId +": message="+ ex.getMessage(), ex);
+                    }
+                }
+            }).start();
             return updatedRestoration;
         } else{
             String message =
@@ -501,8 +513,8 @@ public class RestoreManagerImpl  implements RestoreManager{
         Restoration restoration = this.jobManager.stopRestore(restoreId);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
-        restoration = restoreRepo.saveAndFlush(restoration);
-        return this._restoreCompleted(restoration);
+        restoration = restoreRepo.save(restoration);
+        return this.restoreCompleted(restoration);
     }
 
 }

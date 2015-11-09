@@ -212,7 +212,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreCompleted(java.lang.String)}.
      */
     @Test
-    public void testRestoreComplete() throws SnapshotException{
+    public void testRestoreComplete() throws Exception{
 
         expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
 
@@ -232,6 +232,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         
         restoration = manager.restoreCompleted(restorationId);
         Assert.assertNotNull(restoration);
+        Thread.sleep(1000);
 
     }
     /**
@@ -312,7 +313,8 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     
     @Test
     public void testRestart() throws Exception {
-        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration).times(2);
+        expect(restoreRepo.save(restoration)).andReturn(restoration);
+        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
         expectLastCall();
@@ -328,6 +330,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expect(this.jobManager.executeRestoration(restorationId)).andReturn(BatchStatus.STARTED);
         replayAll();
         this.manager.restartRestore(restorationId);
+        Thread.sleep(1000);
     }
 
 }

@@ -177,6 +177,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
                 
                 failExecution();
 
+                resetContextState();
 
             } else {
                 status = status.and(ExitStatus.COMPLETED);

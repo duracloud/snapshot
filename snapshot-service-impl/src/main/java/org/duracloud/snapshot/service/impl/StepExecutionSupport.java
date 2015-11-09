@@ -31,8 +31,8 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
 
     private Logger log = LoggerFactory.getLogger(StepExecutionSupport.class);
     private StepExecution stepExecution;
-    private static String ITEMS_READ_KEY = "lines.read";
-    private static final String ERRORS_KEY = "errors";
+    public static String ITEMS_READ_KEY = "lines.read";
+    public static final String ERRORS_KEY = "errors";
     private boolean test = false;
 
     protected ExecutionContext getExecutionContext() {
@@ -45,6 +45,23 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
             errors.add(error);
             getExecutionContext().put(ERRORS_KEY, errors);
         }
+    }
+
+    protected synchronized void clearErrors(){
+        synchronized(this.stepExecution){
+            List<String> errors = new LinkedList<>();
+            getExecutionContext().put(ERRORS_KEY, errors);
+        }
+    }
+    
+    /**
+     * 
+     */
+    protected void resetContextState() {
+        //items read state variable must be set back to zero to 
+        //ensure that the step will be run from top of the list on failure.
+        addToItemsRead(getItemsRead()*-1);
+        clearErrors();
     }
 
     /**

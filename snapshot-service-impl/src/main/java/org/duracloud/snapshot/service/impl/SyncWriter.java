@@ -107,6 +107,8 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
                 status.addExitDescription(error);
             }
             
+            resetContextState();
+            
             return status;
         }
     }

@@ -93,6 +93,6 @@ public interface SnapshotJobManager  {
      * @return
      * @throws SnapshotException
      */
-    public void stopRestore(String restoreId) throws SnapshotException;
+    public Restoration stopRestore(String restoreId) throws SnapshotException;
 
 }

@@ -11,6 +11,8 @@ import java.io.File;
 import java.text.MessageFormat;
 import java.util.Date;
 
+import javax.transaction.Transactional;
+
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.retry.Retriable;
@@ -56,8 +58,6 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
@@ -345,8 +345,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     @Transactional
     @Override
-    public void stopRestore(String restoreId) throws SnapshotException {
-        _stopRestore(restoreId);
+    public Restoration stopRestore(String restoreId) throws SnapshotException {
+        return _stopRestore(restoreId);
     }
     
     @Transactional

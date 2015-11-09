@@ -510,7 +510,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         Restoration restoration = get(restoreId);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
-        restoration = restoreRepo.saveAndFlush(restoration);
+        restoration = restoreRepo.save(restoration);
         return this._restoreCompleted(restoration);
     }
 

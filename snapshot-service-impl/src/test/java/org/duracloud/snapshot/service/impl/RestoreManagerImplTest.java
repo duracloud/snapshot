@@ -312,7 +312,8 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     
     @Test
     public void testRestart() throws Exception {
-        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration).times(2);
+        expect(restoreRepo.save(restoration)).andReturn(restoration).times(1);
+        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration).times(1);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
         expectLastCall();

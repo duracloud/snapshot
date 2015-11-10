@@ -10,12 +10,14 @@ package org.duracloud.snapshot.service.impl;
 import static org.easymock.EasyMock.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.duracloud.client.ContentStore;
 import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
+import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -97,6 +99,9 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     private SnapshotJobBuilder snapshotJobBuilder;
 
     @Mock
+    private RestoreJobBuilder restoreJobBuilder;
+
+    @Mock
     private BatchJobBuilderManager builderManager;
 
     @Mock
@@ -147,6 +152,31 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
     }
 
+    @Test
+    public void testExecuteRestore() throws Exception {
+        setupRestoreBuilderManager();
+        EasyMock.expect(restoreJobBuilder.buildJob(restoration, config))
+                .andReturn(job);
+
+        EasyMock.expect(restoreJobBuilder.buildJobParameters(restoration))
+                .andReturn(new JobParameters());
+
+        EasyMock.expect(jobLauncher.run(EasyMock.isA(Job.class),
+                                        EasyMock.isA(JobParameters.class)))
+                .andReturn(jobExecution);
+
+        EasyMock.expect(jobExecution.getStatus())
+                .andReturn(BatchStatus.COMPLETED);
+
+        String restorationId = "restoration-id";
+        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
+
+
+        replayAll();
+
+        manager.executeRestoration(restorationId);
+
+    }
     /**
      * 
      */
@@ -155,12 +185,14 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
                 .andReturn(snapshot);
     }
 
-    /**
-     * 
-     */
     private void setupBuilderManager() {
         EasyMock.expect(builderManager.getBuilder(EasyMock.isA(Snapshot.class)))
                 .andReturn(snapshotJobBuilder).atLeastOnce();
+    }
+
+    private void setupRestoreBuilderManager() {
+        EasyMock.expect(builderManager.getBuilder(EasyMock.isA(Restoration.class)))
+                .andReturn(restoreJobBuilder).atLeastOnce();
     }
 
     @Test
@@ -168,6 +200,8 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
         EasyMock.expect(snapshotJobBuilder.buildIdentifyingJobParameters(snapshot))
                 .andReturn(new JobParameters());
+        EasyMock.expect(snapshotJobBuilder.getJobName())
+        .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
         
         setupBuilderManager();
 
@@ -189,6 +223,8 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         setupBuilderManager();
         EasyMock.expect(snapshotJobBuilder.buildIdentifyingJobParameters(snapshot))
         .andReturn(new JobParameters());
+        EasyMock.expect(snapshotJobBuilder.getJobName())
+        .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
 
         Job job = createMock(Job.class);
         EasyMock.expect(snapshotJobBuilder.buildJob(snapshot, config))
@@ -196,24 +232,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         
 
         expect(this.snapshotRepo.findByName(isA(String.class))).andReturn(snapshot).atLeastOnce();
-        expect(this.jobRepository.getLastJobExecution(isA(String.class),
-                                                      isA(JobParameters.class))).andReturn(jobExecution);
-
-        File rootDir = getTempDir();
-        
-        FileUtils.forceDeleteOnExit(rootDir);
-
-        expect(config.getContentRootDir()).andReturn(rootDir);
-        expect(config.getDuracloudUsername()).andReturn("username");
-        expect(config.getDuracloudPassword()).andReturn("password");
-
-        expect(jobExecution.getStatus()).andReturn(BatchStatus.STARTED);
-        expect(jobExecution.getStepExecutions()).andReturn(new ArrayList<StepExecution>());
-        jobExecution.setStatus(BatchStatus.STOPPING);
-        expectLastCall();
-        
-        jobRepository.update(jobExecution);
-        expectLastCall();
+        setupStop();
 
         String spaceId = "space-id";
         ContentStore contentStore = createMock(ContentStore.class);
@@ -233,5 +252,61 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         this.manager.cancelSnapshot(snapshotName);
         
         Thread.sleep(1000);
+    }
+    
+    @Test
+    public void testCancelRestore() throws Exception {
+        setupRestoreBuilderManager();
+        EasyMock.expect(restoreJobBuilder.buildIdentifyingJobParameters(restoration)).andReturn(new JobParameters());
+        EasyMock.expect(restoreJobBuilder.getJobName()).andReturn(SnapshotServiceConstants.RESTORE_JOB_NAME);
+
+        Job job = createMock(Job.class);
+        EasyMock.expect(restoreJobBuilder.buildJob(restoration, config)).andReturn(job);
+
+        expect(this.restoreRepo.findByRestorationId(isA(String.class))).andReturn(restoration).atLeastOnce();
+
+        setupStop();
+
+        String spaceId = "space-id";
+        ContentStore contentStore = createMock(ContentStore.class);
+        DuracloudEndPointConfig destination = createMock(DuracloudEndPointConfig.class);
+        expect(restoration.getDestination()).andReturn(destination);
+        expect(destination.getSpaceId()).andReturn(spaceId);
+        expect(this.storeHelper.create(isA(DuracloudEndPointConfig.class),
+                                       isA(String.class),
+                                       isA(String.class))).andReturn(contentStore);
+        contentStore.deleteSpace(spaceId);
+        expectLastCall();
+
+        replayAll();
+
+        this.manager.cancelRestore("restoration-id");
+
+        Thread.sleep(1000);
+    }
+
+
+       
+    /**
+     * @throws IOException
+     */
+    private void setupStop() throws IOException {
+        expect(this.jobRepository.getLastJobExecution(isA(String.class),
+                                                      isA(JobParameters.class))).andReturn(jobExecution);
+
+        File rootDir = getTempDir();
+        FileUtils.forceDeleteOnExit(rootDir);
+
+        expect(config.getContentRootDir()).andReturn(rootDir);
+        expect(config.getDuracloudUsername()).andReturn("username");
+        expect(config.getDuracloudPassword()).andReturn("password");
+
+        expect(jobExecution.getStatus()).andReturn(BatchStatus.STARTED);
+        expect(jobExecution.getStepExecutions()).andReturn(new ArrayList<StepExecution>());
+        jobExecution.setStatus(BatchStatus.STOPPING);
+        expectLastCall();
+        
+        jobRepository.update(jobExecution);
+        expectLastCall();
     }
 }

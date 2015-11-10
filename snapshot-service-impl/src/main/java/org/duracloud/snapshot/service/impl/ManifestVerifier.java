@@ -37,7 +37,6 @@ public class ManifestVerifier extends StepExecutionSupport implements ItemWriter
     private Logger log = LoggerFactory.getLogger(ManifestVerifier.class);
     private String restorationId;
     private File contentDir;
-    private ChecksumUtil checksumUtil = new ChecksumUtil(Algorithm.MD5);
     private RestoreManager restoreManager;
     /**
      * @param restorationId
@@ -134,7 +133,8 @@ public class ManifestVerifier extends StepExecutionSupport implements ItemWriter
             for(String error:errors){
                 status = status.addExitDescription(error);
             }
-
+            
+            resetContextState();
             stepExecution.upgradeStatus(BatchStatus.FAILED);
             stepExecution.setTerminateOnly();
             log.error("manifest verification finished: step_execution_id={} " +
@@ -157,6 +157,8 @@ public class ManifestVerifier extends StepExecutionSupport implements ItemWriter
         
         return status;
     }
+
+ 
 
     /*
      * (non-Javadoc)
@@ -181,14 +183,18 @@ public class ManifestVerifier extends StepExecutionSupport implements ItemWriter
                     log.error(message);
                    addError(message);
                 } else {
+                    ChecksumUtil checksumUtil = new ChecksumUtil(Algorithm.MD5);
+
                     String fileChecksum = checksumUtil.generateChecksum(file);
                     if (!checksum.equals(fileChecksum)) {
                         String message =
-                            MessageFormat.format("content id's ({0}) manifest " +
-                                                 "checksum ({1}) does not match " +
-                                                 "file's checksum",
+                            MessageFormat.format("content id ({0}) manifest " +
+                                                 "checksum ({1})  does not match " +
+                                                 "file ({2}) checksum ({3})",
                                                  contentId,
-                                                 file.getAbsolutePath());
+                                                 checksum,
+                                                 file.getAbsolutePath(),
+                                                 fileChecksum);
                         log.error(message);
                         addError(message);
                     } else {

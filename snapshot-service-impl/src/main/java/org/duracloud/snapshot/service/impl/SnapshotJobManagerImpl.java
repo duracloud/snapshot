@@ -19,8 +19,10 @@ import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
 import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
+import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
+import org.duracloud.snapshot.db.model.BaseEntity;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -56,8 +58,6 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.core.step.tasklet.TaskletStep;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.amazonaws.services.elasticache.model.SnapshotNotFoundException;
 
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
@@ -302,26 +302,9 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     public void cancelSnapshot(String snapshotId) throws SnapshotException {
         checkInitialized();
         final Snapshot snapshot = getSnapshot(snapshotId);
-        JobExecution execution = getJobExecution(snapshotId);
-        Job job = this.builderManager.getBuilder(snapshot).buildJob(snapshot, this.config);
-        try {
-            stop(execution, job);
-        } catch (NoSuchJobExecutionException e1) {
-            log.warn("job execution not found: " + e1.getMessage());
-        } catch (JobExecutionNotRunningException e1) {
-            log.warn("job execution not running: " + e1.getMessage());
-        }
-        
+        stop(snapshot);
         String snapshotDir = ContentDirUtils.getDestinationPath(snapshotId, this.config.getContentRootDir());
-
-        log.info("deleting snapshot dir: {}", snapshotDir);
-        File dir = new File(snapshotDir);
-        if (!dir.exists()) {
-            log.info("nothing to delete: {} does not exist.", snapshotDir);
-        } else {
-            boolean success = FileUtils.deleteQuietly(dir);
-            log.info("deleted snapshot dir {}: success={}", snapshotDir, success);
-        }
+        deleteDirectory(snapshotDir);
 
         new Thread(new Runnable(){
             @Override
@@ -360,6 +343,97 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }).start();
     }
 
+    @Transactional
+    @Override
+    public Restoration stopRestore(String restoreId) throws SnapshotException {
+        return stopRestoreInternal(restoreId);
+    }
+    
+    @Transactional
+    public void cancelRestore(String restoreId) throws SnapshotException {
+        checkInitialized();
+        final Restoration restore = stopRestoreInternal(restoreId);
+        String restoreDir = ContentDirUtils.getSourcePath(restoreId, this.config.getContentRootDir());
+        deleteDirectory(restoreDir);
+        final DuracloudEndPointConfig destination = restore.getDestination();
+        
+        new Thread(new Runnable(){
+            @Override
+            public void run() {
+                final String spaceId = destination.getSpaceId();
+                @SuppressWarnings("unused")
+                final ContentStore contentStore =
+                    storeClientHelper.create(destination,
+                                                  config.getDuracloudUsername(),
+                                                  config.getDuracloudPassword());
+                try {
+                    String result = new Retrier().execute(new Retriable(){
+                        @Override
+                        public Object retry() throws Exception {
+                            contentStore.deleteSpace(spaceId);
+                            return null;
+                        }
+                    });
+                    
+                    log.info("restore cancellation is complete: {}", result);
+
+                }catch(Exception ex){
+                    log.error("failed to delete restore space {} as part of cleanup:  {}",
+                              spaceId,
+                              ex.getMessage(),
+                              ex);
+                }
+                
+            }
+        }).start();
+    }
+
+    /**
+     * @param restoreId
+     * @return
+     * @throws RestorationNotFoundException
+     */
+    private Restoration stopRestoreInternal(String restoreId) throws SnapshotException {
+        final Restoration restore = getRestoration(restoreId);
+        stop(restore);
+        return restore;
+    }
+
+    /**
+     * @param entity
+     * @throws SnapshotException
+     */
+    private void stop(final BaseEntity entity) throws SnapshotException {
+        JobExecution execution = getJobExecution(entity);
+        if(execution == null){
+            log.info("no job executions associated with {}", entity);
+            return;
+        }
+        Job job = this.builderManager.getBuilder(entity)
+                                     .buildJob(entity, this.config);
+        try {
+            stop(execution, job);
+        } catch (NoSuchJobExecutionException e1) {
+            log.warn("job execution not found: " + e1.getMessage());
+        } catch (JobExecutionNotRunningException e1) {
+            log.warn("job execution not running: " + e1.getMessage());
+        }
+    }
+  /**
+     * @param path
+     */
+    private void deleteDirectory(String path) {
+        log.info("deleting restore dir: {}", path);
+        File dir = new File(path);
+        if (!dir.exists()) {
+            log.info("nothing to delete: {} does not exist.", path);
+        } else {
+            boolean success = FileUtils.deleteQuietly(dir);
+            log.info("deleted dir {}: success={}", path, success);
+        }
+    }
+
+ 
     /**
      * 
      */
@@ -380,7 +454,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     public BatchStatus getStatus(String snapshotId) throws SnapshotNotFoundException, SnapshotException {
 
         checkInitialized();
-        JobExecution ex = getJobExecution(snapshotId);
+        JobExecution ex = getJobExecution(this.snapshotRepo.findByName(snapshotId));
         if (ex == null) {
             return BatchStatus.UNKNOWN;
         } else {
@@ -392,11 +466,11 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
      * @param snapshotId
      * @return
      */
-    private JobExecution getJobExecution(String snapshotId) {
-        Snapshot snapshot = getSnapshot(snapshotId);
-        BatchJobBuilder builder = this.builderManager.getBuilder(snapshot);
-        JobParameters params = builder.buildIdentifyingJobParameters(snapshot);
-        JobExecution ex = this.jobRepository.getLastJobExecution(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, params);
+    private JobExecution getJobExecution(BaseEntity entity) {
+        BatchJobBuilder builder = this.builderManager.getBuilder(entity);
+        JobParameters params = builder.buildIdentifyingJobParameters(entity);
+        String jobName = builder.getJobName();
+        JobExecution ex = this.jobRepository.getLastJobExecution(jobName, params);
         return ex;
     }
     

@@ -9,6 +9,7 @@ package org.duracloud.snapshot.service;
 
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.db.model.Restoration;
 import org.springframework.batch.core.BatchStatus;
 
 
@@ -75,4 +76,23 @@ public interface SnapshotJobManager  {
      * @throws SnapshotException
      */
     public void cancelSnapshot(String snapshotId) throws SnapshotException;
+
+    /**
+     * Stops the restore process and removes source content and destination space.
+     * Cancels a restore
+     * @param restoreId
+     * @throws SnapshotException
+     */
+    public void cancelRestore(String restoreId) throws SnapshotException;
+
+
+    /**
+     * Stops the restore process but leaves underlying file system and destination space
+     * intact.
+     * @param restoreId
+     * @return
+     * @throws SnapshotException
+     */
+    public Restoration stopRestore(String restoreId) throws SnapshotException;
+
 }

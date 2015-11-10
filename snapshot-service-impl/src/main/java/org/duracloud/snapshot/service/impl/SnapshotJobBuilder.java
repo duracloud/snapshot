@@ -158,7 +158,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             JobBuilderFactory jobBuilderFactory =
                 new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder =
-                jobBuilderFactory.get(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
+                jobBuilderFactory.get(getJobName());
             SimpleJobBuilder simpleJobBuilder = jobBuilder.start(step);
             simpleJobBuilder.listener(jobListener);
 
@@ -220,5 +220,13 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
      */
     private Path getPath(File contentDir, String filename) {
         return ContentDirUtils.getPath(contentDir, filename);
+    }
+    
+    /* (non-Javadoc)
+     * @see org.duracloud.snapshot.service.impl.BatchJobBuilder#getJobName()
+     */
+    @Override
+    public String getJobName() {
+        return SnapshotServiceConstants.SNAPSHOT_JOB_NAME;
     }
 }

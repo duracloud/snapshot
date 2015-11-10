@@ -14,7 +14,6 @@ import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.dto.RestoreStatus;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Daniel Bernstein
@@ -108,4 +107,18 @@ public interface RestoreManager {
      * Look for restorations which have expired, and perform final cleanup actions
      */
     public void finalizeRestores();
+    
+    /**
+     * Cancels a restore.
+     * @param restoreId
+     * @throws SnapshotException 
+     */
+    public void cancelRestore(String restoreId) throws SnapshotException;
+    
+    /**
+     * Restarts a restore.  Assumes that the DPN transfer was successful.
+     * @param restoreId
+     * @throws SnapshotException
+     */
+    public Restoration restartRestore(String restoreId) throws SnapshotException;
 }

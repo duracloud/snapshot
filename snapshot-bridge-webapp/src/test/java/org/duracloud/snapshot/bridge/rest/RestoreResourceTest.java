@@ -13,7 +13,6 @@ import java.util.Date;
 import javax.ws.rs.core.Response;
 
 import org.codehaus.jettison.json.JSONException;
-import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.bridge.rest.RestoreResource;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
@@ -27,6 +26,7 @@ import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
+import static org.easymock.EasyMock.*;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
@@ -138,28 +138,37 @@ public class RestoreResourceTest extends SnapshotTestBase {
         assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
 
+
+  @Test
+  public void testRestorationComplete() throws SnapshotException {
+      String restorationId = "restoration-id";
+      expect(restoration.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+      expect(restoration.getStatusText()).andReturn(isA(String.class));
+
+      expect(manager.restoreCompleted(restorationId))
+              .andReturn(restoration);
+      replayAll();
+      resource.restoreComplete(restorationId);
+  }
+
     @Test
-    public void testSnapshotRestorationComplete() throws SnapshotException {
+    public void testCancelSnapshot() throws SnapshotException {
         String restorationId = "restoration-id";
-        Date expirationDate = new Date();
-
-        EasyMock.expect(manager.restoreCompleted(restorationId))
-                .andReturn(restoration);
-
-        EasyMock.expect(restoration.getStatus())
-                .andReturn(RestoreStatus.RESTORATION_COMPLETE);
-        EasyMock.expect(restoration.getStatusText())
-                .andReturn("Status text");
-
+        Restoration restore = createMock(Restoration.class);
+        expect(restore.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN);
+        expect(manager.get(restorationId)).andReturn(restore);
+        manager.cancelRestore(restorationId);
+        expectLastCall();
         replayAll();
-        resource.restoreComplete(restorationId);
+        resource.cancel(restorationId);
+        
     }
 
     @Test
     public void testGetRestore() throws SnapshotException, JSONException {
         String restorationId = "restoration-id";
         Restoration restoration = setupRestoration();
-        EasyMock.expect(manager.get(restorationId)).andReturn(restoration);
+        expect(manager.get(restorationId)).andReturn(restoration);
         replayAll();
         Response response = resource.get(restorationId);
         Assert.assertNotNull(response);
@@ -170,7 +179,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     public void testGetRestoreBySnapshot() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-id";
         Restoration restoration = setupRestoration();
-        EasyMock.expect(manager.getBySnapshotId(snapshotId)).andReturn(restoration);
+        expect(manager.getBySnapshotId(snapshotId)).andReturn(restoration);
         replayAll();
         Response response = resource.getBySnapshot(snapshotId);
         Assert.assertNotNull(response);
@@ -182,21 +191,21 @@ public class RestoreResourceTest extends SnapshotTestBase {
      */
     private Restoration setupRestoration() {
         Restoration r = createMock(Restoration.class);
-        EasyMock.expect(r.getRestorationId()).andReturn("restore-id");
-        EasyMock.expect(r.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expect(r.getRestorationId()).andReturn("restore-id");
+        expect(r.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
         Snapshot snapshot = createMock(Snapshot.class);
-        EasyMock.expect(r.getSnapshot()).andReturn(snapshot);
-        EasyMock.expect(snapshot.getName()).andReturn("snapshot-id");
-        EasyMock.expect(r.getStartDate()).andReturn(new Date());
-        EasyMock.expect(r.getEndDate()).andReturn(new Date());
-        EasyMock.expect(r.getExpirationDate()).andReturn(new Date());
-        EasyMock.expect(r.getStatusText()).andReturn("status text");
+        expect(r.getSnapshot()).andReturn(snapshot);
+        expect(snapshot.getName()).andReturn("snapshot-id");
+        expect(r.getStartDate()).andReturn(new Date());
+        expect(r.getEndDate()).andReturn(new Date());
+        expect(r.getExpirationDate()).andReturn(new Date());
+        expect(r.getStatusText()).andReturn("status text");
         DuracloudEndPointConfig dest = createMock(DuracloudEndPointConfig.class);
-        EasyMock.expect(r.getDestination()).andReturn(dest);
-        EasyMock.expect(dest.getHost()).andReturn("host");
-        EasyMock.expect(dest.getPort()).andReturn(443);
-        EasyMock.expect(dest.getStoreId()).andReturn("store-id");
-        EasyMock.expect(dest.getSpaceId()).andReturn("space-id");
+        expect(r.getDestination()).andReturn(dest);
+        expect(dest.getHost()).andReturn("host");
+        expect(dest.getPort()).andReturn(443);
+        expect(dest.getStoreId()).andReturn("store-id");
+        expect(dest.getSpaceId()).andReturn("space-id");
         
         return r;
     }

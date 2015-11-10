@@ -19,7 +19,6 @@ import org.duracloud.client.ContentStore;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.SnapshotInProcessException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -34,7 +33,6 @@ import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
@@ -212,7 +210,7 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
      * Test method for {@link org.duracloud.snapshot.service.impl.RestoreManagerImpl#restoreCompleted(java.lang.String)}.
      */
     @Test
-    public void testRestoreComplete() throws SnapshotException{
+    public void testRestoreComplete() throws Exception{
 
         expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
 
@@ -221,17 +219,18 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         
         setupGetRestoreStatus();
         expect(restoration.getStatus()).andReturn(RestoreStatus.INITIALIZED);
+        expect(restoration.getRestorationId()).andReturn(restorationId);
 
         restoration.setStatusText(isA(String.class));
         expectLastCall();
         restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
         expectLastCall();
-        expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
 
         replayAll();
         
         restoration = manager.restoreCompleted(restorationId);
         Assert.assertNotNull(restoration);
+        Thread.sleep(1000);
 
     }
     /**
@@ -297,6 +296,39 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         replayAll();
 
         manager.finalizeRestores();
+    }
+    
+    @Test
+    public void testCancel() throws Exception {
+        this.jobManager.cancelRestore(restorationId);
+        expectLastCall();
+        this.restoreRepo.deleteByRestorationId(restorationId);
+        expectLastCall();
+        replayAll();
+        this.manager.cancelRestore(restorationId);
+    }
+
+    
+    @Test
+    public void testRestart() throws Exception {
+        expect(restoreRepo.save(restoration)).andReturn(restoration);
+        expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
+        restoration.setEndDate(null);
+        restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
+        expectLastCall();
+        
+        expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN).times(2);
+        restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expectLastCall();
+        restoration.setStatusText(isA(String.class));
+        expectLastCall();
+
+        expect(restoration.getRestorationId()).andReturn(restorationId);
+        expect(this.jobManager.stopRestore(restorationId)).andReturn(restoration);
+        expect(this.jobManager.executeRestoration(restorationId)).andReturn(BatchStatus.STARTED);
+        replayAll();
+        this.manager.restartRestore(restorationId);
+        Thread.sleep(1000);
     }
 
 }

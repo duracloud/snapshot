@@ -53,8 +53,6 @@ public class ManifestVerifierTest extends EasyMockSupport {
     @Mock
     private RestoreManager restoreManager;
 
-    private String snapshotName = "snapshot-name";
-
     private File manifestFile;
 
     private File restoreDir;
@@ -180,11 +178,13 @@ public class ManifestVerifierTest extends EasyMockSupport {
         List<String> errors = new LinkedList<>();
         expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
         expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
-        
+
         if(errorCount > 0){
             context.put(isA(String.class), eq(errors));
             expectLastCall().times(errorCount);
-        }
+            context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
+            expectLastCall();
+         }
     }
 
     /**

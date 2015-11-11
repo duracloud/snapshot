@@ -22,8 +22,8 @@ import org.springframework.batch.core.JobParameters;
 public class RestoreJobParameterMarshaller {
 
     /**
-     * @param restoration
-     * @return
+     * @param restoration 
+     * @return a map of job parameters to uniquely identify restoration job
      */
     public static Map<String, JobParameter> marshal(Restoration restoration) {
         Map<String, JobParameter> map = new HashMap<>();

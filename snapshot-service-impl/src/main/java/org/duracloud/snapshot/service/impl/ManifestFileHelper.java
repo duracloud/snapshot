@@ -63,8 +63,8 @@ public class ManifestFileHelper {
     }
     
     /**
-     * @param manifestFile
-     * @return
+     * @param manifestFile a manifest file
+     * @return a set based on the combined content id and checksum.
      */
     public static WriteOnlyStringSet loadManifestSetFromFile(File manifestFile) throws Exception{
         int count = 0;
@@ -102,11 +102,6 @@ public class ManifestFileHelper {
 
     }
     
-    /**
-     * @param contentId
-     * @param checksum
-     * @return
-     */
     public static String formatManifestSetString(String contentId, String checksum) {
         return new StringBuilder().append(contentId)
                                   .append(":")

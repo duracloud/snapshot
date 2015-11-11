@@ -22,10 +22,6 @@ public class PropertiesSerializer {
         new TypeReference<HashMap<String, String>>() {
         };
 
-    /**
-     * @param props
-     * @return
-     */
     public static String serialize(Map<String, String> props) {
         try {
             return mapper.writeValueAsString(props);

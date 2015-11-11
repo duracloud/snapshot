@@ -28,7 +28,7 @@ public class DpnManifestReader extends StepExecutionSupport implements ItemReade
     private BufferedReader reader;
 
     /**
-     * @param md5Manifest
+     * @param manifestFile an md5 manifest file.
      */
      public DpnManifestReader(File manifestFile) {
          this.manifestFile = manifestFile;

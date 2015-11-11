@@ -54,9 +54,6 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
         }
     }
     
-    /**
-     * 
-     */
     protected void resetContextState() {
         //items read state variable must be set back to zero to 
         //ensure that the step will be run from top of the list on failure.
@@ -65,7 +62,7 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
     }
 
     /**
-     * @return
+     * @return a list of errors from the execution context or empty list if there are no errors
      */
     protected List<String> getErrors() {
         List<String> errors = (List<String>) getExecutionContext().get(ERRORS_KEY);
@@ -84,7 +81,8 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
     }
     
     /**
-     * @param it
+     * Skips the iterator ahead to the items read value stored in the execution context
+     * @param it any iterator
      */
     protected void skipLinesAlreadyRead(Iterator it) {
         long linesRead = getItemsRead();
@@ -150,10 +148,6 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
 
     }
 
-    /**
-     * @param key
-     * @return
-     */
     protected long getLongValue(String key) {
         synchronized(this.stepExecution){
            return getExecutionContext().getLong(key,0l);
@@ -161,9 +155,6 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
 
     }
 
-    /**
-     * @param stepExecution
-     */
     protected List<String> verifySpace(final SpaceManifestDpnManifestVerifier verifier){
         List<String> errors = new LinkedList<>();
         String spaceId = verifier.getSpaceId();

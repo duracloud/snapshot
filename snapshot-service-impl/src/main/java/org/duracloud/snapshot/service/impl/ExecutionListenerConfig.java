@@ -80,7 +80,7 @@ public class ExecutionListenerConfig {
     }
     
     /**
-     * @return
+     * @return the content root directory
      */
     public File getContentRoot() {
         return contentRoot;

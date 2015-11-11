@@ -81,10 +81,6 @@ public class BridgeConfiguration {
         return file;
     }
     
-    /**
-     * @param path
-     * @return
-     */
     private static File createDirectoryIfNotExists(String path) {
         File wdir = new File(path);
         if(!wdir.exists()){
@@ -102,14 +98,14 @@ public class BridgeConfiguration {
     }
 
     /**
-     * @return
+     * @return a file representing the content root directory
      */
     public static File getContentRootDir() {
         return createDirectoryIfNotExists(new File(getBridgeRootDir(), "content").getAbsolutePath());
     }
     
     /**
-     * @return
+     * @return a file representing the bridge work dir 
      */
     public static File getBridgeWorkDir() {
         return createDirectoryIfNotExists(new File(getBridgeRootDir(), "work").getAbsolutePath());

@@ -238,19 +238,11 @@ public class RestoreManagerImpl  implements RestoreManager{
         return restoration;
     }
 
-    /**
-     * @param host
-     * @return
-     */
     protected String extractAccountId(String host) {
         String accountId = host.split("[.]")[0];
         return accountId;
     }
     
-    /**
-     * @param config
-     * @return
-     */
     private String[] getAllEMailAddresses(RestoreManagerConfig config) {
         List<String> allAddresses = new ArrayList<String>();
         allAddresses.addAll(Arrays.asList(config.getDuracloudEmailAddresses()));
@@ -259,8 +251,9 @@ public class RestoreManagerImpl  implements RestoreManager{
     }
 
     /**
-     * @param restorationId
-     * @return
+     * @param restorationId of the restore object
+     * @return the restoration 
+     * @throws RestorationNotFoundException if the restoration is not found
      */
 
     public Restoration getRestoration(String restorationId)
@@ -273,10 +266,6 @@ public class RestoreManagerImpl  implements RestoreManager{
         return restoration;
     }
 
-    /**
-     * @param restorationId
-     * @return
-     */
     private File getRestoreDir(String restorationId) {
         File restoreDir = new File(getRestorationContentDir(restorationId));
         return restoreDir;
@@ -298,14 +287,6 @@ public class RestoreManagerImpl  implements RestoreManager{
         
     }
 
-    /**
-     * @param restorationId
-     * @param restoration
-     * @return
-     * @throws InvalidStateTransitionException
-     * @throws RestorationNotFoundException
-     * @throws SnapshotException
-     */
     private Restoration restoreCompleted(Restoration restoration)
         throws InvalidStateTransitionException,
             RestorationNotFoundException,

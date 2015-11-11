@@ -150,6 +150,11 @@
       <artifactId>spring-core</artifactId>
     </dependency>
  
+    <dependency>
+      <groupId>javax.interceptor</groupId>
+      <artifactId>javax.interceptor-api</artifactId>
+    </dependency>
+
     <!-- Spring jdbc, for database -->
     <dependency>
       <groupId>org.springframework</groupId>

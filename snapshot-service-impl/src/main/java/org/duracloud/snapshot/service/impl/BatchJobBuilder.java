@@ -21,7 +21,7 @@ public interface BatchJobBuilder<T> {
      * Creates a job for the specified entity;
      * @param entity
      * @param config
-     * @return
+     * @return a job object. 
      */
     Job buildJob(T entity, SnapshotJobManagerConfig config) throws SnapshotException;
     

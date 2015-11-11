@@ -1,1 +1,1 @@
-alter table snapshot add column `dpn_member_uuid` varchar(128) NOT NULL;
+alter table snapshot add column `member_id` varchar(128) DEFAULT NULL;

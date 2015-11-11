@@ -425,6 +425,12 @@
         <artifactId>common</artifactId>
         <version>${duracloud.db.version}</version>
       </dependency>
+    
+      <dependency>
+        <groupId>org.duracloud</groupId>
+        <artifactId>snapshotdata</artifactId>
+        <version>${duracloud.version}</version>
+      </dependency>
 
       <!-- Spring Batch dependencies -->
       <dependency>

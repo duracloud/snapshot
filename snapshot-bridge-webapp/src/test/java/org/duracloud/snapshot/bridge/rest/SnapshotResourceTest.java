@@ -150,6 +150,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                    System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
+        String dpnMemberUUID = "uuid";
 
         expect(jobManager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
@@ -171,7 +172,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                                                                             storeId,
                                                                                             spaceId,
                                                                                             description,
-                                                                                            email))
+                                                                                            email,
+                                                                                            dpnMemberUUID))
                                                  .getEntity();
 
         assertNotNull(result);

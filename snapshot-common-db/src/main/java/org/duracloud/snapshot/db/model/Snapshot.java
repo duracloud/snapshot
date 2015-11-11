@@ -53,6 +53,8 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     private String statusText;
     private String userEmail;
     private Long totalSizeInBytes = 0l;
+    @Column(name="dpn_member_uuid", nullable=false, length = 128)
+    private String dpnMemberUUID = null;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
           name="snapshot_alternate_ids",
@@ -235,6 +237,20 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
      */
     public void setTotalSizeInBytes(Long totalSizeInBytes) {
         this.totalSizeInBytes = totalSizeInBytes;
+    }
+    
+    /**
+     * @return the dpnMemberUUID
+     */
+    public String getDpnMemberUUID() {
+        return dpnMemberUUID;
+    }
+    
+    /**
+     * @param dpnMemberUUID the dpnMemberUUID to set
+     */
+    public void setDpnMemberUUID(String dpnMemberUUID) {
+        this.dpnMemberUUID = dpnMemberUUID;
     }
     
     /* (non-Javadoc)

@@ -52,7 +52,6 @@
     <dependency>
       <groupId>org.duracloud</groupId>
       <artifactId>snapshotdata</artifactId>
-      <version>${duracloud.version}</version>
     </dependency>
     
   </dependencies>

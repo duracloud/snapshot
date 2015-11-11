@@ -323,6 +323,7 @@ public class SnapshotResource {
             snapshot.setDescription(params.getDescription());
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
             snapshot.setUserEmail(params.getUserEmail());
+            snapshot.setDpnMemberUUID(params.getDpnMemberUUID());
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
 
             this.jobManager.executeSnapshot(snapshotId);

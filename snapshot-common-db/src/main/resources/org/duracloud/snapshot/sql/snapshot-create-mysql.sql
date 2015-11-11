@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `snapshot` (
   `status` varchar(255) NOT NULL,
   `status_text` longtext,
   `user_email` varchar(255) NOT NULL,
+  `dpn_member_uuid` varchar(128) NOT NULL,
   `total_size_in_bytes` bigint(20) DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;

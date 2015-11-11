@@ -28,6 +28,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
@@ -37,6 +38,8 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
 
 /**
  * @author Erik Paulsson
@@ -59,6 +62,9 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private BridgeConfiguration bridgeConfig;
+
+    @Autowired
+    private SnapshotManager snapshotManager;
     
     private ExecutionListenerConfig config;
 
@@ -140,6 +146,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                     "DuraCloud snapshot " + snapshotId + " has been restored!";
                 String message =
                     "A DuraCloud snapshot restore has completed successfully:\n\n";
+                String formattedExpDate =
+                    DateUtil.convertToStringShort(expirationDate.getTime());
 
                 message += "Snapshot Id: " + snapshotId + "\n";
                 message += "Restore Id: " + restoreId + "\n";
@@ -147,11 +155,17 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 message += "Destination StoreId: " + destination.getStoreId() + "\n";
                 message += "Destination SpaceId: " + destination.getSpaceId() + "\n";
                 message += "\nThe restored content WILL EXPIRE IN " + daysToExpire +
-                           " days, on " +
-                           DateUtil.convertToStringShort(expirationDate.getTime()) +
+                           " days, on " + formattedExpDate +
                            ". At that time, the contents of the space '" +
                            destination.getSpaceId() +
                            "' will be removed, and the space will be deleted." + "\n";
+
+                // Add history event
+                String history =
+                    "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_COMPLETED+"'}," +
+                    "{'"+RESTORE_ID_TITLE+"':'"+restoreId+"'}," +
+                    "{'"+RESTORE_EXPIRES_TITLE+"':'"+formattedExpDate+"'}]";
+                snapshotManager.updateHistory(snapshot, history);
 
                 log.info("deleting restoration path " + restorationPath);
 

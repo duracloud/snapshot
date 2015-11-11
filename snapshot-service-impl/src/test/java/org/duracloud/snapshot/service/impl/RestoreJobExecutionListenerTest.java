@@ -18,6 +18,7 @@ import java.util.Map;
 import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -26,6 +27,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -70,6 +72,9 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock 
     private Restoration restoration;
+
+    @Mock
+    private SnapshotManager snapshotManager;
     
     @TestSubject
     private  RestoreJobExecutionListener executionListener = new  RestoreJobExecutionListener();
@@ -139,6 +144,11 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         EasyMock.expect(bridgeConfig.getDuracloudPassword())
                 .andReturn(dcPassword);
 
+        Capture<String> historyCapture = new Capture<>();
+        EasyMock.expect(snapshotManager.updateHistory(EasyMock.eq(snapshot),
+                                                      EasyMock.capture(historyCapture)))
+                .andReturn(snapshot);
+
         replayAll();
 
         executionListener.afterJob(jobExecution);
@@ -147,6 +157,16 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         assertTrue(message.contains(String.valueOf(restorationId)));
         assertTrue(message.contains("EXPIRE"));
         assertTrue(message.contains(String.valueOf(daysToExpire)));
+
+
+        Date expDate = executionListener.getExpirationDate(new Date(), daysToExpire);
+        String formattedExpDate = DateUtil.convertToStringShort(expDate.getTime());
+        String history = historyCapture.getValue();
+        String expectedHistory =
+            "[{'restore-action':'RESTORE_COMPLETED'}," +
+            "{'restore-id':'"+restorationId+"'}," +
+            "{'expiration-date':'"+formattedExpDate+"'}]";
+        assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
 
     private void setupCommon() {

@@ -23,4 +23,13 @@ public class SnapshotServiceConstants {
     public static final String MANIFEST_MD5_TXT_FILE_NAME = 
         "manifest-md5.txt";
 
+    // Restore history values
+    public static final String RESTORE_ACTION_TITLE = "restore-action";
+    public static final String RESTORE_ACTION_REQUESTED = "RESTORE_REQUESTED";
+    public static final String RESTORE_ACTION_INITIATED = "RESTORE_INITIATED";
+    public static final String RESTORE_ACTION_COMPLETED = "RESTORE_COMPLETED";
+    public static final String RESTORE_ACTION_EXPIRED = "RESTORE_EXPIRED";
+    public static final String RESTORE_USER_TITLE = "initiating-user";
+    public static final String RESTORE_ID_TITLE = "restore-id";
+    public static final String RESTORE_EXPIRES_TITLE = "expiration-date";
 }

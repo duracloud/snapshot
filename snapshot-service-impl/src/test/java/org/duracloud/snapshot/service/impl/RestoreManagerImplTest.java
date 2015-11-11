@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.service.impl;
 
 import static org.easymock.EasyMock.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -77,6 +79,9 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
 
     @Mock
     private ContentStore contentStore;
+
+    @Mock
+    private SnapshotManager snapshotManager;
 
     private String snapshotName = "snapshot-name";
 
@@ -289,13 +294,26 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expectLastCall();
         restoration.setStatusText(isA(String.class));
         expectLastCall();
-        expect(restoration.getRestorationId()).andReturn(restorationId);
+        expect(restoration.getRestorationId()).andReturn(restorationId).times(2);
 
         expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
+
+        expect(restoration.getSnapshot()).andReturn(snapshot);
+
+        Capture<String> historyCapture = new Capture<>();
+        expect(snapshotManager.updateHistory(EasyMock.eq(snapshot),
+                                             EasyMock.capture(historyCapture)))
+            .andReturn(snapshot);
 
         replayAll();
 
         manager.finalizeRestores();
+
+        String history = historyCapture.getValue();
+        String expectedHistory =
+            "[{'restore-action':'RESTORE_EXPIRED'}," +
+            "{'restore-id':'"+restorationId+"'}]";
+        assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
     
     @Test

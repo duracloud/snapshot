@@ -30,6 +30,7 @@ import org.duracloud.snapshot.service.RestorationStateTransitionValidator;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
 
 /**
  * @author Daniel Bernstein
@@ -70,6 +73,9 @@ public class RestoreManagerImpl  implements RestoreManager{
 
     @Autowired
     private BridgeConfiguration bridgeConfig;
+
+    @Autowired
+    private SnapshotManager snapshotManager;
 
     public RestoreManagerImpl() {}    
     
@@ -467,6 +473,12 @@ public class RestoreManagerImpl  implements RestoreManager{
                         log.info("Transition of restore " +
                                  restoration.getRestorationId() +
                                  " to expired state completed successfully");
+
+                        // Add history event
+                        String history =
+                            "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_EXPIRED+"'}," +
+                            "{'"+RESTORE_ID_TITLE+"':'"+restoration.getRestorationId()+"'}]";
+                        snapshotManager.updateHistory(restoration.getSnapshot(), history);
                     }
                 } catch (Exception e) {
                     log.error("Failed to transition restore " +

@@ -321,12 +321,17 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         String snapshotName = "snapshot-name";
         String description = "description";
+        String storeId = "store-id";
+        String spaceId = "space-id";
         SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
         List<Snapshot> snapshotList = new LinkedList<>();
         expect(snapshot.getDescription()).andReturn(description);
         expect(snapshot.getName()).andReturn(snapshotName);
         expect(snapshot.getStatus()).andReturn(status);
-
+        DuracloudEndPointConfig source = createMock(DuracloudEndPointConfig.class);
+        expect(source.getStoreId()).andReturn(storeId);
+        expect(source.getSpaceId()).andReturn(spaceId);
+        expect(snapshot.getSource()).andReturn(source);
         snapshotList.add(snapshot);
         expect(this.snapshotRepo.findBySourceHost(sourceHost))
                 .andReturn(snapshotList);
@@ -347,6 +352,9 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         assertEquals(snapshotName, summary.getSnapshotId());
         assertEquals(description, summary.getDescription());
         assertEquals(status, summary.getStatus());
+        assertEquals(storeId, summary.getSourceStoreId());
+        assertEquals(spaceId, summary.getSourceSpaceId());
+
     }
 
     @Test
@@ -479,6 +487,13 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     public void testUpdateHistory() {
         String snapshotId = "snapshot-id";
         String history = "this is some history";
+        String storeId = "store-id";
+        String spaceId = "space-id";
+        DuracloudEndPointConfig source = createMock(DuracloudEndPointConfig.class);
+        expect(source.getStoreId()).andReturn(storeId);
+        expect(source.getSpaceId()).andReturn(spaceId);
+        expect(snapshot.getSource()).andReturn(source);
+
         // object to send as JSON request
         UpdateSnapshotHistoryBridgeParameters params =
             new UpdateSnapshotHistoryBridgeParameters(false, history);

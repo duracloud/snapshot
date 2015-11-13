@@ -119,9 +119,7 @@ public class SnapshotResource {
 
             List<SnapshotSummary> summaries = new ArrayList<>(snapshots.size());
             for (Snapshot snapshot : snapshots) {
-                summaries.add(new SnapshotSummary(snapshot.getName(),
-                                                  snapshot.getStatus(),
-                                                  snapshot.getDescription()));
+                summaries.add(createSnapshotSummary(snapshot));
             }
             
             log.debug("returning {}", snapshots);
@@ -134,6 +132,20 @@ public class SnapshotResource {
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();
         }
+    }
+
+    /**
+     * @param snapshot
+     * @return
+     */
+    private SnapshotSummary createSnapshotSummary(Snapshot snapshot) {
+        DuracloudEndPointConfig source = snapshot.getSource();
+        SnapshotSummary summary = new SnapshotSummary(snapshot.getName(),
+                                                      snapshot.getStatus(),
+                                                      snapshot.getDescription(),
+                                                      source.getStoreId(),
+                                                      source.getSpaceId());
+        return summary;
     }
 
     /*
@@ -588,10 +600,7 @@ public class SnapshotResource {
                     log.info("did not process empty or null snapshot " +
                              "history update from DPN: {}", snapshot);
                 }
-                SnapshotSummary snapSummary =
-                    new SnapshotSummary(snapshot.getName(),
-                                        snapshot.getStatus(),
-                                        snapshot.getDescription());
+                SnapshotSummary snapSummary = createSnapshotSummary(snapshot);
                 List<SnapshotHistory> snapMeta = snapshot.getSnapshotHistory();
                 String history = // retrieve latest history update
                     (( snapMeta != null && snapMeta.size() > 0) ?

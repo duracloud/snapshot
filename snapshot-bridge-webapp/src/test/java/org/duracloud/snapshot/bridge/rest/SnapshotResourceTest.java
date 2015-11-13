@@ -126,6 +126,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshot.getDescription()).andReturn("description");
         expect(snapshot.getSnapshotDate()).andReturn(new Date());
         expect(snapshot.getName()).andReturn("snapshotId");
+        expect(snapshot.getMemberId()).andReturn("memberId");
+
         expect(snapshot.getTotalSizeInBytes()).andReturn(1000l);
         
         replayAll();

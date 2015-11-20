@@ -10,10 +10,8 @@ package org.duracloud.snapshot.service.impl;
 import java.io.File;
 
 import org.duracloud.client.ContentStore;
-import org.duracloud.common.constant.Constants;
 import org.duracloud.manifeststitch.StitchedManifestGenerator;
 import org.duracloud.retrieval.util.StoreClientUtil;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -38,6 +36,7 @@ import org.springframework.batch.core.job.builder.SimpleJobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -58,10 +57,12 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
     private SnapshotContentItemRepo snapshotContentItemRepo;
 
     @Autowired
-    public RestoreJobBuilder(
-        RestoreJobExecutionListener jobListener, JobRepository jobRepository,
-        PlatformTransactionManager transactionManager, TaskExecutor taskExecutor, RestoreManager restoreManager,
-        SnapshotContentItemRepo snapshotContentItemRepo) {
+    public RestoreJobBuilder(   RestoreJobExecutionListener jobListener, 
+                                JobRepository jobRepository,
+                                PlatformTransactionManager transactionManager, 
+                                @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor, 
+                                RestoreManager restoreManager,
+                                SnapshotContentItemRepo snapshotContentItemRepo) {
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;

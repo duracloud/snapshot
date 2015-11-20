@@ -12,7 +12,16 @@
   <bean id="emailNotifier" 
         class="org.duracloud.common.notification.EmailNotifier"/>
 
-  <bean id="taskExecutor" class="org.springframework.core.task.SimpleAsyncTaskExecutor"/>
+  <bean id="jobTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+    <property name="maxPoolSize" value="30"/>
+    <property name="queueCapacity" value="1000"/>
+  </bean>
+
+  <bean id="itemTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
+    <property name="maxPoolSize" value="50"/>
+    <property name="queueCapacity" value="100000"/>
+    <property name="keepAliveSeconds" value="10"/>
+  </bean>
   
   <!-- stored job-metadata in database -->
   <bean id="jobRepository"  lazy-init="default"
@@ -26,7 +35,7 @@
   <bean id="jobLauncher"  lazy-init="default"
         class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
     <property name="jobRepository" ref="jobRepository" />
-    <property name="taskExecutor" ref="taskExecutor"/>
+    <property name="taskExecutor" ref="jobTaskExecutor"/>
   </bean>
 
 </beans>

@@ -12,6 +12,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.duracloud.common.retry.ExceptionHandler;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
 import org.slf4j.Logger;
@@ -170,6 +171,11 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
                         throw new Exception(message);
                     }
                     return result;
+                }
+            }, new ExceptionHandler() {
+                @Override
+                public void handle(Exception ex) {
+                    log.warn("failed to verify: " + ex.getMessage());
                 }
             });
 

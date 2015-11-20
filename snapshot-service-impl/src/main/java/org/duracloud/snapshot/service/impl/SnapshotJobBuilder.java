@@ -44,6 +44,7 @@ import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -70,7 +71,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
     public SnapshotJobBuilder(SnapshotJobExecutionListener jobListener, 
                               JobRepository jobRepository,
                               PlatformTransactionManager transactionManager, 
-                              TaskExecutor taskExecutor,
+                              @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor,
                               SnapshotManager snapshotManager,
                               StoreClientHelper storeClientHelper) {
 

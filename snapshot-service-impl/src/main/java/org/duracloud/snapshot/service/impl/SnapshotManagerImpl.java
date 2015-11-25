@@ -84,14 +84,10 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Autowired 
     private StoreClientHelper storeClientHelper;
     
-    private ChecksumUtil checksumUtil;
-
     @Autowired
     private BridgeConfiguration bridgeConfig;
 
-    public SnapshotManagerImpl() {
-        this.checksumUtil = new ChecksumUtil(Algorithm.MD5);
-    }
+    public SnapshotManagerImpl() {}
 
     /**
      * @param snapshotContentItemRepo the snapshotContentItemRepo to set
@@ -141,7 +137,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                Map<String, String> props)
         throws SnapshotException {
         
-        String contentIdHash = getIdChecksum(contentId);
+        String contentIdHash = createChecksumGenerator().generateChecksum(contentId);
         try{
             
             if(this.snapshotContentItemRepo.findBySnapshotAndContentIdHash(snapshot, contentIdHash) != null){
@@ -175,11 +171,6 @@ public class SnapshotManagerImpl implements SnapshotManager {
         return this.snapshotRepo.saveAndFlush(snapshot);
     }
 
-    // Allows use of the non-thread-safe ChecksumUtil in a threaded environment
-    private synchronized String getIdChecksum(String contentId) {
-        return checksumUtil.generateChecksum(contentId);
-    }
-
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(java.lang.String)
      */
@@ -206,7 +197,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
             
             ensureMetadataSpaceExists(store); 
             
-            String zipChecksum = this.checksumUtil.generateChecksum(zipFile);
+            String zipChecksum = createChecksumGenerator().generateChecksum(zipFile);
 
             try(FileInputStream zipStream = new FileInputStream(zipFile)) {
                 store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
@@ -234,6 +225,13 @@ public class SnapshotManagerImpl implements SnapshotManager {
             log.error(message, e);
             throw new SnapshotManagerException(e.getMessage());
         }
+    }
+
+    /**
+     * @return
+     */
+    private ChecksumUtil createChecksumGenerator() {
+        return new ChecksumUtil(Algorithm.MD5);
     }
 
     /* (non-Javadoc)

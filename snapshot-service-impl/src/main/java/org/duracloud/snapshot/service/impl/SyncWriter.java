@@ -8,7 +8,6 @@
 package org.duracloud.snapshot.service.impl;
 
 import java.io.File;
-import java.util.LinkedList;
 import java.util.List;
 
 import org.duracloud.client.ContentStore;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.util.CollectionUtils;
 

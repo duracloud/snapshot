@@ -19,8 +19,7 @@
 
   <bean id="itemTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
     <property name="maxPoolSize" value="50"/>
-    <property name="queueCapacity" value="100000"/>
-    <property name="keepAliveSeconds" value="10"/>
+    <property name="queueCapacity" value="1000"/>
   </bean>
   
   <!-- stored job-metadata in database -->

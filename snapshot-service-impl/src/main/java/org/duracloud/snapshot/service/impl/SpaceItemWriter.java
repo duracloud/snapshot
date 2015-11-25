@@ -226,6 +226,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         if(snapshotPropsContentItem != null) {
             try {
                 retrieveFile(snapshotPropsContentItem, contentDir, false, true);
+                log.info("snapshot properties retrieved");
             } catch (IOException ioe) {
                 log.error("Error retrieving the snapshot properties file: ",
                              ioe);
@@ -241,10 +242,11 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = super.afterStep(stepExecution);
-        log.debug("Step complete with status: {}",
+        log.info("Step complete with status: {}",
                      stepExecution.getExitStatus());
         try {
             md5Writer.close();
+            log.info("closed md5 writer");
         } catch (IOException ioe) {
             String message = "Error closing MD5 manifest BufferedWriter: " + ioe.getMessage();
             errors.add(message);
@@ -253,6 +255,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
         try {
             sha256Writer.close();
+            log.info("closed sh256 writer");
         } catch (IOException ioe) {
             String message = "Error closing SHA-256 manifest BufferedWriter: " + ioe.getMessage();
             errors.add(message);
@@ -265,9 +268,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             synchronized (propsWriter) {
                 propsWriter.write("]\n");
             }
-
+            
             propsWriter.close();
-
+            log.info("closed props writer");
         } catch (IOException ioe) {
             String message = "Error writing end of content property manifest: " + ioe.getMessage();
             errors.add(message);
@@ -275,6 +278,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
         
         if(errors.size() == 0){
+           log.info("no errors - proceeding with space manifest -dpn manifest verification...");
            errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
         }
         
@@ -294,6 +298,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public void beforeStep(StepExecution stepExecution) {
         super.beforeStep(stepExecution);
+        log.info("starting step {}");
         try {
             errors.clear();
             synchronized (propsWriter) {

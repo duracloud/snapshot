@@ -61,7 +61,7 @@ public class SpaceManifestDpnManifestVerifier {
         this.errors = new LinkedList<>();
         try {
             WriteOnlyStringSet dpnManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
-
+            log.info("loaded manifest set into memory.");
             BufferedReader reader =
                 new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)));
             ManifestFormatter formatter = new TsvManifestFormatter();
@@ -78,8 +78,9 @@ public class SpaceManifestDpnManifestVerifier {
                 if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                     if (!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId,
                                                                                          item.getContentChecksum()))) {
-                        errors.add("DPN manifest does not contain content id/checksum combination ("
-                            + contentId + ", " + item.getContentChecksum());
+                        String message = "DPN manifest does not contain content id/checksum combination ("
+                            + contentId + ", " + item.getContentChecksum();
+                        errors.add(message);
                     }
                     stitchedManifestCount++;
                 }
@@ -87,8 +88,10 @@ public class SpaceManifestDpnManifestVerifier {
 
             int dpnCount = dpnManifest.size();
             if (stitchedManifestCount != dpnCount) {
-                errors.add("DPN Manifest size ("
-                    + dpnCount + ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")");
+                String message = "DPN Manifest size ("
+                    + dpnCount + ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")";
+                errors.add(message);
+                log.error(message);
             }
 
         } catch (Exception e) {
@@ -97,6 +100,7 @@ public class SpaceManifestDpnManifestVerifier {
             log.error(message, e);
         }
 
+        log.info("verification complete. error count = {}", errors.size());
         return getResult(errors);
     }
 

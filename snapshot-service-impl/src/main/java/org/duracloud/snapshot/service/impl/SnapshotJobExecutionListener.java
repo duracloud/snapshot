@@ -89,7 +89,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
     @Transactional
     public void afterJob(JobExecution jobExecution) {
-        log.debug("entering afterJob()...");
+        log.info("entering afterJob()...");
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
         String snapshotName = this.parameterMarshaller.unmarshal(jobParams);
@@ -98,7 +98,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         String snapshotPath =
             ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                config.getContentRoot());
-        log.debug("Completed snapshot: {} with status: {}", snapshotName, status);
+        log.info("Completed snapshot: {} with status: {}", snapshotName, status);
        
         if(BatchStatus.COMPLETED.equals(status)) {
             File snapshotDir = new File(snapshotPath);

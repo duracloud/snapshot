@@ -72,6 +72,7 @@ public class SpaceVerifier extends StepExecutionSupport
     @Override
     public void beforeStep(StepExecution stepExecution) {
         super.beforeStep(stepExecution);
+        clearErrors();
         try {
             new Retrier().execute(new Retriable() {
                 /*

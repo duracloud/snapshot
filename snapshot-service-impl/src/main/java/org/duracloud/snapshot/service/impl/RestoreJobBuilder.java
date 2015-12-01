@@ -186,7 +186,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setBeanName("verifyDuraCloudTransfer");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
-        stepFactory.setCommitInterval(1);
+        stepFactory.setCommitInterval(10000);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
         stepFactory.setListeners(new StepListener[] { writer });

@@ -6,7 +6,7 @@
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>snapshot-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.5.0-SNAPSHOT</version>
+  <version>1.4.1</version>
   <name>DuraCloud Snapshot</name>
   <description>Extension of DuraCloud to support dark archival storage systems</description>
   <url>http://duracloud.org</url>

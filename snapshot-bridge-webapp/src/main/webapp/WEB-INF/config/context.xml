@@ -13,13 +13,13 @@
         class="org.duracloud.common.notification.EmailNotifier"/>
 
   <bean id="jobTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-    <property name="maxPoolSize" value="30"/>
-    <property name="corePoolSize" value="2"/>
-    <property name="queueCapacity" value="10"/>
+    <property name="maxPoolSize" value="10"/>
+    <property name="corePoolSize" value="5"/>
+    <property name="queueCapacity" value="5"/>
   </bean>
 
   <bean id="itemTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-    <property name="maxPoolSize" value="50"/>
+    <property name="maxPoolSize" value="200"/>
     <property name="corePoolSize" value="10"/>
     <property name="queueCapacity" value="10"/>
   </bean>

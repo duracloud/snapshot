@@ -148,7 +148,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
         stepFactory.setCommitInterval(50);
-        stepFactory.setThrottleLimit(20);
+        stepFactory.setThrottleLimit(1);
         stepFactory.setTaskExecutor(taskExecutor);
         stepFactory.setListeners(new StepListener[] { writer });
         return stepFactory.getObject();
@@ -218,7 +218,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setBeanName("verifyDpnTransferUsingDpnManifest");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
-        stepFactory.setCommitInterval(50);
+        stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
         stepFactory.setListeners(new StepListener[] { writer, reader });
@@ -337,7 +337,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setBeanName("restoreContent");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
-        stepFactory.setCommitInterval(20);
+        stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
         stepFactory.setListeners(new StepListener[] { writer });

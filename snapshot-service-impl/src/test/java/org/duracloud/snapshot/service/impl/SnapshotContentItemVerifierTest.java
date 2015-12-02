@@ -212,7 +212,9 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         expectLastCall().atLeastOnce();
 
         List<String> errors = new LinkedList<>();
-        expect(context.get(isA(String.class))).andReturn(errors).atLeastOnce();
+        expect(context.get(eq(StepExecutionSupport.ERRORS_KEY))).andReturn(errors).atLeastOnce();
+        context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
+        expectLastCall();
         expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
         
         if(errorCount > 0){

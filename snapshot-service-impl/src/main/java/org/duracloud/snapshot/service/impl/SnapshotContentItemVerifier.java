@@ -109,6 +109,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
     @Override
     public void beforeStep(StepExecution stepExecution) {
         super.beforeStep(stepExecution);
+        resetContextState();
         try {
 
             this.manifestSet = ManifestFileHelper.loadManifestSetFromFile(this.manifestFile);

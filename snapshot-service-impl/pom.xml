@@ -5,13 +5,13 @@
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>snapshot-service-impl</artifactId>
   <packaging>jar</packaging>
-  <version>1.5.0-SNAPSHOT</version>
+  <version>1.4.2</version>
   <name>Duracloud Snapshot Service Impl</name>
 
   <parent>
     <groupId>org.duracloud.snapshot</groupId>
     <artifactId>snapshot-parent</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.4.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 

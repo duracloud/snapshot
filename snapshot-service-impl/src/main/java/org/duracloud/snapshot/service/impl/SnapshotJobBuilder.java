@@ -151,7 +151,7 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             stepFactory.setBeanName("step1");
             stepFactory.setItemReader(itemReader);
             stepFactory.setItemWriter(itemWriter);
-            stepFactory.setCommitInterval(1);
+            stepFactory.setCommitInterval(20);
             stepFactory.setThrottleLimit(20);
             stepFactory.setTaskExecutor(taskExecutor);
             Step step = (Step) stepFactory.getObject();

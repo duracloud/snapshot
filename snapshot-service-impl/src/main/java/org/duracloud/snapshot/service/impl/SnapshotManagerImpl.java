@@ -12,8 +12,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -59,6 +61,8 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 public class SnapshotManagerImpl implements SnapshotManager {
+    public static final int MAX_DAYS_IN_CLEANUP = 3;
+
     private static Logger log = LoggerFactory.getLogger(SnapshotManagerImpl.class);
 
     protected static String[] METADATA_FILENAMES = {Constants.SNAPSHOT_PROPS_FILENAME, 
@@ -398,6 +402,31 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
                     //update snapshot status and notify users
                     cleanupComplete(snapshot);
+                } else {
+                    
+                    //if snapshot has not been in the CLEANING_UP state
+                    //for more than three days, send a warning.
+                    Calendar c = Calendar.getInstance();
+                    int maxDays = MAX_DAYS_IN_CLEANUP;
+                    c.add(Calendar.DATE, -1*maxDays);
+                    if(snapshot.getModified().before(c.getTime())){
+                        String message =
+                            MessageFormat.format("The snapshot {0} appears to have been in the {1} phase for more than {2} days.",
+                                                 snapshot,
+                                                 snapshot.getStatus(),
+                                                 maxDays);
+                        String subject = "Snapshot cleanup appears to be failing: " + snapshot;
+                        String[] recipients = this.bridgeConfig.getDuracloudEmailAddresses();
+                        log.warn(message + "  Sending notification to duracloud admins: {} ", recipients);
+
+                        if (recipients.length > 0) {
+                            this.notificationManager.sendNotification(NotificationType.EMAIL,
+                                                                      subject,
+                                                                      message,
+                                                                      recipients);
+                        }
+
+                    }
                 }
             } catch (Exception e) {
                 log.error("failed to cleanup " + source);

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -348,6 +349,54 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         CompleteSnapshotTaskResult result = createMock(CompleteSnapshotTaskResult.class);
         expect(result.getResult()).andReturn("success");
         expect(this.snapshotTaskClient.completeSnapshot(spaceId)).andReturn(result);
+        replayAll();
+
+        this.manager.finalizeSnapshots();
+
+    }
+
+    @Test
+    public void testFinalizeSnapshotsUnsuccessfulAfter3Days() throws SnapshotException, ContentStoreException {
+
+        List<Snapshot> snapshots = new ArrayList<>();
+        snapshots.add(snapshot);
+        expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP)))
+            .andReturn(snapshots);
+
+        ContentStore contentStore = createMock(ContentStore.class);
+
+        expect(storeClientHelper.create(isA(DuracloudEndPointConfig.class),
+                                        isA(String.class),
+                                        isA(String.class))).andReturn(contentStore);
+
+        Iterator<String> it = Arrays.asList("test").iterator();
+
+        expect(contentStore.getSpaceContents(isA(String.class))).andReturn(it);
+
+        setupEndpoint();
+
+        String spaceId = "space-id";
+        expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);
+
+ 
+        String adminEmail = "admin-email";
+ 
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DATE, -1*SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP);
+        expect(snapshot.getModified()).andReturn(c.getTime());
+        expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
+        
+        String[] stringArray = new String[] { adminEmail };
+        expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray);
+
+
+        notificationManager.sendNotification(isA(NotificationType.class),
+                                             isA(String.class),
+                                             isA(String.class),
+                                             eq(adminEmail));
+        expectLastCall();
+
+
         replayAll();
 
         this.manager.finalizeSnapshots();

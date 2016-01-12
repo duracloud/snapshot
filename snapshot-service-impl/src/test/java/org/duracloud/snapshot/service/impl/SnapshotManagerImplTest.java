@@ -382,7 +382,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         String adminEmail = "admin-email";
  
         Calendar c = Calendar.getInstance();
-        c.add(Calendar.DATE, -1*SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP);
+        c.add(Calendar.DATE, -1*(SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP+1));
         expect(snapshot.getModified()).andReturn(c.getTime());
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
         

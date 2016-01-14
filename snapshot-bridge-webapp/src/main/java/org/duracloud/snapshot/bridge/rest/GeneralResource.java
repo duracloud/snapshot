@@ -13,6 +13,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -241,7 +242,7 @@ public class GeneralResource {
         notifyConfig.setPassword(initParams.getAwsSecretKey());
         notifyConfig.setOriginator(
             initParams.getOriginatorEmailAddress());
-
+        notifyConfig.setAdmins(Arrays.asList(initParams.getDuracloudEmailAddresses()));
         List<NotificationConfig> notifyConfigs = new ArrayList<>();
         notifyConfigs.add(notifyConfig);
         notificationManager.initializeNotifiers(notifyConfigs);

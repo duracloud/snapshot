@@ -11,6 +11,7 @@ import org.duracloud.client.ContentStore;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.client.util.StoreClientUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,12 +19,17 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class StoreClientHelper {
+    private StoreClientUtil storeClientUtil;
+    
+    @Autowired
+    public StoreClientHelper(StoreClientUtil storeClientUtil){
+        this.storeClientUtil = storeClientUtil;
+    }
     public ContentStore create(DuracloudEndPointConfig config,
                                String username,
                                String password) {
-        StoreClientUtil clientUtil = new StoreClientUtil();
         ContentStore contentStore =
-            clientUtil.createContentStore(config.getHost(),
+            storeClientUtil.createContentStore(config.getHost(),
                                           config.getPort(),
                                           SnapshotServiceConstants.DURASTORE_CONTEXT,
                                           username,

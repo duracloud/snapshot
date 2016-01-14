@@ -82,6 +82,11 @@
 
     <dependency>
       <groupId>org.duracloud</groupId>
+      <artifactId>common-aop</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.duracloud</groupId>
       <artifactId>common-json</artifactId>
       <version>${duracloud.version}</version>
     </dependency>
@@ -119,6 +124,11 @@
     <dependency>
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-jpa</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aop</artifactId>
     </dependency>
 
     <dependency>

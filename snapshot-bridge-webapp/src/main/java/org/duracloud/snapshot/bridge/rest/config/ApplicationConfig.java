@@ -7,8 +7,14 @@
  */
 package org.duracloud.snapshot.bridge.rest.config;
 
+import org.duracloud.client.ContentStore;
+import org.duracloud.client.util.StoreClientUtil;
+import org.duracloud.common.aop.RetryAdvice;
+import org.duracloud.common.notification.NotificationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.framework.ProxyFactoryBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -18,12 +24,44 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ApplicationConfig {
-    private static Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
+    static Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
     /**
      * 
      */
     public ApplicationConfig() {
         log.info("creating ApplicationConfig instance...");
     }
+
+    @Bean 
+    public StoreClientUtil storeClientUtil(RetryAdvice advice){
+        return new ProxiedStoreClientUtil(advice);
+    }
     
+    @Bean
+    public RetryAdvice retryAdvice(NotificationManager notificationManager){
+        return new BridgeRetryAdvice(notificationManager);
+    }
+    
+    class ProxiedStoreClientUtil extends StoreClientUtil {
+        private RetryAdvice advice;
+        public ProxiedStoreClientUtil(RetryAdvice advice){
+            this.advice = advice;
+        }
+        @Override
+        public ContentStore createContentStore(String host,
+                                               int port,
+                                               String context,
+                                               String username,
+                                               String password,
+                                               String storeId) {
+            
+           ContentStore contentStore = super.createContentStore(host, port, context, username, password, storeId);
+           ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+           proxyFactoryBean.addAdvice(advice);
+           proxyFactoryBean.setTarget(contentStore);
+           return (ContentStore)proxyFactoryBean.getObject();
+        }
+    }
 }
+
+

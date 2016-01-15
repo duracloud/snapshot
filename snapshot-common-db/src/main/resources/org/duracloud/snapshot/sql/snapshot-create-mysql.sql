@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `snapshot_content_item` (
 --
 -- Table structure for table `snapshot_alternate_ids`
 --
-CREATE TABLE `snapshot_alternate_ids` (
+CREATE TABLE IF NOT EXISTS `snapshot_alternate_ids` (
   `snapshot_id` bigint(20) NOT NULL,
   `snapshot_alternate_id` varchar(255) DEFAULT NULL,
   KEY `FK_q9se3kgdc5eebpwxqq4843bu3` (`snapshot_id`),
@@ -91,7 +91,7 @@ CREATE TABLE `snapshot_alternate_ids` (
 --
 -- Table structure for table `snapshot_history`
 --
-CREATE TABLE `snapshot_history` (
+CREATE TABLE IF NOT EXISTS `snapshot_history` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime DEFAULT NULL,
   `history` longtext DEFAULT NULL,

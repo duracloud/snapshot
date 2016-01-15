@@ -18,6 +18,7 @@ import javax.ws.rs.core.Response;
 
 import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.common.util.WaitUtil;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
@@ -66,6 +67,9 @@ public class GeneralResourceTest extends SnapshotTestBase {
         "snapshot-work");
     
     private boolean clean = true;
+    
+    @Mock
+    private PurgeObsoleteDataTask purgeTask;
 
     @Mock
     private SnapshotJobManager manager;
@@ -105,7 +109,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 restoreJobListener,
                                 notificationManager,
                                 finalizer,
-                                bridgeConfiguration);
+                                bridgeConfiguration,
+                                purgeTask);
         
         System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY,
                            this.workDir.getAbsolutePath());
@@ -159,11 +164,15 @@ public class GeneralResourceTest extends SnapshotTestBase {
         EasyMock.expectLastCall();
         System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY, this.workDir.getAbsolutePath());
 
+        this.purgeTask.run();
+        EasyMock.expectLastCall();
+        
         replayAll();
 
         InitParams initParams = createInitParams();
         
         Response response = resource.init(initParams);
+        WaitUtil.wait(2);
         assertEquals(202, response.getStatus());
         DatabaseConfig dbConfig = dbConfigCapture.getValue();
         assertEquals(databaseUser, dbConfig.getUsername());

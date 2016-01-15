@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -76,6 +78,8 @@ public class GeneralResource {
 
     @Context
     UriInfo uriInfo;
+    
+    private static Timer Timer = new Timer();
    
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
@@ -85,7 +89,7 @@ public class GeneralResource {
     private NotificationManager notificationManager;
     private BridgeConfiguration bridgeConfiguration;
     private Finalizer finalizer;
-    
+    private PurgeObsoleteDataTask purgeObsoleteDataTask;
     static {
         //override root credential system property keys.
         RootUserCredential.overrideSystemPropertyKeys("duracloud.bridge.root.username",
@@ -101,7 +105,8 @@ public class GeneralResource {
                             RestoreJobExecutionListener restoreListener,
                             NotificationManager notificationManager, 
                             Finalizer finalizer,
-                            BridgeConfiguration bridgeConfiguration) {
+                            BridgeConfiguration bridgeConfiguration,
+                            PurgeObsoleteDataTask purgeObsoleteDataTask) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
         this.databaseInitializer = databaseInitializer;
@@ -110,6 +115,7 @@ public class GeneralResource {
         this.notificationManager = notificationManager;
         this.finalizer = finalizer;
         this.bridgeConfiguration = bridgeConfiguration;
+        this.purgeObsoleteDataTask = purgeObsoleteDataTask;
         
     }    
 
@@ -145,6 +151,7 @@ public class GeneralResource {
 
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
+            log.error("failed to initialize: "+ e.getMessage(), e);
             return Response.serverError()
                            .entity(new ResponseDetails("failure!"+e.getMessage()))
                            .build();
@@ -274,6 +281,16 @@ public class GeneralResource {
         dbConfig.setClean(initParams.isClean());
         //initialize database
         databaseInitializer.init(dbConfig);
+        
+        //create cleaner task;
+        Timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                purgeObsoleteDataTask.run();
+            }
+        }, 1000,  24*60*60*1000);
+        
+
     }
 
     /**

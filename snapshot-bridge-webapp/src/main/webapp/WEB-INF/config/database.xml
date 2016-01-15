@@ -43,8 +43,9 @@
     </constructor-arg>
     <constructor-arg name="schemas">
       <list>
-        <value>classpath:org/duracloud/snapshot/sql/snapshot-create-mysql.sql</value>
         <value>classpath:org/springframework/batch/core/schema-mysql.sql</value>
+        <value>classpath:org/duracloud/snapshot/sql/snapshot-create-mysql.sql</value>
+        <value>classpath:org/duracloud/snapshot/sql/snapshot-procedures.sql</value>
       </list>
     </constructor-arg>
   </bean>

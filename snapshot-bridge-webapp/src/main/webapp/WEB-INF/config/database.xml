@@ -41,13 +41,18 @@
         <value>classpath:org/springframework/batch/core/schema-drop-mysql.sql</value>
       </list>
     </constructor-arg>
-    <constructor-arg name="schemas">
+    <constructor-arg name="createSchemas">
       <list>
         <value>classpath:org/springframework/batch/core/schema-mysql.sql</value>
         <value>classpath:org/duracloud/snapshot/sql/snapshot-create-mysql.sql</value>
+      </list>
+    </constructor-arg>
+    <constructor-arg name="storedProcedureDefinitions">
+      <list>
         <value>classpath:org/duracloud/snapshot/sql/snapshot-procedures.sql</value>
       </list>
     </constructor-arg>
+
   </bean>
 
  <!-- 

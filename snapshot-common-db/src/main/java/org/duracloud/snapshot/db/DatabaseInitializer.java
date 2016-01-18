@@ -34,27 +34,38 @@ public class DatabaseInitializer implements ApplicationContextAware{
 
     private List<Resource> dropSchemas;
 
-    private List<Resource> schemas;
+    private List<Resource> createSchemas;
+    
+    private List<Resource> storedProcedureDefinitions;
     
     private BasicDataSource dataSource;
     
     private ApplicationContext context;
-    public DatabaseInitializer(BasicDataSource dataSource, List<Resource> dropSchemas, List<Resource> schemas){
+
+    
+    public DatabaseInitializer(BasicDataSource dataSource, List<Resource> dropSchemas, List<Resource> createSchemas, List<Resource> storedProcedureDefinitions){
         this.dataSource = dataSource;
         this.dropSchemas = dropSchemas;
-        this.schemas = schemas;
+        this.createSchemas = createSchemas;
+        this.storedProcedureDefinitions = storedProcedureDefinitions;
     }
 
     public void init(DatabaseConfig databaseConfig) {
         final DataSourceInitializer initializer = new DataSourceInitializer();
+        final DataSourceInitializer storedProcInitializer = new DataSourceInitializer();
+
         dataSource.setUrl(databaseConfig.getUrl());
         dataSource.setUsername(databaseConfig.getUsername());
         dataSource.setPassword(databaseConfig.getPassword());
         initializer.setDataSource(dataSource);
         initializer.setDatabasePopulator(databasePopulator(databaseConfig));
+        storedProcInitializer.setDataSource(dataSource);
+        storedProcInitializer.setDatabasePopulator(databaseStoreProcedurePopulator(databaseConfig));
 
         try {
             initializer.afterPropertiesSet();
+            storedProcInitializer.afterPropertiesSet();
+
         } catch (Exception e) {
             Throwable rootCause = getRootCause(e);
 
@@ -88,10 +99,24 @@ public class DatabaseInitializer implements ApplicationContextAware{
             }
         }
 
-        for(Resource schema : schemas){
+        for(Resource schema : createSchemas){
             populator.addScript(schema);
         }
 
+        return populator;
+    }
+    
+    private DatabasePopulator databaseStoreProcedurePopulator(DatabaseConfig databaseConfig) {
+        final ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
+        
+
+        for(Resource schema : storedProcedureDefinitions){
+            populator.addScript(schema);
+        }
+
+        //stored procedure scripts (in snapshot-common-db) are delimited with the # sign
+        //to get around this problem: http://stackoverflow.com/questions/15486516/using-springs-jdbcinitialize-database-how-do-i-run-a-script-with-a-stored-p
+        populator.setSeparator("#");
         return populator;
     }
 

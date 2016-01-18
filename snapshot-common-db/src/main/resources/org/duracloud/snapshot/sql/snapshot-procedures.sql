@@ -1,10 +1,13 @@
--- Purges data from the spring batch tables that is older than the number
--- of days specified in the days_ago parameter or is associated with a 
--- snapshot or restore that has been removed from the system.
--- @author Daniel Bernstein
--- @date 01/15/2016
-delimiter //
-DROP PROCEDURE IF EXISTS purge_obsolete_batch_data;
+--- Purges data from the spring batch tables that is older than the number
+--- of days specified in the days_ago parameter or is associated with a 
+--- snapshot or restore that has been removed from the system.
+--- NOTE:  the '#' separators below are there to get around the fact
+--- that specifying delimiters in a script do not work with Spring data's 
+--- DatabasePopulator.  c.f. http://stackoverflow.com/questions/15486516/using-springs-jdbcinitialize-database-how-do-i-run-a-script-with-a-stored-p
+--- Also note that the "#" delimiter is set in org.duracloud.snapshot.db.DatabaseInitializer.
+--- @author Daniel Bernstein
+--- @date 01/15/2016
+DROP PROCEDURE IF EXISTS purge_obsolete_batch_data#
 
 CREATE PROCEDURE purge_obsolete_batch_data( IN days_ago INT)
 BEGIN
@@ -39,4 +42,5 @@ BEGIN
     delete from BATCH_STEP_EXECUTION_CONTEXT  where step_execution_id not in (select step_execution_id from BATCH_STEP_EXECUTION);
     
     set foreign_key_checks=1;
-END//
+END #
+

@@ -39,6 +39,6 @@ public class PurgeObsoleteDataTask implements Runnable{
                                      .registerStoredProcedureParameter(0, Integer.class, ParameterMode.IN)
                                      .setParameter(0, 90)
                                      .execute();
-       log.info("executed {} : result = {}", storedProc, result);
+       log.info("executed {} : resultset ? {}", storedProc, result);
     }
 }

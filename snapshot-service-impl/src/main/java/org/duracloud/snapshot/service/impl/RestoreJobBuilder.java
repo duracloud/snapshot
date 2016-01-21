@@ -11,7 +11,6 @@ import java.io.File;
 
 import org.duracloud.client.ContentStore;
 import org.duracloud.manifeststitch.StitchedManifestGenerator;
-import org.duracloud.retrieval.util.StoreClientUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.SnapshotServiceConstants;
 import org.duracloud.snapshot.db.ContentDirUtils;
@@ -55,6 +54,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
 
     private RestoreManager restoreManager;
     private SnapshotContentItemRepo snapshotContentItemRepo;
+    private StoreClientHelper storeClientHelper;
 
     @Autowired
     public RestoreJobBuilder(   RestoreJobExecutionListener jobListener, 
@@ -62,13 +62,15 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
                                 PlatformTransactionManager transactionManager, 
                                 @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor, 
                                 RestoreManager restoreManager,
-                                SnapshotContentItemRepo snapshotContentItemRepo) {
+                                SnapshotContentItemRepo snapshotContentItemRepo,
+                                StoreClientHelper storeClientHelper) {
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
         this.taskExecutor = taskExecutor;
         this.restoreManager = restoreManager;
         this.snapshotContentItemRepo = snapshotContentItemRepo;
+        this.storeClientHelper = storeClientHelper;
     }
 
     /*
@@ -89,14 +91,10 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
             String destinationSpaceId = destination.getSpaceId();
             String restoreId = restoration.getRestorationId();
 
-            StoreClientUtil clientUtil = new StoreClientUtil();
             ContentStore contentStore =
-                clientUtil.createContentStore(destination.getHost(),
-                                              destination.getPort(),
-                                              SnapshotServiceConstants.DURASTORE_CONTEXT,
+                this.storeClientHelper.create(destination, 
                                               jobManagerConfig.getDuracloudUsername(),
-                                              jobManagerConfig.getDuracloudPassword(),
-                                              destination.getStoreId());
+                                              jobManagerConfig.getDuracloudPassword());
 
             JobBuilderFactory jobBuilderFactory = new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder = jobBuilderFactory.get(getJobName());

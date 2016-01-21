@@ -7,6 +7,10 @@
  */
 package org.duracloud.snapshot.bridge.rest.config;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.aopalliance.intercept.MethodInvocation;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -23,6 +27,10 @@ import org.duracloud.common.notification.NotificationType;
 class BridgeRetryAdvice extends RetryAdvice {
     
     private NotificationManager notificationManager;
+    private Map<Object,Date> lastNotificationSentMap = new HashMap<>();
+    private long minWaitBetweenNotificationsInSeconds = 600;
+
+
     
     public BridgeRetryAdvice(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
@@ -30,16 +38,25 @@ class BridgeRetryAdvice extends RetryAdvice {
         setWaitTime(3000);
     }
     
-    @Pointcut("execution(* org.duracloud.storeclient.ContentStore.*(..))")
+    @Pointcut("execution(public * org.duracloud.storeclient.ContentStore.*(..)) || execution(public * org.duracloud.client.util.StoreClientUtil.*(..))")
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         try { 
             return super.invoke(invocation);
         }catch(Throwable t){
             try {
-                this.notificationManager.sendAdminNotification(NotificationType.EMAIL,
-                                                               "Failed to access duracloud instance with store client: ",
-                                                               t.getMessage() + "-->"+ invocation.getThis());
+                Date lastNotifcationSent = this.lastNotificationSentMap.get(invocation.getThis());
+                Date nextNotification = new Date();
+                if(lastNotifcationSent != null){
+                    nextNotification = new Date(lastNotifcationSent.getTime()+(minWaitBetweenNotificationsInSeconds*1000));
+                }
+                
+                if(nextNotification.getTime() <= System.currentTimeMillis()){
+                    this.notificationManager.sendAdminNotification(NotificationType.EMAIL,
+                                                                   "Failed to access duracloud instance with store client: ",
+                                                                   t.getMessage() + "-->"+ invocation.getThis());
+                    this.lastNotificationSentMap.put(invocation.getThis(), new Date());
+                }
             }catch(Exception ex){
                 ApplicationConfig.log.error("failed to send notification: " + ex.getMessage() + "->" + t.getMessage(), ex);
             }

@@ -454,6 +454,13 @@
         <artifactId>common-aop</artifactId>
         <version>${duracloud.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.aspectj</groupId>
+        <artifactId>aspectjweaver</artifactId>
+        <version>1.8.8</version>
+      </dependency>
+
       <!-- Spring Batch dependencies -->
       <dependency>
         <groupId>org.springframework.batch</groupId>

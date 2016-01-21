@@ -34,7 +34,11 @@ public class ApplicationConfig {
 
     @Bean 
     public StoreClientUtil storeClientUtil(RetryAdvice advice){
-        return new ProxiedStoreClientUtil(advice);
+           StoreClientUtil storeClientUtil = new ProxiedStoreClientUtil(advice);
+           ProxyFactoryBean proxyFactoryBean = new ProxyFactoryBean();
+           proxyFactoryBean.addAdvice(advice);
+           proxyFactoryBean.setTarget(storeClientUtil);
+           return (StoreClientUtil)proxyFactoryBean.getObject();
     }
     
     @Bean

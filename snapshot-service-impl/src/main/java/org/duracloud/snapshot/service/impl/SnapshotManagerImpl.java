@@ -427,19 +427,20 @@ public class SnapshotManagerImpl implements SnapshotManager {
                         }
                         
                         if(nextNotification.getTime() <= System.currentTimeMillis()){
-                            String message =
-                                MessageFormat.format("The snapshot {0} appears to have been in the {1} phase for more than {2} days.",
-                                                     snapshot,
-                                                     snapshot.getStatus(),
-                                                     maxDays);
-                            String subject = "Snapshot cleanup appears to be failing: " + snapshot;
+                            String subject =
+                                MessageFormat.format("Snapshot cleanup has not completed in over {0} days for snapshot: {1}",
+                                                     maxDays,
+                                                     snapshotId);
+                            
+                            String body = subject + "\n\nSnapshot object=>" + snapshot;
+
                             String[] recipients = this.bridgeConfig.getDuracloudEmailAddresses();
-                            log.warn(message + "  Sending notification to duracloud admins: {} ", recipients);
+                            log.warn(body + "  Sending notification to duracloud admins: {} ", recipients);
 
                             if (recipients.length > 0) {
                                 this.notificationManager.sendNotification(NotificationType.EMAIL,
                                                                           subject,
-                                                                          message,
+                                                                          body,
                                                                           recipients);
                                 this.lastCleanupFailureNotificationBySnapshot.put(snapshotId, new Date());
                             }

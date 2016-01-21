@@ -386,7 +386,6 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         Calendar c = Calendar.getInstance();
         c.add(Calendar.DATE, -1 * (SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP + 1));
         expect(snapshot.getModified()).andReturn(c.getTime()).times(3);
-        expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP).times(2);
 
         String[] stringArray = new String[] { adminEmail };
         expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray).times(2);

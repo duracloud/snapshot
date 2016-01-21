@@ -30,6 +30,7 @@ import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.util.WaitUtil;
 import org.duracloud.error.ContentStoreException;
 import org.duracloud.error.NotFoundException;
 import org.duracloud.snapshot.SnapshotException;
@@ -292,7 +293,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     private void setupEndpoint() {
         expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username").anyTimes();
         expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password").anyTimes();
-        expect(snapshot.getSource()).andReturn(endPointConfig);
+        expect(snapshot.getSource()).andReturn(endPointConfig).atLeastOnce();
     }
 
     @Test
@@ -302,7 +303,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         snapshots.add(snapshot);
         expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP)))
             .andReturn(snapshots);
-
+        
+        expect(this.snapshot.getName()).andReturn("snapshot-id");
         ContentStore contentStore = createMock(ContentStore.class);
 
         expect(storeClientHelper.create(isA(DuracloudEndPointConfig.class),
@@ -360,45 +362,52 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         List<Snapshot> snapshots = new ArrayList<>();
         snapshots.add(snapshot);
-        expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP)))
-            .andReturn(snapshots);
+        expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP))).andReturn(snapshots).times(3);
+
+        expect(this.snapshot.getName()).andReturn("snapshot-id").times(3);
 
         ContentStore contentStore = createMock(ContentStore.class);
 
         expect(storeClientHelper.create(isA(DuracloudEndPointConfig.class),
                                         isA(String.class),
-                                        isA(String.class))).andReturn(contentStore);
+                                        isA(String.class))).andReturn(contentStore).times(3);
 
         Iterator<String> it = Arrays.asList("test").iterator();
 
-        expect(contentStore.getSpaceContents(isA(String.class))).andReturn(it);
+        expect(contentStore.getSpaceContents(isA(String.class))).andReturn(it).times(3);
 
         setupEndpoint();
 
         String spaceId = "space-id";
-        expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);
+        expect(this.endPointConfig.getSpaceId()).andReturn(spaceId).times(3);
 
- 
         String adminEmail = "admin-email";
- 
-        Calendar c = Calendar.getInstance();
-        c.add(Calendar.DATE, -1*(SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP+1));
-        expect(snapshot.getModified()).andReturn(c.getTime());
-        expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
-        
-        String[] stringArray = new String[] { adminEmail };
-        expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray);
 
+        Calendar c = Calendar.getInstance();
+        c.add(Calendar.DATE, -1 * (SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP + 1));
+        expect(snapshot.getModified()).andReturn(c.getTime()).times(3);
+        expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP).times(2);
+
+        String[] stringArray = new String[] { adminEmail };
+        expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray).times(2);
 
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
                                              isA(String.class),
                                              eq(adminEmail));
-        expectLastCall();
+        expectLastCall().times(2);
 
+        int seconds = 1;
+        this.manager.setSecondsBetweenCleanupFailureNotifications(seconds);
 
         replayAll();
 
+        //first time email is sent
+        this.manager.finalizeSnapshots();
+        //second time no email because the seconds between would not have been reached.
+        this.manager.finalizeSnapshots();
+        WaitUtil.wait(seconds);
+        //third time send email again.
         this.manager.finalizeSnapshots();
 
     }

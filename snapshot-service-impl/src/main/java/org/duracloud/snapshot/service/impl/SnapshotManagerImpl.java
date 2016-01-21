@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,12 @@ public class SnapshotManagerImpl implements SnapshotManager {
         SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME,
         SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME};
     
+    private Map<String,Date> lastCleanupFailureNotificationBySnapshot = new HashMap<String,Date>();
+    
+    //by default 1 day
+    private long secondsBetweenCleanupFailureNotifications = 86400; 
+    
+
     //NOTE: auto wiring at the field level rather than in the constructor seems to be necessary
     //      when annotating methods with @Transactional.
     @Autowired
@@ -388,6 +395,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();
             ContentStore store = getContentStore(source);
+            String snapshotId = snapshot.getName();
             try {
                 String spaceId = source.getSpaceId();
                 Iterator<String> it  = store.getSpaceContents(spaceId);
@@ -410,20 +418,31 @@ public class SnapshotManagerImpl implements SnapshotManager {
                     int maxDays = MAX_DAYS_IN_CLEANUP;
                     c.add(Calendar.DATE, -1*maxDays);
                     if(snapshot.getModified().before(c.getTime())){
-                        String message =
-                            MessageFormat.format("The snapshot {0} appears to have been in the {1} phase for more than {2} days.",
-                                                 snapshot,
-                                                 snapshot.getStatus(),
-                                                 maxDays);
-                        String subject = "Snapshot cleanup appears to be failing: " + snapshot;
-                        String[] recipients = this.bridgeConfig.getDuracloudEmailAddresses();
-                        log.warn(message + "  Sending notification to duracloud admins: {} ", recipients);
+                        //only send a warning if a notification has not already been sent
+                        //within secondsBetweenCleanupFailureNotifications 
+                        Date lastNotification = this.lastCleanupFailureNotificationBySnapshot.get(snapshotId);
+                        Date nextNotification = new Date();
+                        if(lastNotification != null){
+                            nextNotification = new Date(lastNotification.getTime()+(secondsBetweenCleanupFailureNotifications*1000));
+                        }
+                        
+                        if(nextNotification.getTime() <= System.currentTimeMillis()){
+                            String message =
+                                MessageFormat.format("The snapshot {0} appears to have been in the {1} phase for more than {2} days.",
+                                                     snapshot,
+                                                     snapshot.getStatus(),
+                                                     maxDays);
+                            String subject = "Snapshot cleanup appears to be failing: " + snapshot;
+                            String[] recipients = this.bridgeConfig.getDuracloudEmailAddresses();
+                            log.warn(message + "  Sending notification to duracloud admins: {} ", recipients);
 
-                        if (recipients.length > 0) {
-                            this.notificationManager.sendNotification(NotificationType.EMAIL,
-                                                                      subject,
-                                                                      message,
-                                                                      recipients);
+                            if (recipients.length > 0) {
+                                this.notificationManager.sendNotification(NotificationType.EMAIL,
+                                                                          subject,
+                                                                          message,
+                                                                          recipients);
+                                this.lastCleanupFailureNotificationBySnapshot.put(snapshotId, new Date());
+                            }
                         }
 
                     }
@@ -466,5 +485,13 @@ public class SnapshotManagerImpl implements SnapshotManager {
         snapshotRepo.deleteByName(snapshotId);
         log.info("successfully deleted snapshot: {}", snapshotId);
     }
+    
+    /**
+     * @param secondsBetweenCleanupFailureNotifications the secondsBetweenCleanupFailureNotifications to set
+     */
+    public void setSecondsBetweenCleanupFailureNotifications(long secondsBetweenCleanupFailureNotifications) {
+        this.secondsBetweenCleanupFailureNotifications = secondsBetweenCleanupFailureNotifications;
+    }
+
 
 }

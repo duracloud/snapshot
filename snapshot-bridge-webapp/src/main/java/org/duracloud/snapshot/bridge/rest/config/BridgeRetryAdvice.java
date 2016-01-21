@@ -27,6 +27,7 @@ class BridgeRetryAdvice extends RetryAdvice {
     public BridgeRetryAdvice(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
         setMaxRetries(3);
+        setWaitTime(3000);
     }
     
     @Pointcut("execution(* org.duracloud.storeclient.ContentStore.*(..))")

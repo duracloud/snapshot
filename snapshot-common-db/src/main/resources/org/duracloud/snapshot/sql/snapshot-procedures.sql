@@ -12,8 +12,9 @@ DROP PROCEDURE IF EXISTS purge_obsolete_batch_data#
 CREATE PROCEDURE purge_obsolete_batch_data( IN days_ago INT)
 BEGIN
     set foreign_key_checks=0;
-    delete from BATCH_JOB_EXECUTION where create_time < adddate(now(), -1*days_ago);
 
+    delete from BATCH_JOB_EXECUTION where last_updated < adddate(now(), -1*days_ago) and
+    		            status in ('COMPLETED', 'FAILED', 'ABANDONED', 'UNKNOWN');
 
     delete je from BATCH_JOB_EXECUTION je join 
          (select distinct a.job_execution_id from BATCH_JOB_EXECUTION_PARAMS a, 

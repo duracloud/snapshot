@@ -28,7 +28,7 @@ class BridgeRetryAdvice extends RetryAdvice {
     
     private NotificationManager notificationManager;
     private Map<Object,Date> lastNotificationSentMap = new HashMap<>();
-    private long minWaitBetweenNotificationsInSeconds = 600;
+    private long minWaitBetweenNotificationsInSeconds = 3600;
 
 
     

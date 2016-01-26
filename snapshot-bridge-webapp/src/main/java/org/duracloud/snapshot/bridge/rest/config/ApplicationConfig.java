@@ -65,6 +65,14 @@ public class ApplicationConfig {
            proxyFactoryBean.setTarget(contentStore);
            return (ContentStore)proxyFactoryBean.getObject();
         }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            return super.toString();
+        }
     }
 }
 

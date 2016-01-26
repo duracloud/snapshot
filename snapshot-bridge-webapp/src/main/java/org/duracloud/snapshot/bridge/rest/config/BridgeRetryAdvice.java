@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.bridge.rest.config;
 
+import java.net.InetAddress;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,8 +53,10 @@ class BridgeRetryAdvice extends RetryAdvice {
                 }
                 
                 if(nextNotification.getTime() <= System.currentTimeMillis()){
+                    InetAddress lh = InetAddress.getLocalHost();
                     this.notificationManager.sendAdminNotification(NotificationType.EMAIL,
-                                                                   "Failed to access duracloud instance with store client: ",
+                                                                   "The bridge (" + lh.getHostName() + "/" + lh.getHostAddress() +") " +
+                                                                    "failed to access duracloud instance with store client: ",
                                                                    t.getMessage() + "-->"+ invocation.getThis());
                     this.lastNotificationSentMap.put(invocation.getThis(), new Date());
                 }

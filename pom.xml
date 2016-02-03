@@ -183,7 +183,7 @@
     <springframework.security.version>4.0.2.RELEASE</springframework.security.version>
     <spring.batch.version>3.0.4.RELEASE</spring.batch.version>
     <hibernate.version>4.3.5.Final</hibernate.version>
-    <duracloud.version>3.7.0</duracloud.version>
+    <duracloud.version>3.7.1</duracloud.version>
     <duracloud.db.version>3.5.1</duracloud.db.version>
 
     <skipITs>true</skipITs>

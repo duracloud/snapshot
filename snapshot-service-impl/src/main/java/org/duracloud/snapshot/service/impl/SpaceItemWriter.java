@@ -125,19 +125,27 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         Map<String,String> props = retrievalWorker.retrieveFile();
         File localFile = retrievalWorker.getLocalFile();
 
-        String md5Checksum = props.get(ContentStore.CONTENT_CHECKSUM);
+        String md5Checksum = null;
+        if(null != props) {
+            md5Checksum = props.get(ContentStore.CONTENT_CHECKSUM);
+        }
         log.info("Retrieved item {} from space {} with MD5 checksum {}",
                  contentItem.getContentId(),
                  contentItem.getSpaceId(),
                  md5Checksum);
         String contentId = chunkUtil.preChunkedContentId(contentItem.getContentId());
         if(localFile.exists() && md5Checksum != null) {
-            if(writeChecksums) {
-                writeMD5Checksum(contentId, md5Checksum);
-                writeSHA256Checksum(contentId, localFile);
+            try {
+                if (writeChecksums) {
+                    writeMD5Checksum(contentId, md5Checksum);
+                    writeSHA256Checksum(contentId, localFile);
+                }
+                writeToSnapshotManager(contentId, props);
+                writeContentProperties(contentId, props, lastItem);
+            }catch(IOException ioe) {
+                log.error("Error writing snapshot details: " + ioe.getMessage());
+                throw ioe;
             }
-            writeToSnapshotManager(contentId, props);
-            writeContentProperties(contentId, props, lastItem);
         } else {
             // There was a problem! Throw a meaningful exception:
             String baseError =
@@ -146,12 +154,14 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                               contentItem.getContentId(),
                               contentItem.getSpaceId());
             if(!localFile.exists()) {
-                throw new IOException(baseError + "The local file at path " +
-                                      localFile.getAbsolutePath()+
-                                      " could not be found.");
+                String error = baseError + "The local file at path " +
+                               localFile.getAbsolutePath()+ " could not be found.";
+                log.error(error);
+                throw new IOException(error);
             } else {
-                throw new IOException(baseError + "MD5 checksum for " +
-                                      "retrieved file was null");
+                String error = baseError + "MD5 checksum for retrieved file was null";
+                log.error(error);
+                throw new IOException(error);
             }
         }
     }

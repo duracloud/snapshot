@@ -64,6 +64,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_COMPLETED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_INITIATED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ALT_IDS_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ID_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_USER_TITLE;
+
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
  * engine.
@@ -335,13 +342,21 @@ public class SnapshotResource {
             snapshot.setSource(source);
             snapshot.setDescription(params.getDescription());
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
-            snapshot.setUserEmail(params.getUserEmail());
+            String userEmail = params.getUserEmail();
+            snapshot.setUserEmail(userEmail);
             snapshot.setMemberId(params.getMemberId());
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
 
             this.jobManager.executeSnapshot(snapshotId);
             CreateSnapshotBridgeResult result =
                 new CreateSnapshotBridgeResult(snapshotId, snapshot.getStatus());
+
+            // Add history event
+            String history =
+                "[{'"+SNAPSHOT_ACTION_TITLE+"':'"+SNAPSHOT_ACTION_INITIATED+"'}," +
+                "{'"+SNAPSHOT_USER_TITLE+"':'"+userEmail+"'}," +
+                "{'"+SNAPSHOT_ID_TITLE+"':'"+snapshotId+"'}]";
+            snapshotManager.updateHistory(snapshot, history);
             
             log.info("successfully created snapshot: {}", result);
             return Response.created(null).entity(result).build();
@@ -383,29 +398,36 @@ public class SnapshotResource {
         try {
             Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
 
-            // sanity check input from alternateIds since they are optional
+            // parse alternate IDs if provided
             List<String> alternateIds = params.getAlternateIds();
+            String altIds = "[]";
             if(alternateIds != null && !alternateIds.isEmpty()) {
-                // add alternate id's
-                snapshot = this.snapshotManager.addAlternateSnapshotIds(snapshot, alternateIds);
-
+                // add alternate IDs to snapshot
+                snapshot = this.snapshotManager.addAlternateSnapshotIds(snapshot,
+                                                                        alternateIds);
+                // build alternate IDs for history
                 StringBuilder history = new StringBuilder();
-                history.append("{\"alternateIds\":[");
+                history.append("[");
                 boolean first = true;
                 for(String id : alternateIds){
                     if(!first){
                         history.append(",");
                     }
-
-                    history.append("\"" + id + "\"");
+                    history.append("'" + id + "'");
                     first = false;
                 }
-                history.append("]}");
-                snapshot = this.snapshotManager.updateHistory(snapshot, history.toString());
+                history.append("]");
+                altIds = history.toString();
             }
 
-            snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
+            // Add history event
+            String history =
+                "[{'"+SNAPSHOT_ACTION_TITLE+"':'"+SNAPSHOT_ACTION_COMPLETED+"'}," +
+                "{'"+SNAPSHOT_ID_TITLE+"':'"+snapshotId+"'}," +
+                "{'"+SNAPSHOT_ALT_IDS_TITLE+"':"+altIds+"}]";
+            snapshotManager.updateHistory(snapshot, history);
 
+            snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
 
             log.info("successfully processed snapshot complete notification from DPN: {}",
                      snapshot);

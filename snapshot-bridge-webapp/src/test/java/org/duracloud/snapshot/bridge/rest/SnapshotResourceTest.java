@@ -165,6 +165,12 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshot.getStatus())
                 .andReturn(SnapshotStatus.INITIALIZED);
 
+        expect(this.snapshotManager.updateHistory(snapshot,
+                "[{'snapshot-action':'SNAPSHOT_INITIATED'}," +
+                 "{'initiating-user':'"+email+"'}," +
+                 "{'snapshot-id':'"+snapshotId+"'}]"))
+            .andReturn(snapshot);
+
         replayAll();
 
         CreateSnapshotBridgeResult result =
@@ -246,10 +252,13 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             new CompleteSnapshotBridgeParameters(snapshotAlternateIds);
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
-        expect(this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds)).andReturn(snapshot);
+        expect(this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds))
+            .andReturn(snapshot);
         expect(this.snapshotManager.updateHistory(snapshot,
-                                                  "{\"alternateIds\":[\""+altId1+"\",\""+altId2+"\"]}"))
-        .andReturn(snapshot);
+                "[{'snapshot-action':'SNAPSHOT_COMPLETED'}," +
+                 "{'snapshot-id':'"+snapshotId+"'}," +
+                 "{'alternate-ids':['"+altId1+"','"+altId2+"']}]"))
+            .andReturn(snapshot);
 
         expect(this.snapshotManager.transferToDpnNodeComplete(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);

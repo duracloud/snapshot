@@ -23,6 +23,15 @@ public class SnapshotServiceConstants {
     public static final String MANIFEST_MD5_TXT_FILE_NAME = 
         "manifest-md5.txt";
 
+    // Snapshot history values
+    public static final String SNAPSHOT_ACTION_TITLE = "snapshot-action";
+    public static final String SNAPSHOT_ACTION_INITIATED = "SNAPSHOT_INITIATED";
+    public static final String SNAPSHOT_ACTION_STAGED = "SNAPSHOT_STAGED";
+    public static final String SNAPSHOT_ACTION_COMPLETED = "SNAPSHOT_COMPLETED";
+    public static final String SNAPSHOT_USER_TITLE = "initiating-user";
+    public static final String SNAPSHOT_ID_TITLE = "snapshot-id";
+    public static final String SNAPSHOT_ALT_IDS_TITLE = "alternate-ids";
+
     // Restore history values
     public static final String RESTORE_ACTION_TITLE = "restore-action";
     public static final String RESTORE_ACTION_REQUESTED = "RESTORE_REQUESTED";

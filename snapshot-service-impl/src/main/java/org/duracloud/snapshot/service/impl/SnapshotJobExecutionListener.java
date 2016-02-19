@@ -18,6 +18,7 @@ import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,9 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private SnapshotManager snapshotManager;
+
+    @Autowired
+    private EventLog eventLog;
     
     private ExecutionListenerConfig config;
     
@@ -162,7 +166,8 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         snapshot.setStatus(status);
         snapshot.setStatusText(msg);
         snapshotRepo.save(snapshot);
-        log.debug("updated status of " + snapshot + " to " + status);
+        eventLog.logSnapshotUpdate(snapshot);
+        log.info("Updated status of " + snapshot + " to " + status);
     }
 
     private void sendEmail(String subject, String msg, String... destinations) {

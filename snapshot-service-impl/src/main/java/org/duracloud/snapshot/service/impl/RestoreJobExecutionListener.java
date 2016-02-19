@@ -28,6 +28,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +66,9 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private SnapshotManager snapshotManager;
+
+    @Autowired
+    private EventLog eventLog;
     
     private ExecutionListenerConfig config;
 
@@ -240,6 +244,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
             restoration.setExpirationDate(expirationDate);
         }
         restoreRepo.save(restoration);
+        eventLog.logRestoreUpdate(restoration);
+
         return expirationDate;
     }
 

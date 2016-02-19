@@ -12,6 +12,8 @@
   <bean id="emailNotifier" 
         class="org.duracloud.common.notification.EmailNotifier"/>
 
+  <bean id="eventLog" class="org.duracloud.snapshot.service.EventLog"/>
+
   <bean id="jobTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
     <property name="maxPoolSize" value="10"/>
     <property name="corePoolSize" value="5"/>

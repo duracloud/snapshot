@@ -176,7 +176,6 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
 
     /**
      * @param snapshotAlternateIds
-     * @throws JSONException
      */
     public void addSnapshotAlternateIds(List<String> snapshotAlternateIds) {
         if(snapshotAlternateIds != null) {

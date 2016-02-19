@@ -47,6 +47,7 @@ import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
@@ -90,6 +91,9 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Mock
     private DuracloudEndPointConfig source;
 
+    @Mock
+    private EventLog eventLog;
+
     /*
      * (non-Javadoc)
      * 
@@ -102,7 +106,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             new SnapshotResource(jobManager,
                                  snapshotManager,
                                  snapshotRepo,
-                                 snapshotContentItemRepo);
+                                 snapshotContentItemRepo,
+                                 eventLog);
     }
 
     @Test
@@ -161,6 +166,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         expect(snapshotRepo.saveAndFlush(isA(Snapshot.class)))
                 .andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         expect(snapshot.getStatus())
                 .andReturn(SnapshotStatus.INITIALIZED);
@@ -208,6 +215,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expectLastCall();
         expect(snapshotRepo.saveAndFlush(snapshot))
                 .andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
         replayAll();
         
         Response response = resource.restart(snapshotId);

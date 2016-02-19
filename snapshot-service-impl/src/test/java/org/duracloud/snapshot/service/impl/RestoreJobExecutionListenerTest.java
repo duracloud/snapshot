@@ -27,6 +27,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -75,6 +76,9 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private SnapshotManager snapshotManager;
+
+    @Mock
+    private EventLog eventLog;
     
     @TestSubject
     private  RestoreJobExecutionListener executionListener = new  RestoreJobExecutionListener();
@@ -182,6 +186,8 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(restoration.getSnapshot()).andReturn(snapshot);
         expect(snapshot.getName()).andReturn(snapshotName);
         expect(restoreRepo.save(restoration)).andReturn(restoration);
+        eventLog.logRestoreUpdate(restoration);
+        expectLastCall();
     }
 
     @Test

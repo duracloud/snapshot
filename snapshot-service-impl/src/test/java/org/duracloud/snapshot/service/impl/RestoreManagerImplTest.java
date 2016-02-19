@@ -30,6 +30,7 @@ import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
@@ -84,6 +85,9 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     @Mock
     private SnapshotManager snapshotManager;
 
+    @Mock
+    private EventLog eventLog;
+
     private String snapshotName = "snapshot-name";
 
     private String restorationId = "restoration-id";
@@ -116,6 +120,9 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expect(snapshot.getSource()).andReturn(source);
 
         expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
+        eventLog.logRestoreUpdate(isA(Restoration.class));
+        expectLastCall();
+
         Capture<String> emailBodyCapture = new Capture<>();
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
@@ -219,6 +226,8 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     public void testRestoreComplete() throws Exception{
 
         expect(restoreRepo.saveAndFlush(isA(Restoration.class))).andReturn(restoration);
+        eventLog.logRestoreUpdate(restoration);
+        expectLastCall();
 
         expect(this.jobManager.executeRestoration(isA(String.class)))
                 .andReturn(BatchStatus.UNKNOWN);
@@ -298,6 +307,8 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
         expect(restoration.getRestorationId()).andReturn(restorationId).times(2);
 
         expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
+        eventLog.logRestoreUpdate(restoration);
+        expectLastCall();
 
         expect(restoration.getSnapshot()).andReturn(snapshot);
 
@@ -332,6 +343,8 @@ public class RestoreManagerImplTest  extends SnapshotTestBase {
     public void testRestart() throws Exception {
         expect(restoreRepo.save(restoration)).andReturn(restoration);
         expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
+        eventLog.logRestoreUpdate(restoration);
+        expectLastCall().times(2);
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
         expectLastCall();

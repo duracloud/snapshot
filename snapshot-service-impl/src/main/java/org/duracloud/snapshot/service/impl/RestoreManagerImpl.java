@@ -14,6 +14,7 @@ import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotInProcessException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -76,6 +77,9 @@ public class RestoreManagerImpl  implements RestoreManager{
 
     @Autowired
     private SnapshotManager snapshotManager;
+
+    @Autowired
+    private EventLog eventLog;
 
     public RestoreManagerImpl() {}    
     
@@ -198,6 +202,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      */
     private Restoration save(Restoration restoration) {
         Restoration saved =  restoreRepo.saveAndFlush(restoration);
+        eventLog.logRestoreUpdate(restoration);
         log.debug("saved {}", saved);
         return saved;
     }
@@ -509,6 +514,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         restoration.setEndDate(null);
         restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
         restoration = restoreRepo.save(restoration);
+        eventLog.logRestoreUpdate(restoration);
         return this.restoreCompleted(restoration);
     }
 

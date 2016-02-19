@@ -48,6 +48,7 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
 import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.slf4j.Logger;
@@ -96,6 +97,9 @@ public class SnapshotManagerImpl implements SnapshotManager {
     
     @Autowired
     private BridgeConfiguration bridgeConfig;
+
+    @Autowired
+    private EventLog eventLog;
 
     public SnapshotManagerImpl() {}
 
@@ -190,14 +194,11 @@ public class SnapshotManagerImpl implements SnapshotManager {
         throws SnapshotException {
         try {
             Snapshot snapshot = getSnapshot(snapshotId);
+            snapshot = changeSnapshotStatus(snapshot, SnapshotStatus.CLEANING_UP, "");
 
-            snapshot.setStatus(SnapshotStatus.CLEANING_UP);
-            snapshot.setStatusText("");
-            snapshot = this.snapshotRepo.saveAndFlush(snapshot);
-
-            File snapshotDir =
-                new File(ContentDirUtils.getDestinationPath(snapshot.getName(),
-                                                            BridgeConfiguration.getContentRootDir()));
+            File snapshotDir = new File(
+                ContentDirUtils.getDestinationPath(snapshot.getName(),
+                                                   BridgeConfiguration.getContentRootDir()));
 
              File zipFile = zipMetadata(snapshotId, snapshotDir);
             
@@ -255,9 +256,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
             Snapshot snapshot = getSnapshot(snapshotId);
 
             // Set snapshot state in the db
-            snapshot.setStatus(SnapshotStatus.ERROR);
-            snapshot.setStatusText(errorDetails);
-            snapshot = this.snapshotRepo.saveAndFlush(snapshot);
+            snapshot = changeSnapshotStatus(snapshot, SnapshotStatus.ERROR, errorDetails);
 
             // Send email to duracloud administrators
             String subject = "Snapshot ERROR: " + snapshotId;
@@ -361,9 +360,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     private Snapshot cleanupComplete(Snapshot snapshot)
         throws SnapshotException {
         snapshot.setEndDate(new Date());
-        snapshot.setStatus(SnapshotStatus.SNAPSHOT_COMPLETE);
-        snapshot.setStatusText("");
-        snapshot = snapshotRepo.saveAndFlush(snapshot);
+        snapshot = changeSnapshotStatus(snapshot, SnapshotStatus.SNAPSHOT_COMPLETE, "");
         String snapshotId = snapshot.getName();
         String message = "Snapshot complete: " + snapshotId;
         List<String> recipients =
@@ -494,5 +491,15 @@ public class SnapshotManagerImpl implements SnapshotManager {
         this.secondsBetweenCleanupFailureNotifications = secondsBetweenCleanupFailureNotifications;
     }
 
+    private Snapshot changeSnapshotStatus(Snapshot snapshot,
+                                          SnapshotStatus status,
+                                          String statusText) {
+        snapshot.setStatus(status);
+        snapshot.setStatusText(statusText);
+        Snapshot savedSnapshot = this.snapshotRepo.saveAndFlush(snapshot);
+        eventLog.logSnapshotUpdate(savedSnapshot);
+        log.info("Updated status of " + snapshot + " to " + status);
+        return savedSnapshot;
+    }
 
 }

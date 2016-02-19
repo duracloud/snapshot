@@ -55,6 +55,7 @@ import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.UpdateSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
@@ -98,17 +99,20 @@ public class SnapshotResource {
     private SnapshotContentItemRepo snapshotContentItemRepo;
     private SnapshotRepo snapshotRepo;
 
+    private EventLog eventLog;
 
     @Autowired
     public SnapshotResource(
         SnapshotJobManager jobManager, 
         SnapshotManager snapshotManager,
         SnapshotRepo snapshotRepo,
-        SnapshotContentItemRepo snapshotContentItemRepo) {
+        SnapshotContentItemRepo snapshotContentItemRepo,
+        EventLog eventLog) {
         this.jobManager = jobManager;
         this.snapshotManager = snapshotManager;
         this.snapshotRepo = snapshotRepo;
         this.snapshotContentItemRepo = snapshotContentItemRepo;
+        this.eventLog = eventLog;
     }
 
     /**
@@ -262,6 +266,7 @@ public class SnapshotResource {
             snapshot.setStatusText("restarting");
             snapshot.setStatus(SnapshotStatus.INITIALIZED);
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
+            eventLog.logSnapshotUpdate(snapshot);
             
             SnapshotStatus snapshotStatus = snapshot.getStatus();
             this.jobManager.executeSnapshot(snapshotId);
@@ -346,6 +351,7 @@ public class SnapshotResource {
             snapshot.setUserEmail(userEmail);
             snapshot.setMemberId(params.getMemberId());
             snapshot = this.snapshotRepo.saveAndFlush(snapshot);
+            eventLog.logSnapshotUpdate(snapshot);
 
             this.jobManager.executeSnapshot(snapshotId);
             CreateSnapshotBridgeResult result =

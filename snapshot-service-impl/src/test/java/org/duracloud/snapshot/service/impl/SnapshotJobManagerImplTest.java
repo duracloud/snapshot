@@ -24,7 +24,10 @@ import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.RestoreStatus;
+import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CompleteCancelSnapshotTaskParameters;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
@@ -106,6 +109,9 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
     @Mock
     private StoreClientHelper storeHelper;
+
+    @Mock
+    private EventLog eventLog;
     
     @Before
     @Override
@@ -117,7 +123,8 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
                                        jobLauncher,
                                        jobRepository,
                                        builderManager,
-                                       storeHelper);
+                                       storeHelper,
+                                       eventLog);
         manager.init(config, false);
     }
 
@@ -229,7 +236,6 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         Job job = createMock(Job.class);
         EasyMock.expect(snapshotJobBuilder.buildJob(snapshot, config))
         .andReturn(job);
-        
 
         expect(this.snapshotRepo.findByName(isA(String.class))).andReturn(snapshot).atLeastOnce();
         setupStop();
@@ -245,7 +251,13 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
         CompleteCancelSnapshotTaskParameters params = new CompleteCancelSnapshotTaskParameters();
         params.setSpaceId(spaceId);
-        expect(contentStore.performTask(SnapshotConstants.COMPLETE_SNAPSHOT_CANCEL_TASK_NAME, params.serialize())).andReturn("test");
+        expect(contentStore.performTask(SnapshotConstants.COMPLETE_SNAPSHOT_CANCEL_TASK_NAME, params.serialize()))
+            .andReturn("test");
+
+        snapshot.setStatus(SnapshotStatus.CANCELLED);
+        snapshot.setStatusText("");
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         replayAll();
 
@@ -276,6 +288,11 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
                                        isA(String.class),
                                        isA(String.class))).andReturn(contentStore);
         contentStore.deleteSpace(spaceId);
+        expectLastCall();
+
+        restoration.setStatus(RestoreStatus.CANCELLED);
+        restoration.setStatusText("");
+        eventLog.logRestoreUpdate(restoration);
         expectLastCall();
 
         replayAll();

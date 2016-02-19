@@ -46,6 +46,7 @@ import org.duracloud.snapshot.dto.task.CleanupSnapshotTaskResult;
 import org.duracloud.snapshot.dto.task.CompleteSnapshotTaskResult;
 import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.easymock.Capture;
 import org.easymock.Mock;
@@ -87,6 +88,9 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
     @Mock
     private StoreClientHelper storeClientHelper;
+
+    @Mock
+    private EventLog eventLog;
 
     /**
      * @throws java.lang.Exception
@@ -194,6 +198,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
             .andReturn(new CleanupSnapshotTaskResult());
         expect(snapshotRepo.saveAndFlush(isA(Snapshot.class)))
             .andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         expectLastCall();
         replayAll();
@@ -221,6 +227,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expectLastCall();
         snapshot.setStatusText(errorDetails);
         expect(snapshotRepo.saveAndFlush(snapshot)).andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         // Send email
         String add1 = "add-1";
@@ -248,7 +256,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
 
         expect(snapshot.getName()).andReturn(snapshotId).times(2);
-        expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot);
+        expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId))
+            .andReturn(snapshot);
         this.snapshot.addSnapshotAlternateIds(alternateIds);
         expectLastCall();
         expect(this.snapshotRepo.saveAndFlush(snapshot)).andReturn(snapshot);
@@ -277,9 +286,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
             assertTrue(true);
         }
     }
-    /**
-     * 
-     */
+
     private void setupTaskClientHelper() {
         expect(snapshotTaskClientHelper.create(eq(endPointConfig),
                                                isA(String.class),
@@ -287,9 +294,6 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         .andReturn(snapshotTaskClient);
     }
 
-    /**
-     * 
-     */
     private void setupEndpoint() {
         expect(this.bridgeConfig.getDuracloudUsername()).andReturn("username").anyTimes();
         expect(this.bridgeConfig.getDuracloudPassword()).andReturn("password").anyTimes();
@@ -338,6 +342,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray);
 
         expect(snapshotRepo.saveAndFlush(isA(Snapshot.class))).andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),

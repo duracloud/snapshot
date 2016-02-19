@@ -27,6 +27,7 @@ import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.SnapshotStatus;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -67,6 +68,9 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private SnapshotManager snapshotManager;
+
+    @Mock
+    private EventLog eventLog;
     
     @TestSubject
     private SnapshotJobExecutionListener executionListener = new SnapshotJobExecutionListener();
@@ -102,6 +106,8 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         expectLastCall();
         expect(snapshotRepo.save(snapshot))
             .andReturn(snapshot);;
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
 
         replayAll();
 
@@ -183,6 +189,8 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
         expect(snapshotRepo.save(snapshot))
             .andReturn(snapshot);
+        eventLog.logSnapshotUpdate(snapshot);
+        expectLastCall();
     }
 
     @Test

@@ -28,9 +28,11 @@ import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.repo.RestoreRepo;
 import org.duracloud.snapshot.db.repo.SnapshotRepo;
+import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.task.CompleteCancelSnapshotTaskParameters;
 import org.duracloud.snapshot.service.AlreadyInitializedException;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
@@ -76,11 +78,16 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     private SnapshotJobManagerConfig config;
     private BatchJobBuilderManager builderManager;
     private StoreClientHelper storeClientHelper;
+    private EventLog eventLog;
 
     @Autowired
-    public SnapshotJobManagerImpl(
-        SnapshotRepo snapshotRepo, RestoreRepo restoreRepo, JobLauncher jobLauncher, JobRepository jobRepository,
-        BatchJobBuilderManager manager, StoreClientHelper storeClientHelper) {
+    public SnapshotJobManagerImpl(SnapshotRepo snapshotRepo,
+                                  RestoreRepo restoreRepo,
+                                  JobLauncher jobLauncher,
+                                  JobRepository jobRepository,
+                                  BatchJobBuilderManager manager,
+                                  StoreClientHelper storeClientHelper,
+                                  EventLog eventLog) {
         super();
         this.restoreRepo = restoreRepo;
         this.snapshotRepo = snapshotRepo;
@@ -88,6 +95,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         this.jobLauncher = jobLauncher;
         this.jobRepository = jobRepository;
         this.storeClientHelper = storeClientHelper;
+        this.eventLog = eventLog;
     }
 
     /*
@@ -340,6 +348,9 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
                     
                     log.info("snapshot cancellation is complete: {}", result);
 
+                    snapshot.setStatus(SnapshotStatus.CANCELLED);
+                    snapshot.setStatusText("");
+                    eventLog.logSnapshotUpdate(snapshot);
                 }catch(Exception ex){
                     log.error("failed to complete cancellation on the durastore side for space {}:  {}",
                               spaceId,
@@ -385,6 +396,9 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
                     
                     log.info("restore cancellation is complete: {}", result);
 
+                    restore.setStatus(RestoreStatus.CANCELLED);
+                    restore.setStatusText("");
+                    eventLog.logRestoreUpdate(restore);
                 }catch(Exception ex){
                     log.error("failed to delete restore space {} as part of cleanup:  {}",
                               spaceId,
@@ -441,10 +455,6 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }
     }
 
- 
-    /**
-     * 
-     */
     private void checkInitialized() throws SnapshotException {
         if (!isInitialized()) {
             throw new SnapshotException("The application must be initialized " + "before it can be invoked!", null);
@@ -470,10 +480,6 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         }
     }
 
-    /**
-     * @param snapshotId
-     * @return
-     */
     private JobExecution getJobExecution(BaseEntity entity) {
         BatchJobBuilder builder = this.builderManager.getBuilder(entity);
         JobParameters params = builder.buildIdentifyingJobParameters(entity);

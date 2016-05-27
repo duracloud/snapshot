@@ -7,7 +7,26 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import org.apache.commons.httpclient.HttpStatus;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
+
+import java.text.MessageFormat;
+import java.util.Arrays;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.http.HttpStatus;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -28,28 +47,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import java.text.MessageFormat;
-import java.util.Arrays;
-
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_INITIATED;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_REQUESTED;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ID_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_USER_TITLE;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing

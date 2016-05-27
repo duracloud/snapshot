@@ -19,12 +19,10 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.commons.httpclient.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.bridge.rest.ResponseDetails;
-import org.duracloud.snapshot.bridge.rest.SnapshotResource;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;

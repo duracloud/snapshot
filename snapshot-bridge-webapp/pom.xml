@@ -106,7 +106,18 @@
       <groupId>org.glassfish.jersey.ext</groupId>
       <artifactId>jersey-spring3</artifactId>
       <version>${jersey.version}</version>
-    </dependency>
+
+       <exclusions>
+          <exclusion>
+            <artifactId>jersey-bean-validation</artifactId>
+            <groupId>org.glassfish.jersey.ext</groupId>
+          </exclusion>
+          <exclusion>
+            <artifactId>bean-validator</artifactId>
+            <groupId>org.glassfish.hk2.external</groupId>
+          </exclusion>
+        </exclusions>
+     </dependency>
 
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>

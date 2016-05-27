@@ -16,7 +16,7 @@ import java.util.Collection;
 
 import javax.ws.rs.core.Response;
 
-import org.duracloud.appconfig.domain.NotificationConfig;
+import org.duracloud.common.notification.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.util.WaitUtil;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;

@@ -7,6 +7,8 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
+
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -27,7 +29,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.apache.commons.httpclient.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -64,13 +66,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_COMPLETED;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_INITIATED;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ALT_IDS_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ID_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_USER_TITLE;
 
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing

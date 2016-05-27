@@ -32,9 +32,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import org.duracloud.appconfig.domain.NotificationConfig;
 import org.duracloud.common.json.JaxbJsonSerializer;
 import org.duracloud.common.model.RootUserCredential;
+import org.duracloud.common.notification.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.EncryptionUtil;

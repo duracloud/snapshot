@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.duracloud.snapshot</groupId>
@@ -178,13 +178,13 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <slf4j.version>1.7.6</slf4j.version>
-    <springframework.version>4.0.9.RELEASE</springframework.version>
-    <springframework.data.jpa.version>1.8.1.RELEASE</springframework.data.jpa.version>
-    <springframework.security.version>4.0.2.RELEASE</springframework.security.version>
-    <spring.batch.version>3.0.4.RELEASE</spring.batch.version>
-    <hibernate.version>4.3.5.Final</hibernate.version>
-    <duracloud.version>3.7.1</duracloud.version>
-    <duracloud.db.version>3.5.1</duracloud.db.version>
+    <springframework.version>4.2.5.RELEASE</springframework.version>
+    <springframework.data.jpa.version>1.10.1.RELEASE</springframework.data.jpa.version>
+    <springframework.security.version>4.0.4.RELEASE</springframework.security.version>
+    <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
+    <hibernate.version>5.1.0.Final</hibernate.version>
+    <duracloud.version>4.0.0-SNAPSHOT</duracloud.version>
+    <duracloud.db.version>4.0.0-SNAPSHOT</duracloud.db.version>
 
     <skipITs>true</skipITs>
   </properties>
@@ -291,7 +291,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.16</version>
         <configuration>
-          <systemProperties/>
+          <systemProperties />
         </configuration>
         <executions>
           <execution>
@@ -302,7 +302,7 @@
             </goals>
             <configuration>
               <skip>${skipTests}</skip>
-              <systemProperties/>
+              <systemProperties />
               <excludes>
                 <exclude>${integrationTests}</exclude>
                 <exclude>${instrumentedTests}</exclude>
@@ -332,9 +332,9 @@
             </configuration>
           </execution>
           <execution>
-            <!-- This execution 'default-test' overrides the built-in default
-              execution for the test phase. Thus unit tests aren't run when you running
-              integration tests. It comes in handy when trying to debug a single integration
+            <!-- This execution 'default-test' overrides the built-in default 
+              execution for the test phase. Thus unit tests aren't run when you running 
+              integration tests. It comes in handy when trying to debug a single integration 
               test as you only need to attach your debugger once. -->
             <id>default-test</id>
             <configuration>
@@ -377,15 +377,15 @@
       </dependency>
 
       <dependency>
-       <groupId>org.springframework</groupId>
-       <artifactId>spring-aop</artifactId>
-       <version>${springframework.version}</version>
-       <exclusions>
-         <exclusion>
-           <groupId>commons-logging</groupId>
-           <artifactId>commons-logging</artifactId>
-         </exclusion>
-       </exclusions>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-aop</artifactId>
+        <version>${springframework.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -404,7 +404,7 @@
       <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-core</artifactId>
-	<version>${springframework.security.version}</version>
+        <version>${springframework.security.version}</version>
       </dependency>
 
       <dependency>
@@ -418,7 +418,7 @@
         <artifactId>spring-security-config</artifactId>
         <version>${springframework.security.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.springframework.security</groupId>
         <artifactId>spring-security-taglibs</artifactId>
@@ -442,7 +442,7 @@
         <artifactId>common</artifactId>
         <version>${duracloud.db.version}</version>
       </dependency>
-    
+
       <dependency>
         <groupId>org.duracloud</groupId>
         <artifactId>snapshotdata</artifactId>
@@ -479,7 +479,7 @@
           </exclusion>
         </exclusions>
       </dependency>
-      
+
       <dependency>
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
@@ -508,6 +508,22 @@
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-entitymanager</artifactId>
         <version>${hibernate.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>${hibernate.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.fasterxml</groupId>
+            <artifactId>classmate</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

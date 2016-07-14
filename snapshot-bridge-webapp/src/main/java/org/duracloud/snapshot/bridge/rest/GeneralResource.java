@@ -33,12 +33,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.duracloud.common.json.JaxbJsonSerializer;
-import org.duracloud.common.model.RootUserCredential;
 import org.duracloud.common.notification.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
 import org.duracloud.common.util.EncryptionUtil;
 import org.duracloud.common.util.IOUtil;
+import org.duracloud.snapshot.bridge.rest.config.RootUserCredential;
 import org.duracloud.snapshot.db.DatabaseConfig;
 import org.duracloud.snapshot.db.DatabaseInitializer;
 import org.duracloud.snapshot.service.AlreadyInitializedException;
@@ -90,13 +90,7 @@ public class GeneralResource {
     private BridgeConfiguration bridgeConfiguration;
     private Finalizer finalizer;
     private PurgeObsoleteDataTask purgeObsoleteDataTask;
-    static {
-        //override root credential system property keys.
-        RootUserCredential.overrideSystemPropertyKeys("duracloud.bridge.root.username",
-                                                      "duracloud.bridge.root.password",
-                                                      "duracloud.bridge.root.email");
-    }
-    
+
     @Autowired
     public GeneralResource(SnapshotJobManager jobManager, 
                             RestoreManager restorationManager,

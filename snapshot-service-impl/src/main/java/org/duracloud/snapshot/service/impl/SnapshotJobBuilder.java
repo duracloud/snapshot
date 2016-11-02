@@ -53,7 +53,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Daniel Bernstein Date: Feb 19, 2014
  */
 @Component
-public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
+public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBuilder<Snapshot> {
     private static Logger log = LoggerFactory.getLogger(SnapshotJobBuilder.class);
 
     private static final String MANIFEST_SHA256_TXT_FILE_NAME = 
@@ -151,8 +151,8 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
             stepFactory.setBeanName("step1");
             stepFactory.setItemReader(itemReader);
             stepFactory.setItemWriter(itemWriter);
-            stepFactory.setCommitInterval(20);
-            stepFactory.setThrottleLimit(20);
+            stepFactory.setCommitInterval(1);
+            setThrottleLimitForContentTransfers(stepFactory);
             stepFactory.setTaskExecutor(taskExecutor);
             Step step = (Step) stepFactory.getObject();
 
@@ -173,7 +173,6 @@ public class SnapshotJobBuilder implements BatchJobBuilder<Snapshot> {
         return job;
     }
 
-    
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildIdentifyingJobParameters(java.lang.Object)
      */

@@ -44,7 +44,7 @@ import org.springframework.transaction.PlatformTransactionManager;
  * @author Daniel Bernstein Date: Feb 19, 2014
  */
 @Component
-public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
+public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBuilder<Restoration> {
     private static Logger log = LoggerFactory.getLogger(RestoreJobBuilder.class);
 
     private RestoreJobExecutionListener jobListener;
@@ -336,7 +336,7 @@ public class RestoreJobBuilder implements BatchJobBuilder<Restoration> {
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
         stepFactory.setCommitInterval(1);
-        stepFactory.setThrottleLimit(20);
+        setThrottleLimitForContentTransfers(stepFactory);
         stepFactory.setTaskExecutor(taskExecutor);
         stepFactory.setListeners(new StepListener[] { writer });
         return stepFactory.getObject();

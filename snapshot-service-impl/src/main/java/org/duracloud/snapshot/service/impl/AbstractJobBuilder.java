@@ -7,6 +7,7 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
@@ -23,9 +24,9 @@ public class AbstractJobBuilder {
      * @param stepFactory
      */
     protected void setThrottleLimitForContentTransfers(SimpleStepFactoryBean<?,?> stepFactory) {
-        String threadsPerJob = System.getProperty("duracloud.bridge.threads-per-job", "7");
-        log.debug("threadsPerJob = {}", threadsPerJob);
-        stepFactory.setThrottleLimit(Integer.parseInt(threadsPerJob));
+        int threadsPerJob = BridgeConfiguration.getBridgeThreadsPerJob();
+        log.info("Setting threadsPerJob = {}", threadsPerJob);
+        stepFactory.setThrottleLimit(threadsPerJob);
     }
 
 }

@@ -9,6 +9,8 @@ package org.duracloud.snapshot.service;
 
 import java.io.File;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,10 +19,16 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class BridgeConfiguration {
+
     public static final String DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY = "duracloud.bridge.root.dir";
+    public static final String DURACLOUD_BRIDGE_THREADS_PER_JOB = "duracloud.bridge.threads-per-job";
+
     private String[] duracloudEmailAddresses;
     private String duracloudUsername;
     private String duracloudPassword;
+
+    private static Logger log = LoggerFactory.getLogger(BridgeConfiguration.class);
+
     /**
      * @return the duracloudUsername
      */
@@ -109,6 +117,27 @@ public class BridgeConfiguration {
      */
     public static File getBridgeWorkDir() {
         return createDirectoryIfNotExists(new File(getBridgeRootDir(), "work").getAbsolutePath());
+    }
+
+    public static int getBridgeThreadsPerJob() {
+        String threadsPerJobConfig = System.getProperty(DURACLOUD_BRIDGE_THREADS_PER_JOB);
+        if(null != threadsPerJobConfig) {
+            try {
+                return Integer.parseInt(threadsPerJobConfig);
+            } catch(NumberFormatException e) {
+                log.warn("Could not parse system property " +
+                         DURACLOUD_BRIDGE_THREADS_PER_JOB +
+                         " with value " + threadsPerJobConfig +
+                         " into an int. Proceeding with default threads setting.");
+            }
+        }
+
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        if(availableProcessors > 1) {
+            return availableProcessors - 1;
+        } else {
+            return 1;
+        }
     }
 
 }

@@ -29,6 +29,8 @@ import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
+import org.duracloud.common.retry.Retrier;
+import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.common.util.IOUtil;
@@ -200,7 +202,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
                 ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                    BridgeConfiguration.getContentRootDir()));
 
-             File zipFile = zipMetadata(snapshotId, snapshotDir);
+            File zipFile = zipMetadata(snapshotId, snapshotDir);
             
             DuracloudEndPointConfig source = snapshot.getSource();
 
@@ -210,18 +212,28 @@ public class SnapshotManagerImpl implements SnapshotManager {
             
             String zipChecksum = createChecksumGenerator().generateChecksum(zipFile);
 
-            try(FileInputStream zipStream = new FileInputStream(zipFile)) {
-                store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
-                                 zipFile.getName(),
-                                 zipStream,
-                                 zipFile.length(),
-                                 "application/zip",
-                                 zipChecksum,
-                                 null);
+            try {
+                new Retrier(4, 1000, 2).execute(new Retriable(){
+                    public Object retry() throws Exception {
+                        try(FileInputStream zipStream = new FileInputStream(zipFile)) {
+                            return store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
+                                             zipFile.getName(),
+                                             zipStream,
+                                             zipFile.length(),
+                                             "application/zip",
+                                             zipChecksum,
+                                             null);
+                        }
+                    }
+              });
+            }catch(Exception ex){
+                log.error("failed to upload snapshot zip ("
+                    + zipFile.getAbsolutePath() + ") to duracloud: " + ex.getMessage(), ex);
+                throw new Exception(ex);
+            } finally {
+                zipFile.delete();
             }
 
-            zipFile.delete();
-            
             FileUtils.deleteDirectory(snapshotDir);
 
             String spaceId = source.getSpaceId();

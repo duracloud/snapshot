@@ -32,14 +32,15 @@ class BridgeRetryAdvice extends RetryAdvice {
     private long minWaitBetweenNotificationsInSeconds = 3600;
 
 
-    
     public BridgeRetryAdvice(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
         setMaxRetries(3);
         setWaitTime(3000);
     }
     
-    @Pointcut("execution(public * org.duracloud.storeclient.ContentStore.*(..)) || execution(public * org.duracloud.client.util.StoreClientUtil.*(..))")
+    @Pointcut("(execution(public * org.duracloud.client.ContentStore.*(..)) and "
+            + "  !execution(public * org.duracloud.client.ContentStore.addContent(..))) "
+            + " or execution(public * org.duracloud.client.util.StoreClientUtil.*(..))")
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         try { 

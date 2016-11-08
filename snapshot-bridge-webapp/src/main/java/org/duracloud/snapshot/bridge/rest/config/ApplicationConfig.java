@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * All java-based config definitions live in this class. 
@@ -23,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
  *         Date: Feb 4, 2014
  */
 @Configuration
+@EnableAspectJAutoProxy
 public class ApplicationConfig {
     static Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
     /**

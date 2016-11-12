@@ -13,10 +13,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
-import org.duracloud.snapshot.service.impl.FileSystemReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.item.ExecutionContext;
+
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.anyLong;
 
 /**
  * @author Daniel Bernstein
@@ -31,15 +36,21 @@ public class FileSystemReaderTest extends SnapshotTestBase {
     public void setUp() throws Exception {
         super.setup();
     }
-
-
+    
     /**
      * Test method for {@link org.duracloud.snapshot.service.impl.FileSystemReader#read()}.
      * @throws IOException 
      */
     @Test
-    public void testRead() throws IOException {
-        File rootDirectory = new File(System.getProperty("java.io.tmpdir")+File.separator + "FileSystemReaderTest"+ System.currentTimeMillis());
+    public void testRead() throws Exception {
+        StepExecution stepExecution = createMock(StepExecution.class);
+        ExecutionContext context = createMock(ExecutionContext.class);
+        expect(stepExecution.getExecutionContext()).andReturn(context);
+        expect(context.getLong(isA(String.class), anyLong())).andReturn(0l);
+        
+        File rootDirectory =
+            new File(System.getProperty("java.io.tmpdir")
+                + File.separator + "FileSystemReaderTest" + System.currentTimeMillis());
         rootDirectory.mkdirs();
         rootDirectory.deleteOnExit();
         
@@ -53,17 +64,16 @@ public class FileSystemReaderTest extends SnapshotTestBase {
             files.add(f);
         }
         
+        replayAll();
+        
         FileSystemReader reader = new FileSystemReader(rootDirectory);
+        reader.beforeStep(stepExecution);
         while(true){
-            try {
-                File file = reader.read();
-                if(file == null){
-                    break;
-                }
-                results.add(file);
-            } catch (Exception e) {
-                e.printStackTrace();
+            File file = reader.read();
+            if(file == null){
+                break;
             }
+            results.add(file);
         }
 
         Assert.assertEquals(files.size(), results.size());

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
 import org.duracloud.chunk.util.ChunkUtil;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
@@ -33,7 +34,6 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.ItemWriter;
 
 /**
@@ -272,6 +272,16 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             log.error(message, ioe);
 
         }
+        
+        try {
+            outputWriter.close();
+            log.info("closed output writer");
+        } catch (Exception ioe) {
+            String message = "Error closing output writer: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
+
+        }
 
         retrieveSnapshotProperties();
         try {
@@ -279,12 +289,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                 propsWriter.write("]\n");
             }
             
-            propsWriter.close();
             log.info("closed props writer");
         } catch (IOException ioe) {
             String message = "Error writing end of content property manifest: " + ioe.getMessage();
             errors.add(message);
             log.error(message, ioe);
+        } finally {
+            IOUtils.closeQuietly(propsWriter);
         }
         
         if(errors.size() == 0){

@@ -59,11 +59,11 @@ public class SpaceManifestDpnManifestVerifier {
     public boolean verify() {
 
         this.errors = new LinkedList<>();
-        try {
+        try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)))){
             WriteOnlyStringSet dpnManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
             log.info("loaded manifest set into memory.");
-            BufferedReader reader =
-                new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)));
+            
             ManifestFormatter formatter = new TsvManifestFormatter();
             // skip header
             if (formatter.getHeader() != null) {

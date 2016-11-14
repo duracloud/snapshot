@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.service.impl;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
@@ -19,6 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.duracloud.chunk.util.ChunkUtil;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
+import org.duracloud.common.error.DuraCloudRuntimeException;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
@@ -254,49 +256,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         ExitStatus status = super.afterStep(stepExecution);
         log.info("Step complete with status: {}",
                      stepExecution.getExitStatus());
-        try {
-            md5Writer.close();
-            log.info("closed md5 writer");
-        } catch (IOException ioe) {
-            String message = "Error closing MD5 manifest BufferedWriter: " + ioe.getMessage();
-            errors.add(message);
-            log.error(message, ioe);
-        }
 
-        try {
-            sha256Writer.close();
-            log.info("closed sh256 writer");
-        } catch (IOException ioe) {
-            String message = "Error closing SHA-256 manifest BufferedWriter: " + ioe.getMessage();
-            errors.add(message);
-            log.error(message, ioe);
-
-        }
+        close("md5 writer", md5Writer);
+        close("sh256 writer", sha256Writer);
+        close("output writer", outputWriter);
         
-        try {
-            outputWriter.close();
-            log.info("closed output writer");
-        } catch (Exception ioe) {
-            String message = "Error closing output writer: " + ioe.getMessage();
-            errors.add(message);
-            log.error(message, ioe);
-
-        }
-
         retrieveSnapshotProperties();
-        try {
-            synchronized (propsWriter) {
-                propsWriter.write("]\n");
-            }
-            
-            log.info("closed props writer");
-        } catch (IOException ioe) {
-            String message = "Error writing end of content property manifest: " + ioe.getMessage();
-            errors.add(message);
-            log.error(message, ioe);
-        } finally {
-            IOUtils.closeQuietly(propsWriter);
-        }
+        closePropsWriter();
         
         if(errors.size() == 0){
            log.info("no errors - proceeding with space manifest -dpn manifest verification...");
@@ -315,6 +281,40 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         return status;
     }
 
+    private void closePropsWriter() {
+        try {
+            synchronized (propsWriter) {
+                propsWriter.write("]\n");
+            }
+            
+            log.info("closed props writer");
+        } catch (IOException ioe) {
+            String message = "Error writing end of content property manifest: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
+        } finally {
+            IOUtils.closeQuietly(propsWriter);
+        }
+    }
+
+    private void close(String writerName, Object writer) {
+        try {
+            
+            if(writer instanceof Closeable){
+                ((Closeable)writer).close();
+            }else if(writer instanceof OutputWriter){
+                ((OutputWriter)writer).close();
+            }else {
+                throw new DuraCloudRuntimeException(writerName + 
+                                                    " is not a supported parameter type for this method.");
+            }
+            log.info("closed {}", writerName);
+        } catch (IOException ioe) {
+            String message = "Error closing "+writerName+" BufferedWriter: " + ioe.getMessage();
+            errors.add(message);
+            log.error(message, ioe);
+        }
+    }
 
     @Override
     public void beforeStep(StepExecution stepExecution) {

@@ -35,10 +35,10 @@ import org.duracloud.snapshot.dto.SnapshotStatus;
  *         Date: Jul 21, 2014
  */
 @Entity
-@Table (name="snapshot", uniqueConstraints={@UniqueConstraint(columnNames={"name"})})
+@Table (name="snapshot", uniqueConstraints={@UniqueConstraint(name="idx_snapshot_name",columnNames={"name"})})
 public class Snapshot extends BaseEntity implements Comparator<Snapshot>{
     
-    @Column(name="name", nullable=false, length = 256)
+    @Column(name="name", nullable=false, length = 255)
     private String name;
     @Column(name="description", nullable=true, length = 512)
     private String description;

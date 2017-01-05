@@ -63,7 +63,8 @@ public class SnapshotDatabaseConfig {
 
         dataSource.setTestOnBorrow(true);
         dataSource.setValidationQuery("SELECT 1");
-
+        dataSource.setValidationQueryTimeout(10);
+        dataSource.addConnectionProperty("hibernate.connection.release_mode", "after_transaction");
         return dataSource;
     }
 

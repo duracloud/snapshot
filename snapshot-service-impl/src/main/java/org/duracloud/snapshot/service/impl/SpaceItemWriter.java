@@ -26,6 +26,7 @@ import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.retrieval.mgmt.OutputWriter;
+import org.duracloud.retrieval.mgmt.RetrievalListener;
 import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.snapshot.db.model.Snapshot;
@@ -124,7 +125,12 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         RetrievalWorker retrievalWorker =
             new RetrievalWorker(contentItem, retrievalSource, directory,
                                 true, outputWriter, false, true);
-        Map<String,String> props = retrievalWorker.retrieveFile();
+        Map<String,String> props = retrievalWorker.retrieveFile(new RetrievalListener(){ 
+            @Override
+            public void chunkRetrieved(String chunk) {
+                getStepExecution().getExecutionContext().put("last-chunk-retrieved-" + Thread.currentThread().getName(), chunk);
+            }
+        });
         File localFile = retrievalWorker.getLocalFile();
 
         String md5Checksum = null;

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -41,6 +42,7 @@ import org.duracloud.common.util.DateUtil;
 import org.duracloud.common.util.DateUtil.DateFormat;
 import org.duracloud.retrieval.mgmt.CSVFileOutputWriter;
 import org.duracloud.retrieval.mgmt.OutputWriter;
+import org.duracloud.retrieval.mgmt.RetrievalListener;
 import org.duracloud.retrieval.source.ContentStream;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.snapshot.SnapshotException;
@@ -401,7 +403,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_MODIFIED, date);
         ContentStream contentStream = new ContentStream(is, map);
         ContentItem item = new ContentItem(spaceId, contentId);
-        expect(retrievalSource.getSourceContent(item)).andReturn(contentStream);
+        
+        expect(retrievalSource.getSourceContent(eq(item), isA(RetrievalListener.class))).andReturn(contentStream);
 
         items.add(item);
         this.snapshotManager.addContentItem(eq(snapshot),

@@ -2,10 +2,10 @@
 
 <configuration debug="true" scan="true">
   <jmxConfigurator/>
-  <property name="LOG_FILENAME" value="/var/log/duracloud/bridge.log" />
-  <property name="EVENT_LOG_FILENAME" value="/var/log/duracloud/bridge-events.log" />
-  <property name="RETRIEVE_LOG_FILENAME" value="/var/log/duracloud/bridge-snapshot-items.log" />
-  <property name="RESTORE_LOG_FILENAME" value="/var/log/duracloud/bridge-restore-items.log" />
+  <property name="LOG_FILENAME" value="${bridge.log.dir}/bridge.log" />
+  <property name="EVENT_LOG_FILENAME" value="${bridge.log.dir}/bridge-events.log" />
+  <property name="RETRIEVE_LOG_FILENAME" value="${bridge.log.dir}/bridge-snapshot-items.log" />
+  <property name="RESTORE_LOG_FILENAME" value="${bridge.log.dir}/bridge-restore-items.log" />
 
   <appender name="EVENT_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <!--See also http://logback.qos.ch/manual/appenders.html#RollingFileAppender-->

@@ -186,6 +186,7 @@
     <hibernate.version>5.1.0.Final</hibernate.version>
     <duracloud.version>4.2.5</duracloud.version>
     <duracloud.db.version>4.0.2</duracloud.db.version>
+    <bridge.log.dir>/var/log/duracloud</bridge.log.dir>
 
     <skipITs>true</skipITs>
   </properties>

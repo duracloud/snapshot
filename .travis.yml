@@ -59,13 +59,13 @@ deploy:
       tags: true
 env:
   global:
-    - secure: "FUmdsx25YfJtTbuJhXD+Y5HF8bAQBeAtOaLexyPefLCY6BlqbwQ4kjGQ/lbAmeCrnFlB5UnnqNyXtkVTB8ANqpqe59Z2uQydGrJVmLiHuGjgHRucEvI45ojaLq0c6ViWZBj5VgTUtDmeNSlP4Ibk/cRtJHtmo3BRM9pPA1WwQvM="
+    - secure: "SZ3SrQHMcdfAU3UlKnQnu6xwuOz9lanrewQ6YorRSsh3Kvpj13Qyrwu4nEXQ9cNKieeiMLk0A0NU7sqQ1xZ/9JFcwWjJ2lZ5lISEAlqj/h4QL5OnxkubdlN/hQwz/Oh53f/yC/J6mC0tKdJ2GxHZ9TdlTj2jxc+S9/4E4SY2bys="
     - # ^^ SONATYPE_USERNAME
-    - secure: "Q0tQKOEJknPPgQTRX8bBbDz+vCwxoiV83XBAlq4S5qhG7KJnRmiNbNjhgjGwm8j0H6efQO34vwuCqtDcLA1sw6F7TRdd0RY908HaCEbwL/D1CNC+9Bgj0fWRbKqrJb9S/TRYouoGxStjcjbsfemSTk9wvWaSz13AdMnIB2ixHk4="
+    - secure: "24zlG+vW34kWLohCGtOt0tRW/z75YmYPFi1gz4xQMsESKI7TRdG7erFdrU8iJ0d9IZTv/FLJqItQ1PmQvi5/q2zukPgHqgJcyuh1cS1D5m9jvDXzfgFrXCzSehF/Uu3jpx4U4mCcPQAJaYnYLPOn2GSma7wzwwVH3Eol9ceAMMw="
     - # ^^ SONATYPE_PASSWORD
-    - secure: "MVAIuG3nn5Y7RCqamR6/YaZ6mIZ0ulgJDKFClfsocL6zf+Jd0S6n/asXJJZpYLh7NiFoFsOD2OiPCraHRlJNMlylqNgko6YCZ8WkiUOayYUweSUUVkzob1i7OMyG/s1GVrJUJQGJ1Ds3i+J9qoau30gsFffkrYv4iTe3If/8iSg="
+    - secure: "tS23oHpw1Y0U+BgYtTt77jrBO05ZiI3zDhzumMS9957FMEwg15DW4ed/oEiI3D6A3l4dKcuzasnWMcDTRIkGFU/PqqS13SDckXe598nHDcdwf48XAip50YBYQIi5CMQJ28//ZZRnxPXzwhjgHwR81eIPz5ke4oURe1MDYUSpiJo="
     - # ^^ GPG_KEY_NAME
-    - secure: "BSEN+HcXsDUQaqW5aq5Wdwqgvlp82IsofhkOdhDEmU4xyEIZnDYFE0xfRZx+GY/DjS1Iq3LGSqUqTUBh+KfQtUqp6xWl2XVS6QvVrQ/qCVA3YYlLUN2RPQmfka5x9Zh4xksI+8bFjvmnW4zImGIWG+j9/j/KrEJOEnNNYtGh2dw="
+    - secure: "1oMSmB71A/j7W7PPi8s58dXcp9Fs5Nl8rB79K+/bGTIq5M7rS9bkuYnHBtnZ0yAmg6l05BIKlyh42I2J5zInHJ2Q6W1iLzBgicpbGCZwXIIbkx2OchYDBl2ILsI45okvUXp4uB8TMsepdbcAw8gx0xUg0zmRBA6LxwE6dR8OMTQ="
     - # ^^ GPG_PASSPHRASE
 after_success:
   - chmod +x resources/travis/*.sh

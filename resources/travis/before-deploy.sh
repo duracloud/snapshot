@@ -1,6 +1,6 @@
 #!/bin/bash
 echo 'Starting before-deploy.sh'
-if [ "$TRAVIS_BRANCH" = 'master' ] || [ "$TRAVIS_BRANCH" = 'develop' ]; then
+if [ "$TRAVIS_BRANCH" = 'master' ] || [ "$TRAVIS_BRANCH" = 'develop' ] || [ ! -z "$TRAVIS_TAG" ]; then
     if [ "$TRAVIS_PULL_REQUEST" == 'false' ]; then
         echo "Decrypting code signing key"
         openssl aes-256-cbc -K $encrypted_e3f51da3741f_key -iv $encrypted_e3f51da3741f_iv -in resources/travis/codesignkey.asc.enc -out codesignkey.asc -d
@@ -48,6 +48,10 @@ if [ ! -z "$TRAVIS_TAG" ]; then
     mv ${zipFile} $targetDir/
     cd $targetDir
     rm -rf install site javadoc-bundle-options
+
+    # generate signed checksum file
+    sha512sum * > sha512sum.txt
+    echo $GPG_PASSPHRASE | gpg --passphrase-fd 0 --clearsign sha512sum.txt
 fi
 
 cd $TRAVIS_BUILD_DIR

@@ -52,6 +52,7 @@ deploy:
     file:
       - "target/duracloud-*-apidocs.zip"
       - "target/duracloud-bridge-beanstalk-v*.zip"
+      - "target/sha512sum.txt.asc"
     on:
       tags: true
 env:

@@ -5,19 +5,15 @@
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>snapshot-service-impl</artifactId>
   <packaging>jar</packaging>
-  <version>1.7.7</version>
+  <version>1.7.8</version>
   <name>Duracloud Snapshot Service Impl</name>
 
   <parent>
     <groupId>org.duracloud.snapshot</groupId>
     <artifactId>snapshot-parent</artifactId>
-    <version>1.7.7</version>
+    <version>1.7.8</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-
-  <properties>
-    <mysql.driver.version>5.1.28</mysql.driver.version>
-  </properties>
 
   <build>
     <plugins>
@@ -179,7 +175,6 @@
     <dependency>
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
-      <version>${mysql.driver.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -7,8 +7,65 @@ notifications:
       - cibuilds@duracloud.org
     on_success: change
     on_failure: always
-  slack: duraspace:vOBySuKUwM95j2kfbwh0SNxq    
+  slack: duraspace:vOBySuKUwM95j2kfbwh0SNxq
 install:
-  - mvn install -DskipTests -DskipDeploy
+  - mvn install -DskipTests -DskipDeploy --batch-mode
 script:
   - mvn test -DskipIntTests
+sudo: true
+deploy:
+  - provider: s3
+    access_key_id: $ARTIFACTS_KEY
+    secret_access_key: $ARTIFACTS_SECRET
+    bucket: $ARTIFACTS_BUCKET
+    region: $ARTIFACTS_REGION
+    skip_cleanup: true
+    local_dir: $TRAVIS_BUILD_DIR/target
+    upload-dir: duracloud-bridge/master
+    on:
+      branch: master
+  - provider: s3
+    access_key_id: $ARTIFACTS_KEY
+    secret_access_key: $ARTIFACTS_SECRET
+    bucket: $ARTIFACTS_BUCKET
+    region: $ARTIFACTS_REGION
+    skip_cleanup: true
+    local_dir: $TRAVIS_BUILD_DIR/target
+    upload-dir: duracloud-bridge/tagged-releases/$TRAVIS_TAG
+    on:
+      tags: true
+  - provider: s3
+    access_key_id: $ARTIFACTS_KEY
+    secret_access_key: $ARTIFACTS_SECRET
+    bucket: $ARTIFACTS_BUCKET
+    region: $ARTIFACTS_REGION
+    skip_cleanup: true
+    local_dir: $TRAVIS_BUILD_DIR/target
+    upload-dir: duracloud-bridge/develop
+    on:
+      branch: develop
+  - provider: releases
+    api_key:
+      secure: hNuckzskswfCkY5tXzY9uxFyp9M7ZAfAdo0ys5rtJa2vmT2zRymj3mAAfxO6WBchrEnEyd2amMUBYny2lItz3PuOQiYs8caxAjWFlxIsJhMRVIlLlrZpkYs7PMu9CD//Q8AdhhRFITIZj+i/iH50FeOXRy7Lhs/CuwyAMVIDkxU=
+    skip_cleanup: true
+    file-glob: true
+    file:
+      - "target/duracloud-*-apidocs.zip"
+      - "target/duracloud-bridge-beanstalk-v*.zip"
+      - "target/sha512sum.txt.asc"
+    on:
+      tags: true
+env:
+  global:
+    - secure: "SZ3SrQHMcdfAU3UlKnQnu6xwuOz9lanrewQ6YorRSsh3Kvpj13Qyrwu4nEXQ9cNKieeiMLk0A0NU7sqQ1xZ/9JFcwWjJ2lZ5lISEAlqj/h4QL5OnxkubdlN/hQwz/Oh53f/yC/J6mC0tKdJ2GxHZ9TdlTj2jxc+S9/4E4SY2bys="
+    - # ^^ SONATYPE_USERNAME
+    - secure: "24zlG+vW34kWLohCGtOt0tRW/z75YmYPFi1gz4xQMsESKI7TRdG7erFdrU8iJ0d9IZTv/FLJqItQ1PmQvi5/q2zukPgHqgJcyuh1cS1D5m9jvDXzfgFrXCzSehF/Uu3jpx4U4mCcPQAJaYnYLPOn2GSma7wzwwVH3Eol9ceAMMw="
+    - # ^^ SONATYPE_PASSWORD
+    - secure: "tS23oHpw1Y0U+BgYtTt77jrBO05ZiI3zDhzumMS9957FMEwg15DW4ed/oEiI3D6A3l4dKcuzasnWMcDTRIkGFU/PqqS13SDckXe598nHDcdwf48XAip50YBYQIi5CMQJ28//ZZRnxPXzwhjgHwR81eIPz5ke4oURe1MDYUSpiJo="
+    - # ^^ GPG_KEY_NAME
+    - secure: "1oMSmB71A/j7W7PPi8s58dXcp9Fs5Nl8rB79K+/bGTIq5M7rS9bkuYnHBtnZ0yAmg6l05BIKlyh42I2J5zInHJ2Q6W1iLzBgicpbGCZwXIIbkx2OchYDBl2ILsI45okvUXp4uB8TMsepdbcAw8gx0xUg0zmRBA6LxwE6dR8OMTQ="
+    - # ^^ GPG_PASSPHRASE
+after_success:
+  - chmod +x resources/travis/*.sh
+  - ./resources/travis/before-deploy.sh
+  - ./resources/travis/deploy.sh

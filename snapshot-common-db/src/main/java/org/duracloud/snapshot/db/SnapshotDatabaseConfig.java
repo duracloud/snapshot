@@ -60,7 +60,8 @@ public class SnapshotDatabaseConfig {
                    env.getProperty("snapshot.db.name", "snapshot")));
         dataSource.setUsername(env.getProperty("snapshot.db.user", "user"));
         dataSource.setPassword(env.getProperty("snapshot.db.pass", "pass"));
-
+        //ensure connection pool does not limit database connection creation
+        dataSource.setMaxTotal(-1);
         dataSource.setTestOnBorrow(true);
         dataSource.setValidationQuery("SELECT 1");
         dataSource.setValidationQueryTimeout(10);

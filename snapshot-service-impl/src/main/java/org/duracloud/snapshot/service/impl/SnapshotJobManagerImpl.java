@@ -140,13 +140,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     private void restartIncompleteJobs() throws Exception {
         log.info("checking for incomplete snapshot jobs.");
 
-        for (Snapshot snapshot : this.snapshotRepo.findByStatus(SnapshotStatus.TRANSFERRING_FROM_DURACLOUD)) {
-            try{
-                resumeJob(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, snapshot);
-            }catch(SnapshotException ex){
-                log.error("unable to resume snapshot " + snapshot, ex);
-            }
-        }
+        resumeByStatus(SnapshotStatus.TRANSFERRING_FROM_DURACLOUD);
+        resumeByStatus(SnapshotStatus.INITIALIZED);
 
         log.info("checking for incomplete restore jobs.");
         for (Restoration restore : this.restoreRepo.findRunning()) {
@@ -154,6 +149,16 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
                 resumeJob(SnapshotServiceConstants.RESTORE_JOB_NAME, restore);
             }catch(SnapshotException ex){
                 log.error("unable to resume restore " + restore, ex);
+            }
+        }
+    }
+
+    private void resumeByStatus(final SnapshotStatus status) {
+        for (Snapshot snapshot : this.snapshotRepo.findByStatus(status)) {
+            try{
+                resumeJob(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, snapshot);
+            }catch(SnapshotException ex){
+                log.error("unable to resume snapshot " + snapshot, ex);
             }
         }
     }

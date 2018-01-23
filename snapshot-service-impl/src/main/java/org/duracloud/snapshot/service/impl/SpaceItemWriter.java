@@ -59,7 +59,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private BufferedWriter propsWriter;
     private BufferedWriter md5Writer;
     private BufferedWriter sha256Writer;
-    private ChecksumUtil sha256ChecksumUtil;
     private ContentItem snapshotPropsContentItem;
     private SnapshotManager snapshotManager;
     private Snapshot snapshot;
@@ -84,8 +83,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         this.propsWriter = propsWriter;
         this.md5Writer = md5Writer;
         this.sha256Writer = sha256Writer;
-        this.sha256ChecksumUtil =
-            new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
         this.snapshotManager = snapshotManager;
         this.spaceManifestDpnManifestVerifier = spaceManifestDpnManifestVerifier;
     }
@@ -207,12 +204,18 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
 
 
-    protected synchronized void writeSHA256Checksum(String contentId,
+    protected void writeSHA256Checksum(String contentId,
                                        File localFile) throws IOException {
+
+        ChecksumUtil sha256ChecksumUtil =
+            new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
+
         String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
-        ManifestFileHelper.writeManifestEntry(sha256Writer, 
-                                                contentId, 
-                                                sha256Checksum);
+        synchronized (sha256Writer){
+            ManifestFileHelper.writeManifestEntry(sha256Writer,
+                contentId,
+                sha256Checksum);
+        }
     }
 
     protected void writeContentProperties(String contentId,

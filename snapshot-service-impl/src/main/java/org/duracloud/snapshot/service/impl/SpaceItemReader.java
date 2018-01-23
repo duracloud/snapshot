@@ -35,12 +35,19 @@ public class SpaceItemReader implements ItemReader<ContentItem> {
     public synchronized ContentItem read()
         throws Exception, UnexpectedInputException, ParseException,
                NonTransientResourceException {
-        ContentItem contentItem = retrievalSource.getNextContentItem();
-        if(contentItem != null) {
-            LOGGER.debug("contentItem: {}", contentItem.getContentId());
-        } else {
-            LOGGER.debug("contentItem is null");
+
+        try {
+            ContentItem contentItem = retrievalSource.getNextContentItem();
+            if(contentItem != null) {
+                LOGGER.debug("contentItem: {}", contentItem.getContentId());
+            } else {
+                LOGGER.debug("contentItem is null");
+            }
+            return contentItem;
+
+        } catch(Exception ex){
+            LOGGER.error("item read failed:  " + ex.getMessage(), ex);
+            throw ex;
         }
-        return contentItem;
     }
 }

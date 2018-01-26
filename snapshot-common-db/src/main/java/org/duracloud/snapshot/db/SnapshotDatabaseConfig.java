@@ -8,6 +8,7 @@
 package org.duracloud.snapshot.db;
 
 import java.text.MessageFormat;
+import java.util.Properties;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -54,7 +55,7 @@ public class SnapshotDatabaseConfig {
                     "?useLegacyDatetimeCode=false" +
                     "&serverTimezone=GMT" +
                     "&characterEncoding=utf8" +
-                    "&characxterSetResults=utf8",
+                    "&characterSetResults=utf8",
                    env.getProperty("snapshot.db.host", "localhost"),
                    env.getProperty("snapshot.db.port", "3306"),
                    env.getProperty("snapshot.db.name", "snapshot")));
@@ -89,6 +90,12 @@ public class SnapshotDatabaseConfig {
         emf.setPackagesToScan("org.duracloud.snapshot");
 
         JpaConfigurationUtil.configureEntityManagerFactory(env,emf);
+
+        if(Boolean.parseBoolean(env.getProperty("generate.database", "false"))){
+            Properties properties = new Properties();
+            properties.setProperty("javax.persistence.schema-generation.database.action", "create");
+            emf.setJpaProperties(properties);
+        }
 
         return emf;
     }

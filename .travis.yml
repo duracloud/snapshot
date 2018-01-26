@@ -69,3 +69,6 @@ after_success:
   - chmod +x resources/travis/*.sh
   - ./resources/travis/before-deploy.sh
   - ./resources/travis/deploy.sh
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libaio1

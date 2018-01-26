@@ -109,10 +109,6 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     }
 
     /**
-     * Test method for
-     * {@link org.duracloud.snapshot.service.impl.SnapshotManagerImpl#addContentItem(java.lang.String, org.duracloud.common.model.ContentItem, java.util.Map)}
-     * .
-     * 
      * @throws SnapshotManagerException
      */
     @Test
@@ -305,7 +301,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         List<Snapshot> snapshots = new ArrayList<>();
         snapshots.add(snapshot);
-        expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP)))
+        expect(this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(eq(SnapshotStatus.CLEANING_UP)))
             .andReturn(snapshots);
         
         expect(this.snapshot.getName()).andReturn("snapshot-id");
@@ -368,7 +364,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         List<Snapshot> snapshots = new ArrayList<>();
         snapshots.add(snapshot);
-        expect(this.snapshotRepo.findByStatus(eq(SnapshotStatus.CLEANING_UP))).andReturn(snapshots).times(3);
+        expect(this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(eq(SnapshotStatus.CLEANING_UP))).andReturn(snapshots).times(3);
 
         expect(this.snapshot.getName()).andReturn("snapshot-id").times(3);
 

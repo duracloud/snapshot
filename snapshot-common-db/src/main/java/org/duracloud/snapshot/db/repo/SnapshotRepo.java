@@ -49,7 +49,7 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
      * @param status current snapshot status
      * @return all snapshots with the given status
      */
-    public List<Snapshot> findByStatus(SnapshotStatus status);
+    public List<Snapshot> findByStatusOrderBySnapshotDateAsc(SnapshotStatus status);
 
     /**
      * @param host where snapshot originated

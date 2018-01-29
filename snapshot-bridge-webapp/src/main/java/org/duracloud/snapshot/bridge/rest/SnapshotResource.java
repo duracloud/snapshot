@@ -182,7 +182,7 @@ public class SnapshotResource {
                 return snapshotRepo.findBySourceStoreId(storeId);
             }
         } else if(null != status) { // Status
-            return snapshotRepo.findByStatus(status);
+            return snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
         } else { // No filters
             return snapshotRepo.findAll();
         }

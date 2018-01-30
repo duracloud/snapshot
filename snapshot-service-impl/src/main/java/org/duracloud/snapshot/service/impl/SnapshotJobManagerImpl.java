@@ -37,6 +37,7 @@ import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -154,7 +155,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     }
 
     private void resumeByStatus(final SnapshotStatus status) {
-        for (Snapshot snapshot : this.snapshotRepo.findByStatus(status)) {
+        for (Snapshot snapshot : this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(status)) {
             try{
                 resumeJob(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, snapshot);
             }catch(SnapshotException ex){
@@ -177,6 +178,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
             }else{
                 log.debug("found job execution in running state for {} (job execution = {})", entity, jobExecution);
                 jobExecution.setStatus(BatchStatus.STOPPED);
+                jobExecution.setExitStatus(ExitStatus.STOPPED);
                 jobExecution.setEndTime(new Date());
                 jobRepository.update(jobExecution);
                 log.info("updated job execution in running state to stopped: {} (job execution = {})",

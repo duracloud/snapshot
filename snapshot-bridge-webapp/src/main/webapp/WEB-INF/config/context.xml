@@ -16,13 +16,13 @@
 
   <bean id="jobTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
     <property name="maxPoolSize" value="10"/>
-    <property name="corePoolSize" value="5"/>
+    <property name="corePoolSize" value="10"/>
     <property name="queueCapacity" value="1000"/>
   </bean>
 
   <bean id="itemTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
     <property name="maxPoolSize" value="200"/>
-    <property name="corePoolSize" value="10"/>
+    <property name="corePoolSize" value="20"/>
     <property name="queueCapacity" value="10"/>
   </bean>
   

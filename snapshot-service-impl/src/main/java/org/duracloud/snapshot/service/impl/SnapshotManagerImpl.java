@@ -400,7 +400,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     public void finalizeSnapshots() {
          log.debug("Running finalize snapshots...");
         List<Snapshot> snapshots =
-            this.snapshotRepo.findByStatus(SnapshotStatus.CLEANING_UP);
+            this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(SnapshotStatus.CLEANING_UP);
         for(Snapshot snapshot : snapshots){
             DuracloudEndPointConfig source = snapshot.getSource();
             ContentStore store = getContentStore(source);

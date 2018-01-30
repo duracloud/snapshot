@@ -426,7 +426,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Test
     public void testListSnapshotsStatus() {
         SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
-        expect(snapshotRepo.findByStatus(status))
+        expect(snapshotRepo.findByStatusOrderBySnapshotDateAsc(status))
             .andReturn(new ArrayList<Snapshot>());
         replayAll();
         resource.listSnapshots(null, null, status);

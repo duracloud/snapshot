@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -52,6 +53,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.storage.provider.StorageProvider;
 import org.easymock.Mock;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -96,6 +98,15 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     private File contentDir;
     private File workDir;
 
+    private String snapshotName = "snapshot-name";
+
+    private File propsFile;
+    private File md5File;
+    private File sha256File;
+
+    private String spaceId = "space-id";
+    private String contentId = "content-id";
+
     /*
      * (non-Javadoc)
      * 
@@ -107,6 +118,9 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         super.setup();
         contentDir = createDirectory("content" + System.currentTimeMillis());
         workDir = createDirectory("work" + System.currentTimeMillis());
+        propsFile =  new File(contentDir, "properties.json");
+        md5File = new File(contentDir, MD5_MANIFEST_TXT_FILE_NAME);
+        sha256File = new File(contentDir, SHA256_MANIFEST_TXT_FILE_NAME);
 
     }
 
@@ -153,61 +167,32 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     }
     private void test(int threads, boolean manifestVerificationSuccessful) throws Exception {
         outputWriter = new CSVFileOutputWriter(workDir);
-        BufferedWriter propsWriter =
-            createWriter(contentDir, "properties.json");
-        File md5File = new File(contentDir, MD5_MANIFEST_TXT_FILE_NAME);
-        BufferedWriter md5Writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(md5File)));
-        BufferedWriter sha256Writer =
-            createWriter(contentDir, SHA256_MANIFEST_TXT_FILE_NAME);
-        
-        String spaceId = "space-id";
-        String contentId = "content-id";
+
         List<ContentItem> items = new ArrayList<>();
         
         ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i)));
+            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),1));
         }
 
-        setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME);
+        setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
         
         int toIndex = items.size();
         if(!manifestVerificationSuccessful){
             toIndex = items.size()-2;
         }
-        
-        Collections.sort(sourceFiles, new Comparator<File>(){
-            /* (non-Javadoc)
-             * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-             */
-            @Override
-            public int compare(File o1, File o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
 
-        
-        Collections.sort(items, new Comparator<ContentItem>(){
-            /* (non-Javadoc)
-             * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-             */
-            @Override   
-            public int compare(ContentItem o1, ContentItem o2) {
-                 if(o1.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
-                     return 1;
-                 }
-                 return o1.getContentId().compareTo(o2.getContentId());
-            }
-        });
+        sortSourceFilesAndItems(items, sourceFiles);
 
         
         
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
-        
-        
-        
+
+        expect(snapshot.getName()).andReturn(snapshotName).times(1);
+
+
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(manifestVerificationSuccessful);
@@ -226,18 +211,224 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 retrievalSource,
                                 contentDir,
                                 outputWriter,
-                                propsWriter,
-                                md5Writer,
-                                sha256Writer,
-                                snapshotManager, 
+                                propsFile,
+                                md5File,
+                                sha256File,
+                                snapshotManager,
                                 spaceManifestVerifier);
+        writer.resetDatabase();
         writer.setIsTest();
         writer.beforeStep(stepExecution);
         writeItems(items, threads);
         ExitStatus status = writer.afterStep(stepExecution);
 
-        List<String> md5Lines = getLines(MD5_MANIFEST_TXT_FILE_NAME);
+        //verifyMd5Manifest(items, sourceFiles);
+        verifySha256Manifest(items, sourceFiles);
+
+        if(manifestVerificationSuccessful){
+            assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
+        }else{
+            assertEquals(ExitStatus.FAILED.getExitCode(), status.getExitCode());
+        }
         
+    }
+
+    private void sortSourceFilesAndItems(List<ContentItem> items, List<File> sourceFiles) {
+        Collections.sort(sourceFiles, new Comparator<File>(){
+            /* (non-Javadoc)
+             * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+             */
+            @Override
+            public int compare(File o1, File o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+
+        Collections.sort(items, new Comparator<ContentItem>(){
+            /* (non-Javadoc)
+             * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+             */
+            @Override
+            public int compare(ContentItem o1, ContentItem o2) {
+                 if(o1.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+                     return 1;
+                 }
+                 return o1.getContentId().compareTo(o2.getContentId());
+            }
+        });
+    }
+
+
+    @Test
+    public void testRestartDuringTransfer() throws Exception {
+        outputWriter = new CSVFileOutputWriter(workDir);
+        List<ContentItem> items = new ArrayList<>();
+
+        ContentStore contentStore = createMock(ContentStore.class);
+        List<File> sourceFiles = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),2));
+        }
+
+        setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
+
+        sortSourceFilesAndItems(items, sourceFiles);
+
+        expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
+            .times(2);
+
+        expect(snapshot.getName()).andReturn(snapshotName).times(2);
+
+
+        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+
+        expect(spaceManifestVerifier.verify()).andReturn(true);
+        expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
+
+        replayAll();
+        writer =
+            new SpaceItemWriter(snapshot,
+                retrievalSource,
+                contentDir,
+                outputWriter,
+                propsFile,
+                md5File,
+                sha256File,
+                snapshotManager,
+                spaceManifestVerifier);
+        writer.setIsTest();
+        writer.beforeStep(stepExecution);
+        writeItems(items, 1);
+
+        assertEquals("total checksum performed should be one less than the number of content items",
+            items.size()-1,  writer.getTotalChecksumsPerformed());
+        //close the database using protected method
+        //in order to release exclusive file lock
+        //by the mapdb instance.
+        writer.closeDatabase();
+
+        //use a new writer simulating a step restart.
+        writer =
+            new SpaceItemWriter(snapshot,
+                retrievalSource,
+                contentDir,
+                outputWriter,
+                propsFile,
+                md5File,
+                sha256File,
+                snapshotManager,
+                spaceManifestVerifier);
+
+        //simulate restart
+        writer.beforeStep(stepExecution);
+        writeItems(items, 1);
+
+        ExitStatus status = writer.afterStep(stepExecution);
+
+        assertEquals("total checksums should be 0",
+            0,  writer.getTotalChecksumsPerformed());
+
+
+        verifyMd5Manifest(items, sourceFiles);
+
+        verifySha256Manifest(items, sourceFiles);
+
+        assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
+
+
+    }
+
+    @Test
+    public void testRestartWithEmptyCacheButNonEmptyManifestFiles() throws Exception {
+        outputWriter = new CSVFileOutputWriter(workDir);
+        List<ContentItem> items = new ArrayList<>();
+
+        ContentStore contentStore = createMock(ContentStore.class);
+        List<File> sourceFiles = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),2));
+        }
+
+        for(ContentItem item : items){
+            expect(this.retrievalSource.getSourceProperties(item))
+                .andReturn(createContentProperties("md5"));
+        }
+
+
+        setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
+
+
+        sortSourceFilesAndItems(items, sourceFiles);
+
+        expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
+            .times(2);
+
+        expect(snapshot.getName()).andReturn(snapshotName).times(2);
+
+
+        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+
+        expect(spaceManifestVerifier.verify()).andReturn(true);
+        expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
+
+        replayAll();
+        writer =
+            new SpaceItemWriter(snapshot,
+                retrievalSource,
+                contentDir,
+                outputWriter,
+                propsFile,
+                md5File,
+                sha256File,
+                snapshotManager,
+                spaceManifestVerifier);
+        writer.setIsTest();
+        writer.beforeStep(stepExecution);
+        writeItems(items, 1);
+        assertEquals("total checksum performed should be one less than the number of content items",
+            items.size()-1,  writer.getTotalChecksumsPerformed());
+
+        //reset the database to ensure that cache is empty
+        writer.resetDatabase();
+
+        //close the database using protected method
+        //in order to release exclusive file lock
+        //by the mapdb instance.
+        writer.closeDatabase();
+
+        //use a new writer simulating a step restart.
+        writer =
+            new SpaceItemWriter(snapshot,
+                retrievalSource,
+                contentDir,
+                outputWriter,
+                propsFile,
+                md5File,
+                sha256File,
+                snapshotManager,
+                spaceManifestVerifier);
+
+        //simulate restart
+        writer.beforeStep(stepExecution);
+        writeItems(items, 1);
+
+        ExitStatus status = writer.afterStep(stepExecution);
+
+        assertEquals("total checksums performed should be 0",
+            0,  writer.getTotalChecksumsPerformed());
+
+        verifyMd5Manifest(items, sourceFiles);
+        verifySha256Manifest(items, sourceFiles);
+
+        assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
+
+
+    }
+
+    private void verifyMd5Manifest(List<ContentItem> items, List<File> sourceFiles) throws IOException {
+        List<String> md5Lines = getLines(MD5_MANIFEST_TXT_FILE_NAME);
+
         for (int i = 0; i < sourceFiles.size(); i++) {
             File file = sourceFiles.get(i);
             ContentItem content = items.get(i);
@@ -249,14 +440,16 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                 continue;
             }
             log.debug("md5 line: \"{}\", md5Checksum={}, filename={}, contentId={}",
-                      md5Line,
-                      md5Checksum,
-                      file.getName(),
-                      contentId2);
+                md5Line,
+                md5Checksum,
+                file.getName(),
+                contentId2);
             assertTrue("\"" +md5Line +"\" does not contain "+ contentId2, md5Line.contains(contentId2));
             assertTrue(md5Line.contains(md5Checksum));
         }
+    }
 
+    private void verifySha256Manifest(List<ContentItem> items, List<File> sourceFiles) throws IOException {
         List<String> shaLines = getLines(SHA256_MANIFEST_TXT_FILE_NAME);
 
         for (int i = 0; i < sourceFiles.size(); i++) {
@@ -267,32 +460,24 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             String shaLine = shaLines.get(i);
             String contentId3 = content.getContentId();
             log.debug("sha256 line: \"{}\", md5Checksum={}, filename={}, contentId={}",
-                      shaLine,
-                      shaChecksum,
-                      file.getName(),
-                      contentId3);
+                shaLine,
+                shaChecksum,
+                file.getName(),
+                contentId3);
 
             assertTrue(shaLine.endsWith(contentId3));
             assertTrue(shaLine.contains(shaChecksum));
         }
-
-        if(manifestVerificationSuccessful){
-            assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
-        }else{
-            assertEquals(ExitStatus.FAILED.getExitCode(), status.getExitCode());
-        }
-        
     }
 
 
-
     /**
-     * @param string
+     * @param filename
      * @return
      * @throws IOException 
      */
     private List<String> getLines(String filename) throws IOException {
-        List<String> lines = Files.readAllLines(ContentDirUtils.getPath(contentDir, filename), StandardCharsets.UTF_8);
+        List<String> lines = Files.readAllLines(getPath(contentDir, filename), StandardCharsets.UTF_8);
         Collections.sort(lines, new Comparator<String>() {
             /* (non-Javadoc)
              * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
@@ -311,6 +496,13 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             }
         });
         return lines;
+    }
+
+    private Path getPath(File dir, String filename) {
+        Path path =
+            FileSystems.getDefault().getPath(dir.getAbsolutePath(),
+                filename);
+        return path;
     }
 
     /**
@@ -367,7 +559,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         
         try {
-            assertTrue(countdownLatch.await(20, TimeUnit.SECONDS));
+            assertTrue(countdownLatch.await(60, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -377,12 +569,13 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
     /**
      * @param spaceId
-     * @param string
+     * @param contentId
      * @throws SnapshotException
      */
     private File setupContentItem(List<ContentItem> items,
                                   String spaceId,
-                                  String contentId)
+                                  String contentId,
+                                  int times)
         throws IOException,
             SnapshotException {
         int size = 1024 * 100;
@@ -391,6 +584,22 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         assertEquals(size, content.length());
         String md5 = util.generateChecksum(content);
         InputStream is = new FileInputStream(content);
+        Map<String, String> map = createContentProperties(md5);
+        ContentStream contentStream = new ContentStream(is, map);
+        ContentItem item = new ContentItem(spaceId, contentId);
+        
+        expect(retrievalSource.getSourceContent(eq(item), isA(RetrievalListener.class))).andReturn(contentStream);
+
+        items.add(item);
+        this.snapshotManager.addContentItem(eq(snapshot),
+                                            eq(contentId),
+                                            isA(Map.class));
+        expectLastCall().times(times);
+        return content;
+    }
+
+    @NotNull
+    private Map<String, String> createContentProperties(String md5) {
         Map<String, String> map = new HashMap<>();
         map.put(StorageProvider.PROPERTIES_CONTENT_CHECKSUM, md5);
 
@@ -401,16 +610,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_CREATED, date);
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_LAST_ACCESSED, date);
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_MODIFIED, date);
-        ContentStream contentStream = new ContentStream(is, map);
-        ContentItem item = new ContentItem(spaceId, contentId);
-        
-        expect(retrievalSource.getSourceContent(eq(item), isA(RetrievalListener.class))).andReturn(contentStream);
-
-        items.add(item);
-        this.snapshotManager.addContentItem(eq(snapshot),
-                                            eq(contentId),
-                                            eq(map));
-        return content;
+        return map;
     }
 
     private File createUniqueTempFile(int size, String filename) throws IOException {
@@ -437,14 +637,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         os.close();
         file.deleteOnExit();
         return file;
-    }
-
-    private BufferedWriter createWriter(File contentDir, String name)
-        throws IOException {
-        Path propsPath = ContentDirUtils.getPath(contentDir, name);
-        BufferedWriter propsWriter =
-            Files.newBufferedWriter(propsPath, StandardCharsets.UTF_8);
-        return propsWriter;
     }
 
     /**

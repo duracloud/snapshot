@@ -7,16 +7,11 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
-
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -33,8 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
 import org.duracloud.common.util.ChecksumUtil;
@@ -48,7 +41,6 @@ import org.duracloud.retrieval.source.ContentStream;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
-import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.storage.provider.StorageProvider;
@@ -62,6 +54,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
+
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Daniel Bernstein 
@@ -91,9 +90,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
  
     private OutputWriter outputWriter;
-    private BufferedWriter propsWriter;
-    private BufferedWriter md5Writer;
-    private BufferedWriter sha256Writer;
 
     private File contentDir;
     private File workDir;
@@ -155,7 +151,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     public void testMultiThreaded() throws Exception {
         test(10);
     }
-
     
     @Test
     public void testManifestVerificationFailure() throws Exception {
@@ -165,33 +160,26 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     private void test(int threads) throws Exception {
         test(threads, true);
     }
+
     private void test(int threads, boolean manifestVerificationSuccessful) throws Exception {
         outputWriter = new CSVFileOutputWriter(workDir);
 
         List<ContentItem> items = new ArrayList<>();
         
-        ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),1));
+            sourceFiles.add(setupContentItem(items, spaceId, contentId +
+                                                             String.format("%05d", i),1));
         }
 
         setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
-        
-        int toIndex = items.size();
-        if(!manifestVerificationSuccessful){
-            toIndex = items.size()-2;
-        }
 
         sortSourceFilesAndItems(items, sourceFiles);
-
-        
         
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
 
         expect(snapshot.getName()).andReturn(snapshotName).times(1);
-
 
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
 
@@ -230,7 +218,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         }else{
             assertEquals(ExitStatus.FAILED.getExitCode(), status.getExitCode());
         }
-        
     }
 
     private void sortSourceFilesAndItems(List<ContentItem> items, List<File> sourceFiles) {
@@ -265,10 +252,10 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         outputWriter = new CSVFileOutputWriter(workDir);
         List<ContentItem> items = new ArrayList<>();
 
-        ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),2));
+            sourceFiles.add(setupContentItem(items, spaceId, contentId +
+                                                             String.format("%05d", i),2));
         }
 
         setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
@@ -280,8 +267,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         expect(snapshot.getName()).andReturn(snapshotName).times(2);
 
-
-        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+        SpaceManifestDpnManifestVerifier spaceManifestVerifier =
+            createMock(SpaceManifestDpnManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(true);
         expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
@@ -329,14 +316,11 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         assertEquals("total checksums should be 0",
             0,  writer.getTotalChecksumsPerformed());
 
-
         verifyMd5Manifest(items, sourceFiles);
 
         verifySha256Manifest(items, sourceFiles);
 
         assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
-
-
     }
 
     @Test
@@ -344,7 +328,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         outputWriter = new CSVFileOutputWriter(workDir);
         List<ContentItem> items = new ArrayList<>();
 
-        ContentStore contentStore = createMock(ContentStore.class);
         List<File> sourceFiles = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             sourceFiles.add(setupContentItem(items, spaceId, contentId + String.format("%05d", i),2));
@@ -355,9 +338,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                 .andReturn(createContentProperties("md5"));
         }
 
-
         setupContentItem(items, spaceId, Constants.SNAPSHOT_PROPS_FILENAME,1);
-
 
         sortSourceFilesAndItems(items, sourceFiles);
 
@@ -422,8 +403,6 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         verifySha256Manifest(items, sourceFiles);
 
         assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
-
-
     }
 
     private void verifyMd5Manifest(List<ContentItem> items, List<File> sourceFiles) throws IOException {

@@ -179,7 +179,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
                                              .times(2);
 
-        expect(snapshot.getName()).andReturn(snapshotName).times(1);
+        expect(snapshot.getName()).andReturn(snapshotName).times(2);
 
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
 
@@ -265,7 +265,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
             .times(2);
 
-        expect(snapshot.getName()).andReturn(snapshotName).times(2);
+        expect(snapshot.getName()).andReturn(snapshotName).times(3);
 
         SpaceManifestDpnManifestVerifier spaceManifestVerifier =
             createMock(SpaceManifestDpnManifestVerifier.class);
@@ -345,7 +345,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED)
             .times(2);
 
-        expect(snapshot.getName()).andReturn(snapshotName).times(2);
+        expect(snapshot.getName()).andReturn(snapshotName).times(3);
 
 
         SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);

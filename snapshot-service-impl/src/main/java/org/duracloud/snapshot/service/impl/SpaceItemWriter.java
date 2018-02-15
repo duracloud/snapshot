@@ -185,13 +185,8 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         //retrieve cached data
         String md5Checksum = md5Cache.get(contentId);
         String sha256 = sha256Cache.get(contentId);
-        String propsStr = propsCache.get(contentId);
 
         Map<String,String> props = null;
-
-        if(propsStr != null){
-            props = PropertiesSerializer.deserialize(propsStr);
-        }
 
         RetrievalWorker retrievalWorker =
             new RetrievalWorker(contentItem, retrievalSource, directory,
@@ -225,8 +220,12 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                      " No need to download and reverify.",
                      contentId);
 
-            // Get the props if the hadn't been cached
-            if(props == null){
+            // Get the props from cache, otherwise retrieve them.
+            String propsStr = propsCache.get(contentId);
+            if(propsStr != null){
+                props = PropertiesSerializer.deserialize(propsStr);
+                log.info("Props found in cache for {}.", contentId);
+            } else {
                 log.info("Props not found in cache for {}.", contentId);
                 props = retrievalSource.getSourceProperties(contentItem);
                 cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));

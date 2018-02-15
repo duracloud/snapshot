@@ -262,8 +262,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                         cacheValue(sha256Cache, contentId, sha256);
                     } else {
                         log.info("SHA-256 checksum for contentId {} is already cached, " +
-                                 "no need to recompute" +
-                                 contentId);
+                                 "no need to recompute", contentId);
                     }
 
                     writeSHA256Checksum(contentId, sha256);
@@ -277,11 +276,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             }
         } else {
             // There was a problem! Throw a meaningful exception:
-            String baseError =
-                String.format("Retrieved item {} from space {} could not " +
-                              "be processed due to: ",
-                              contentItem.getContentId(),
-                              contentItem.getSpaceId());
+            String baseError = "Retrieved item " + contentItem.getContentId() +
+                               " from space " + contentItem.getSpaceId() + " could not " +
+                               "be processed due to: ";
             if(!localFile.exists()) {
                 String error = baseError + "The local file at path " +
                                localFile.getAbsolutePath()+ " could not be found.";
@@ -315,8 +312,8 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
             });
         } catch (Exception e) {
-            log.error("failed to add snapshot content item: "
-                + contentId + " to snapshot " + snapshot + ": " + e.getMessage(), e);
+            log.error("Failed to add snapshot content item: " + contentId +
+                      " to snapshot " + snapshot + ": " + e.getMessage(), e);
             throw new IOException(e);
         }
     }
@@ -342,8 +339,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                                           Map<String,String> props,
                                           boolean lastItem)
             throws IOException {
-        
-        
         Set<String> propKeys = props.keySet();
         StringBuffer sb = new StringBuffer(100);
         sb.append("{\n  \"" + contentId + "\": {\n");
@@ -368,14 +363,14 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         if(snapshotPropsContentItem != null) {
             try {
                 retrieveFile(snapshotPropsContentItem, contentDir, false, true);
-                log.info("snapshot properties retrieved");
+                log.info("Snapshot properties retrieved");
             } catch (IOException ioe) {
-                log.error("Error retrieving the snapshot properties file: ",
-                             ioe);
+                log.error("Error retrieving the snapshot properties file: " +
+                          ioe.getMessage(), ioe);
             }
         } else {
             String message = "No snapshot properties file found. (" +
-                Constants.SNAPSHOT_PROPS_FILENAME + ")";
+                             Constants.SNAPSHOT_PROPS_FILENAME + ")";
             log.error(message);
             errors.add(message);
         }
@@ -384,28 +379,29 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = super.afterStep(stepExecution);
-        log.info("Step complete with status: {}",
-                     stepExecution.getExitStatus());
+        log.info("Step complete with status: {}", stepExecution.getExitStatus());
         close("md5 writer", md5Writer);
         close("sh256 writer", sha256Writer);
         close("output writer", outputWriter);
 
         retrieveSnapshotProperties();
         closePropsWriter();
-        
+
         if(errors.size() == 0){
-           log.info("no errors - proceeding with space manifest -dpn manifest verification...");
+           log.info("No errors in retrieval of snapshot {}; " +
+                    "Proceeding with space manifest - dpn manifest verification...",
+                    snapshot.getName());
            errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
         }
-        
+
         if(errors.size() > 0){
             stepExecution.upgradeStatus(BatchStatus.FAILED);
             status = status.and(ExitStatus.FAILED);
             for(String error : errors){
                 status = status.addExitDescription(error);
             }
-            log.error("space item writer failed due to the following error(s): " + 
-                       status.getExitDescription());
+            log.error("Space item writer failed due to the following error(s): " +
+                      status.getExitDescription());
         }
 
         deleteDatabase();
@@ -418,8 +414,8 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                 propsWriter.write("]\n");
                 propsWriter.flush();
             }
-            
-            log.info("closed props writer");
+
+            log.debug("Closed props writer");
         } catch (IOException ioe) {
             String message = "Error writing end of content property manifest: " + ioe.getMessage();
             errors.add(message);
@@ -431,13 +427,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
     private void close(String writerName, Object writer) {
         try {
-            
+
             if(writer instanceof Closeable){
                 ((Closeable)writer).close();
             }else if(writer instanceof OutputWriter){
                 ((OutputWriter)writer).close();
             }else {
-                throw new DuraCloudRuntimeException(writerName + 
+                throw new DuraCloudRuntimeException(writerName +
                                                     " is not a supported parameter type for this method.");
             }
             log.info("closed {}", writerName);
@@ -448,7 +444,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
-    private void loadCacheFromFile(Map<String,String> cache, File file, Function<String,Boolean> isValidChecksum) throws IOException{
+    private void loadCacheFromFile(Map<String,String> cache,
+                                   File file,
+                                   Function<String,Boolean> isValidChecksum) throws IOException{
         //if the cache is empty check if there is are md5 and sha256 manifests
         //that can be used to prepopulate the cache.
         if(cache.isEmpty() && file.exists()){
@@ -462,11 +460,11 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                         if(isValidChecksum.apply(checksum)){
                             cacheValue(cache, contentId, checksum);
                         }else{
-                            log.info("checksum {} in file {} was not a valid checksum: skipping.",
+                            log.info("Checksum {} in manifest file {} was not a valid checksum: skipping.",
                                      checksum, file.getAbsolutePath());
                         }
                     } catch (ParseException ex) {
-                        log.info("unable to parse line in file {}. message={}. skipping: line={}",
+                        log.info("Unable to parse line in manifest file {}. message={}. skipping: line={}",
                                  file.getAbsolutePath(), ex.getMessage(), line);
                     }
                 }
@@ -477,7 +475,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public void beforeStep(StepExecution stepExecution) {
         super.beforeStep(stepExecution);
-        log.info("starting step {}", stepExecution);
+        log.info("Starting step {}", stepExecution);
         try {
 
             md5Cache = db

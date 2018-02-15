@@ -119,7 +119,7 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
 
             File propsFile = new File(contentDir, SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
             File md5File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
-            File sha256File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
+            File sha256File = new File(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
             SpaceManifestDpnManifestVerifier verifier =
                 new SpaceManifestDpnManifestVerifier(md5File,

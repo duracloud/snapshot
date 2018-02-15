@@ -195,6 +195,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         File localFile = retrievalWorker.getLocalFile();
 
         if(md5Checksum == null) { // File is not in MD5 cache
+            StopWatch sw = new StopWatch();
+            sw.start();
+
             props = retrievalWorker.retrieveFile(new RetrievalListener() {
                 @Override
                 public void chunkRetrieved(String chunk) {
@@ -203,6 +206,15 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                                                                  chunk);
                 }
             });
+
+            sw.stop();
+
+            log.info("Finished retrieving content: contentId={}, " +
+                    " fileSize={}, file path={}, elapsedTimeMs={}",
+                contentId,
+                localFile.length(),
+                localFile.getAbsolutePath(),
+                sw.getTime());
 
             // cache props
             cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));

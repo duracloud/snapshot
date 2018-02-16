@@ -117,17 +117,9 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
                 contentDir.mkdirs();
             }
 
-            BufferedWriter propsWriter =
-                createWriter(contentDir,
-                             SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
-            
-            
+            File propsFile = new File(contentDir, SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME);
             File md5File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
-            BufferedWriter md5Writer =
-                createWriter(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
-            
-            BufferedWriter sha256Writer =
-                createWriter(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
+            File sha256File = new File(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
             SpaceManifestDpnManifestVerifier verifier =
                 new SpaceManifestDpnManifestVerifier(md5File,
@@ -138,9 +130,9 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
                                     retrievalSource,
                                     contentDir,
                                     new LoggingOutputWriter(),
-                                    propsWriter,
-                                    md5Writer,
-                                    sha256Writer,
+                                    propsFile,
+                                    md5File,
+                                    sha256File,
                                     snapshotManager,
                                     verifier);
 
@@ -195,33 +187,7 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
         return SnapshotJobParameterMarshaller.marshal(snapshot);
     }
 
-    /**
-     * @param contentDir
-     * @param file
-     * @return
-     * @throws IOException
-     */
-    private BufferedWriter createWriter(File contentDir, String file)
-        throws IOException {
-        Path path = getPath(contentDir, file);
-        return createWriter(path);
-    }
-    
-    private BufferedWriter createWriter(Path path) throws IOException{
-        BufferedWriter propsWriter =
-            Files.newBufferedWriter(path, StandardCharsets.UTF_8);
-        return propsWriter;
-    }
 
-    /**
-     * @param contentDir
-     * @param filename
-     * @return
-     */
-    private Path getPath(File contentDir, String filename) {
-        return ContentDirUtils.getPath(contentDir, filename);
-    }
-    
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.impl.BatchJobBuilder#getJobName()
      */

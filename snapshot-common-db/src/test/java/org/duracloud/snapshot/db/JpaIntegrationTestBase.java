@@ -42,6 +42,7 @@ public abstract class JpaIntegrationTestBase extends EasyMockSupport {
         int port = 3310;
         MysqldConfig config = aMysqldConfig(v5_7_latest).withCharset(UTF8).withPort(port).withUser("user", "pass")
                 .withTimeZone("GMT").withTimeout(2, TimeUnit.MINUTES).withServerVariable("max_connect_errors", 666)
+                .withServerVariable("log_syslog", 0)
                 .build();
 
         mysqld = anEmbeddedMysql(config).addSchema("snapshot", ScriptResolver.classPathScript("db_init.sql")).start();

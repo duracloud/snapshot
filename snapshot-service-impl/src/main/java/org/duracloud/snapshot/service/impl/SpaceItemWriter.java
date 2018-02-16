@@ -135,6 +135,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     }
 
     protected void resetDatabase(){
+        closeDatabase();
         deleteDatabase();
         this.db = makeDatabase();
     }
@@ -210,11 +211,12 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             sw.stop();
 
             log.info("Finished retrieving content: contentId={}, " +
-                    " fileSize={}, file path={}, elapsedTimeMs={}",
-                contentId,
-                localFile.length(),
-                localFile.getAbsolutePath(),
-                sw.getTime());
+                     " fileSize={}, file path={}, elapsedTimeMs={}, transferRateMbps={}",
+                     contentId,
+                     localFile.length(),
+                     localFile.getAbsolutePath(),
+                     sw.getTime(),
+                     (localFile.length() * 0.008)/sw.getTime());
 
             // cache props
             cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));

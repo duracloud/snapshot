@@ -41,6 +41,7 @@ public class ManifestFileHelper {
                                    String contentId, 
                                    String checksum) throws IOException {
         writer.write(checksum + "  data/" + contentId + "\n");
+        writer.flush();
     }
     
     public static ManifestEntry parseManifestEntry(String line)

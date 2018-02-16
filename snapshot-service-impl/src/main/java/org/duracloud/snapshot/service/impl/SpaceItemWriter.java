@@ -7,16 +7,25 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.text.ParseException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.duracloud.chunk.util.ChunkUtil;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
@@ -31,6 +40,9 @@ import org.duracloud.retrieval.mgmt.RetrievalWorker;
 import org.duracloud.retrieval.source.RetrievalSource;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.service.SnapshotManager;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -65,26 +77,73 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private List<String> errors = new LinkedList<String>();
     private SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier;
     private ChunkUtil chunkUtil = new ChunkUtil();
-    
-    
-    public SpaceItemWriter(Snapshot snapshot, RetrievalSource retrievalSource,
+    private Map<String,String> md5Cache = new HashMap<>();
+    private Map<String,String> sha256Cache = new HashMap<>();
+    private Map<String,String> propsCache = new HashMap<>();
+    private File md5ManifestFile;
+    private File sha256ManifestFile;
+    private File propsFile;
+    private DB db;
+    private File dbFile;
+    private int totalChecksumsPerformed = 0;
+
+    /**
+     *
+     * @param snapshot
+     * @param retrievalSource
+     * @param contentDir
+     * @param outputWriter
+     * @param propsFile
+     * @param md5ManifestFile
+     * @param sha256ManifestFile
+     * @param snapshotManager
+     * @param spaceManifestDpnManifestVerifier
+     */
+    public SpaceItemWriter(Snapshot snapshot,
+                           RetrievalSource retrievalSource,
                            File contentDir,
                            OutputWriter outputWriter,
-                           BufferedWriter propsWriter,
-                           BufferedWriter md5Writer,
-                           BufferedWriter sha256Writer, 
-                           SnapshotManager snapshotManager, 
+                           File propsFile,
+                           File md5ManifestFile,
+                           File sha256ManifestFile,
+                           SnapshotManager snapshotManager,
                            SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier) {
         super();
         this.snapshot = snapshot;
         this.retrievalSource = retrievalSource;
         this.contentDir = contentDir;
         this.outputWriter = outputWriter;
-        this.propsWriter = propsWriter;
-        this.md5Writer = md5Writer;
-        this.sha256Writer = sha256Writer;
+        this.md5ManifestFile = md5ManifestFile;
+        this.sha256ManifestFile = sha256ManifestFile;
         this.snapshotManager = snapshotManager;
         this.spaceManifestDpnManifestVerifier = spaceManifestDpnManifestVerifier;
+        this.dbFile = new File(contentDir, snapshot.getName()+".db");
+        this.db = makeDatabase();
+        this.propsFile = propsFile;
+    }
+
+    private DB makeDatabase(){
+        return DBMaker.fileDB(this.dbFile).transactionEnable().closeOnJvmShutdown().make();
+    }
+
+    protected void closeDatabase(){
+        this.db.close();
+    }
+
+    private void deleteDatabase(){
+        this.dbFile.delete();
+    }
+
+    protected void resetDatabase(){
+        closeDatabase();
+        deleteDatabase();
+        this.db = makeDatabase();
+    }
+
+    private BufferedWriter createWriter(File file) throws IOException{
+        BufferedWriter writer =
+            Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
+        return writer;
     }
 
     @Override
@@ -104,9 +163,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
-    /**
-     * @return
-     */
     private File getDataDir() {
         return new File(contentDir, "data");
     }
@@ -116,35 +172,116 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         retrieveFile(contentItem, directory, true, false);
     }
 
+    private void cacheValue(Map<String,String> cache, String key, String value){
+        cache.put(key, value);
+        db.commit();
+    }
+
     protected void retrieveFile(ContentItem contentItem, File directory,
                                 boolean writeChecksums, boolean lastItem)
             throws IOException {
+
+        String contentId = chunkUtil.preChunkedContentId(contentItem.getContentId());
+
+        //retrieve cached data
+        String md5Checksum = md5Cache.get(contentId);
+        String sha256 = sha256Cache.get(contentId);
+
+        Map<String,String> props = null;
+
         RetrievalWorker retrievalWorker =
             new RetrievalWorker(contentItem, retrievalSource, directory,
                                 true, outputWriter, false, true);
-        Map<String,String> props = retrievalWorker.retrieveFile(new RetrievalListener(){ 
-            @Override
-            public void chunkRetrieved(String chunk) {
-                getStepExecution().getExecutionContext().put("last-chunk-retrieved-" + Thread.currentThread().getName(), chunk);
-            }
-        });
+
         File localFile = retrievalWorker.getLocalFile();
 
-        String md5Checksum = null;
-        if(null != props) {
+        if(md5Checksum == null) { // File is not in MD5 cache
+            StopWatch sw = new StopWatch();
+            sw.start();
+
+            props = retrievalWorker.retrieveFile(new RetrievalListener() {
+                @Override
+                public void chunkRetrieved(String chunk) {
+                    getStepExecution().getExecutionContext().put("last-chunk-retrieved-" +
+                                                                 Thread.currentThread().getName(),
+                                                                 chunk);
+                }
+            });
+
+            sw.stop();
+
+            log.info("Finished retrieving content: contentId={}, " +
+                     " fileSize={}, file path={}, elapsedTimeMs={}, transferRateMbps={}",
+                     contentId,
+                     localFile.length(),
+                     localFile.getAbsolutePath(),
+                     sw.getTime(),
+                     (localFile.length() * 0.008)/sw.getTime());
+
+            // cache props
+            cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));
+
+            // cache md5
             md5Checksum = props.get(ContentStore.CONTENT_CHECKSUM);
+            cacheValue(md5Cache, contentId, md5Checksum);
+
+            log.info("Retrieved item {} from space {} with MD5 checksum {}",
+                     contentItem.getContentId(),
+                     contentItem.getSpaceId(),
+                     md5Checksum);
+        } else {
+            log.info("MD5 for contentId {} is already cached." +
+                     " No need to download and reverify.",
+                     contentId);
+
+            // Get the props from cache, otherwise retrieve them.
+            String propsStr = propsCache.get(contentId);
+            if(propsStr != null){
+                props = PropertiesSerializer.deserialize(propsStr);
+                log.info("Props found in cache for {}.", contentId);
+            } else {
+                log.info("Props not found in cache for {}.", contentId);
+                props = retrievalSource.getSourceProperties(contentItem);
+                cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));
+                log.info("Retrieved and cached props for {}.", contentId);
+            }
         }
-        log.info("Retrieved item {} from space {} with MD5 checksum {}",
-                 contentItem.getContentId(),
-                 contentItem.getSpaceId(),
-                 md5Checksum);
-        String contentId = chunkUtil.preChunkedContentId(contentItem.getContentId());
+
         if(localFile.exists() && md5Checksum != null) {
             try {
                 if (writeChecksums) {
                     writeMD5Checksum(contentId, md5Checksum);
-                    writeSHA256Checksum(contentId, localFile);
+                    if(sha256 == null){
+                        ChecksumUtil sha256ChecksumUtil =
+                            new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
+                        StopWatch sw = new StopWatch();
+
+                        log.info("Starting sha256 checksum generation for contentId={}; file path={}",
+                                 contentId,
+                                 localFile.getAbsolutePath());
+
+                        sw.start();
+                        sha256 = sha256ChecksumUtil.generateChecksum(localFile);
+                        totalChecksumsPerformed++;
+                        sw.stop();
+
+                        log.info("Finished sha256 checksum generation for contentId={};" +
+                                 " fileSize={}, file path={}; elapsedTimeMs={}",
+                                 contentId,
+                                 localFile.length(),
+                                 localFile.getAbsolutePath(),
+                                 sw.getTime());
+
+                        //cache the result
+                        cacheValue(sha256Cache, contentId, sha256);
+                    } else {
+                        log.info("SHA-256 checksum for contentId {} is already cached, " +
+                                 "no need to recompute", contentId);
+                    }
+
+                    writeSHA256Checksum(contentId, sha256);
                 }
+
                 writeToSnapshotManager(contentId, props);
                 writeContentProperties(contentId, props, lastItem);
             }catch(IOException ioe) {
@@ -153,11 +290,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             }
         } else {
             // There was a problem! Throw a meaningful exception:
-            String baseError =
-                String.format("Retrieved item {} from space {} could not " +
-                              "be processed due to: ",
-                              contentItem.getContentId(),
-                              contentItem.getSpaceId());
+            String baseError = "Retrieved item " + contentItem.getContentId() +
+                               " from space " + contentItem.getSpaceId() + " could not " +
+                               "be processed due to: ";
             if(!localFile.exists()) {
                 String error = baseError + "The local file at path " +
                                localFile.getAbsolutePath()+ " could not be found.";
@@ -171,8 +306,12 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
+    protected int getTotalChecksumsPerformed(){
+        return totalChecksumsPerformed;
+    }
+
     /**
-     * @param contentItem
+     * @param contentId
      * @param props
      */
     private void writeToSnapshotManager(final String contentId,
@@ -187,8 +326,8 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
             });
         } catch (Exception e) {
-            log.error("failed to add snapshot content item: "
-                + contentId + " to snapshot " + snapshot + ": " + e.getMessage(), e);
+            log.error("Failed to add snapshot content item: " + contentId +
+                      " to snapshot " + snapshot + ": " + e.getMessage(), e);
             throw new IOException(e);
         }
     }
@@ -196,25 +335,17 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     protected void writeMD5Checksum(String contentId,
                                     String md5Checksum) throws IOException {
         synchronized (md5Writer) {
-            ManifestFileHelper.writeManifestEntry(md5Writer, 
-                                                    contentId, 
-                                                    md5Checksum);
+            ManifestFileHelper.writeManifestEntry(md5Writer, contentId, md5Checksum);
         }
     }
 
 
 
     protected void writeSHA256Checksum(String contentId,
-                                       File localFile) throws IOException {
+                                       String sha256Checksum) throws IOException {
 
-        ChecksumUtil sha256ChecksumUtil =
-            new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
-
-        String sha256Checksum = sha256ChecksumUtil.generateChecksum(localFile);
         synchronized (sha256Writer){
-            ManifestFileHelper.writeManifestEntry(sha256Writer,
-                contentId,
-                sha256Checksum);
+            ManifestFileHelper.writeManifestEntry(sha256Writer, contentId, sha256Checksum);
         }
     }
 
@@ -222,8 +353,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                                           Map<String,String> props,
                                           boolean lastItem)
             throws IOException {
-        
-        
         Set<String> propKeys = props.keySet();
         StringBuffer sb = new StringBuffer(100);
         sb.append("{\n  \"" + contentId + "\": {\n");
@@ -240,6 +369,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
         synchronized (propsWriter) {
             propsWriter.write(sb.toString());
+            propsWriter.flush();
         }
     }
 
@@ -247,14 +377,14 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         if(snapshotPropsContentItem != null) {
             try {
                 retrieveFile(snapshotPropsContentItem, contentDir, false, true);
-                log.info("snapshot properties retrieved");
+                log.info("Snapshot properties retrieved");
             } catch (IOException ioe) {
-                log.error("Error retrieving the snapshot properties file: ",
-                             ioe);
+                log.error("Error retrieving the snapshot properties file: " +
+                          ioe.getMessage(), ioe);
             }
         } else {
             String message = "No snapshot properties file found. (" +
-                Constants.SNAPSHOT_PROPS_FILENAME + ")";
+                             Constants.SNAPSHOT_PROPS_FILENAME + ")";
             log.error(message);
             errors.add(message);
         }
@@ -263,30 +393,32 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = super.afterStep(stepExecution);
-        log.info("Step complete with status: {}",
-                     stepExecution.getExitStatus());
-
+        log.info("Step complete with status: {}", stepExecution.getExitStatus());
         close("md5 writer", md5Writer);
         close("sh256 writer", sha256Writer);
         close("output writer", outputWriter);
-        
+
         retrieveSnapshotProperties();
         closePropsWriter();
-        
+
         if(errors.size() == 0){
-           log.info("no errors - proceeding with space manifest -dpn manifest verification...");
+           log.info("No errors in retrieval of snapshot {}; " +
+                    "Proceeding with space manifest - dpn manifest verification...",
+                    snapshot.getName());
            errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
         }
-        
+
         if(errors.size() > 0){
             stepExecution.upgradeStatus(BatchStatus.FAILED);
             status = status.and(ExitStatus.FAILED);
             for(String error : errors){
                 status = status.addExitDescription(error);
             }
-            log.error("space item writer failed due to the following error(s): " + 
-                       status.getExitDescription());
+            log.error("Space item writer failed due to the following error(s): " +
+                      status.getExitDescription());
         }
+
+        deleteDatabase();
         return status;
     }
 
@@ -294,9 +426,10 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         try {
             synchronized (propsWriter) {
                 propsWriter.write("]\n");
+                propsWriter.flush();
             }
-            
-            log.info("closed props writer");
+
+            log.debug("Closed props writer");
         } catch (IOException ioe) {
             String message = "Error writing end of content property manifest: " + ioe.getMessage();
             errors.add(message);
@@ -308,13 +441,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
     private void close(String writerName, Object writer) {
         try {
-            
+
             if(writer instanceof Closeable){
                 ((Closeable)writer).close();
             }else if(writer instanceof OutputWriter){
                 ((OutputWriter)writer).close();
             }else {
-                throw new DuraCloudRuntimeException(writerName + 
+                throw new DuraCloudRuntimeException(writerName +
                                                     " is not a supported parameter type for this method.");
             }
             log.info("closed {}", writerName);
@@ -325,14 +458,67 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
+    private void loadCacheFromFile(Map<String,String> cache,
+                                   File file,
+                                   Function<String,Boolean> isValidChecksum) throws IOException{
+        //if the cache is empty check if there is are md5 and sha256 manifests
+        //that can be used to prepopulate the cache.
+        if(cache.isEmpty() && file.exists()){
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+                String line = null;
+                while ((line = reader.readLine()) != null) {
+                    try {
+                        ManifestEntry entry = ManifestFileHelper.parseManifestEntry(line);
+                        String contentId = entry.getContentId();
+                        String checksum = entry.getChecksum();
+                        if(isValidChecksum.apply(checksum)){
+                            cacheValue(cache, contentId, checksum);
+                        }else{
+                            log.info("Checksum {} in manifest file {} was not a valid checksum: skipping.",
+                                     checksum, file.getAbsolutePath());
+                        }
+                    } catch (ParseException ex) {
+                        log.info("Unable to parse line in manifest file {}. message={}. skipping: line={}",
+                                 file.getAbsolutePath(), ex.getMessage(), line);
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void beforeStep(StepExecution stepExecution) {
         super.beforeStep(stepExecution);
-        log.info("starting step {}");
+        log.info("Starting step {}", stepExecution);
         try {
+
+            md5Cache = db
+                .treeMap("md5Cache", Serializer.STRING, Serializer.STRING)
+                .createOrOpen();
+            sha256Cache = db
+                .treeMap("sha256Cache", Serializer.STRING, Serializer.STRING)
+                .createOrOpen();
+            propsCache = db
+                .treeMap("propsCache", Serializer.STRING, Serializer.STRING)
+                .createOrOpen();
+
+            //load caches from files left from previously unsuccessful run.
+            loadCacheFromFile(this.md5Cache, this.md5ManifestFile, x->  x  != null && x.matches("[a-fA-F0-9]{32}"));
+            loadCacheFromFile(this.sha256Cache, this.sha256ManifestFile, x-> x != null && x.matches("[a-fA-F0-9]{64}"));
+
+            //initialize writers after loading cache from files.
+            try {
+                this.propsWriter = createWriter(propsFile);
+                this.md5Writer = createWriter(this.md5ManifestFile);
+                this.sha256Writer = createWriter(this.sha256ManifestFile);
+            }catch(IOException ex){
+                throw new RuntimeException(ex);
+            }
+
             errors.clear();
             synchronized (propsWriter) {
                 propsWriter.write("[\n");
+                propsWriter.flush();
             }
         } catch (IOException ioe) {
             log.error("Error writing start of content property " +

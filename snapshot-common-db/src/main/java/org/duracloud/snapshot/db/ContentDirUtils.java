@@ -28,17 +28,4 @@ public class ContentDirUtils {
             + File.separator + "restorations" + File.separator
             + restorationId;
     }
-    
-    /**
-     * @param contentDir
-     * @param filename
-     * @return
-     */
-    public static Path getPath(File dir, String filename) {
-        Path path =
-            FileSystems.getDefault().getPath(dir.getAbsolutePath(),
-                                             filename);
-        return path;
-    }
-
 }

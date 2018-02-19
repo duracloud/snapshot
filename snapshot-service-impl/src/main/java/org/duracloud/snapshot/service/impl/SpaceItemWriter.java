@@ -132,6 +132,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     }
 
     protected void deleteDatabase(){
+        closeDatabase();
         this.dbFile.delete();
     }
 

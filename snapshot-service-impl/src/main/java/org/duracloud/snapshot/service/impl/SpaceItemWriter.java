@@ -118,7 +118,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         this.snapshotManager = snapshotManager;
         this.spaceManifestDpnManifestVerifier = spaceManifestDpnManifestVerifier;
         this.dbFile = new File(contentDir, snapshot.getName()+".db");
-        this.db = makeDatabase();
         this.propsFile = propsFile;
     }
 
@@ -127,17 +126,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     }
 
     protected void closeDatabase(){
-        this.db.close();
+        if(this.db != null){
+            this.db.close();
+        }
     }
 
-    private void deleteDatabase(){
+    protected void deleteDatabase(){
         this.dbFile.delete();
-    }
-
-    protected void resetDatabase(){
-        closeDatabase();
-        deleteDatabase();
-        this.db = makeDatabase();
     }
 
     private BufferedWriter createWriter(File file) throws IOException{
@@ -491,6 +486,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         super.beforeStep(stepExecution);
         log.info("Starting step {}", stepExecution);
         try {
+            this.db = makeDatabase();
 
             md5Cache = db
                 .treeMap("md5Cache", Serializer.STRING, Serializer.STRING)

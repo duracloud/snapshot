@@ -204,7 +204,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
                                 sha256File,
                                 snapshotManager,
                                 spaceManifestVerifier);
-        writer.resetDatabase();
+        writer.closeDatabase();
+        writer.deleteDatabase();
         writer.setIsTest();
         writer.beforeStep(stepExecution);
         writeItems(items, threads);
@@ -371,12 +372,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
             items.size()-1,  writer.getTotalChecksumsPerformed());
 
         //reset the database to ensure that cache is empty
-        writer.resetDatabase();
-
-        //close the database using protected method
-        //in order to release exclusive file lock
-        //by the mapdb instance.
         writer.closeDatabase();
+        writer.deleteDatabase();
 
         //use a new writer simulating a step restart.
         writer =

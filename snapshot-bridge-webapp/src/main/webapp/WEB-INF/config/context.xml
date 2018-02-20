@@ -15,8 +15,8 @@
   <bean id="eventLog" class="org.duracloud.snapshot.service.EventLog"/>
 
   <bean id="jobTaskExecutor" class="org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor">
-    <property name="maxPoolSize" value="6"/>
-    <property name="corePoolSize" value="6"/>
+    <property name="maxPoolSize" value="7"/>
+    <property name="corePoolSize" value="7"/>
     <property name="queueCapacity" value="1000"/>
   </bean>
 

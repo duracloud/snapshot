@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.http.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.snapshot.EmptySpaceException;
 import org.duracloud.snapshot.SnapshotException;
@@ -177,7 +178,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                              isA(String.class),
                              isA(String.class))).andReturn(contentStore);
 
-        expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList("first-item").iterator());
+        expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME,
+                                                                               "first-item").iterator());
         expect(jobManager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
 
@@ -243,8 +245,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             isA(String.class),
             isA(String.class))).andReturn(contentStore);
 
-        expect(contentStore.getSpaceContents(spaceId)).andReturn(new ArrayList<String>().iterator());
-
+        expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME)
+                                                                       .iterator());
         replayAll();
 
         Response response = resource.create(snapshotId,

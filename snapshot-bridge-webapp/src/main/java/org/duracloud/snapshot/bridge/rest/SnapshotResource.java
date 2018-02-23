@@ -33,7 +33,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpStatus;
 import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.error.ContentStoreException;
+import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
 import org.duracloud.snapshot.EmptySpaceException;
@@ -408,7 +410,7 @@ public class SnapshotResource {
                 config.getDuracloudPassword());
         try {
             Iterator<String> contents = contentStore.getSpaceContents(source.getSpaceId());
-            if(contents == null || !contents.hasNext()){
+            if(contents == null || isEmpty(contents)){
                 throw new EmptySpaceException("A snapshot of an empty space may not be taken.");
             }
 
@@ -417,6 +419,14 @@ public class SnapshotResource {
         }
     }
 
+    private boolean isEmpty(Iterator<String> contents) {
+        while(contents.hasNext()){
+            if(!Constants.SNAPSHOT_PROPS_FILENAME.equals(contents.next())){
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * Notifies the bridge that the snapshot transfer from the bridge storage to
      * the DPN node is complete. Also sets a snapshot's alternate id's if they

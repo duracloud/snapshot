@@ -95,4 +95,11 @@ public interface SnapshotJobManager  {
      */
     public Restoration stopRestore(String restoreId) throws SnapshotException;
 
+
+    /**
+     * Access the snapshot job manager configuration.
+     * @return the config object
+     */
+    public SnapshotJobManagerConfig getConfig();
+
 }

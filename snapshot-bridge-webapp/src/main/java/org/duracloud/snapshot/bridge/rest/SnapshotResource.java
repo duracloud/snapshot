@@ -12,6 +12,7 @@ import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,11 +28,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpStatus;
+import org.duracloud.client.ContentStore;
+import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
+import org.duracloud.snapshot.EmptySpaceException;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
@@ -59,8 +64,10 @@ import org.duracloud.snapshot.id.SnapshotIdentifier;
 import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.PropertiesSerializer;
+import org.duracloud.snapshot.service.impl.StoreClientHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +101,7 @@ public class SnapshotResource {
     private SnapshotContentItemRepo snapshotContentItemRepo;
     private SnapshotRepo snapshotRepo;
 
+    private StoreClientHelper storeClientHelper;
     private EventLog eventLog;
 
     @Autowired
@@ -102,12 +110,14 @@ public class SnapshotResource {
         SnapshotManager snapshotManager,
         SnapshotRepo snapshotRepo,
         SnapshotContentItemRepo snapshotContentItemRepo,
-        EventLog eventLog) {
+        EventLog eventLog,
+        StoreClientHelper storeClientHelper) {
         this.jobManager = jobManager;
         this.snapshotManager = snapshotManager;
         this.snapshotRepo = snapshotRepo;
         this.snapshotContentItemRepo = snapshotContentItemRepo;
         this.eventLog = eventLog;
+        this.storeClientHelper = storeClientHelper;
     }
 
     /**
@@ -324,6 +334,7 @@ public class SnapshotResource {
                     + snapshotId
                     + " already exists - please use a different name");
             }
+
             snapshot = new Snapshot();
             
             DuracloudEndPointConfig source = new DuracloudEndPointConfig();
@@ -331,6 +342,9 @@ public class SnapshotResource {
             source.setPort(Integer.valueOf(params.getPort()));
             source.setSpaceId(params.getSpaceId());
             source.setStoreId(params.getStoreId());
+
+            checkForEmptySpace(source);
+
             Date now = new Date();
             snapshot.setModified(now);
             snapshot.setStartDate(now);
@@ -375,9 +389,31 @@ public class SnapshotResource {
                 }
                 log.info("cleaning up complete");
             }
-            return Response.serverError()
+
+            Status status = Status.INTERNAL_SERVER_ERROR;
+            if(ex instanceof EmptySpaceException){
+                status = Status.CONFLICT;
+            }
+
+            return Response.status(status)
                            .entity(new ResponseDetails(ex.getMessage()))
                            .build();
+        }
+    }
+
+    private void checkForEmptySpace(DuracloudEndPointConfig source) throws SnapshotException {
+        SnapshotJobManagerConfig config = this.jobManager.getConfig();
+        ContentStore contentStore =
+            storeClientHelper.create(source, config.getDuracloudUsername(),
+                config.getDuracloudPassword());
+        try {
+            Iterator<String> contents = contentStore.getSpaceContents(source.getSpaceId());
+            if(contents == null || !contents.hasNext()){
+                throw new EmptySpaceException("A snapshot of an empty space may not be taken.");
+            }
+
+        } catch(ContentStoreException ex){
+            throw new RuntimeException(ex);
         }
     }
 

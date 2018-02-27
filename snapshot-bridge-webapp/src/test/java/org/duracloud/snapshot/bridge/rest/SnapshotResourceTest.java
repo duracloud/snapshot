@@ -21,7 +21,10 @@ import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
+import org.duracloud.client.ContentStore;
+import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
+import org.duracloud.snapshot.EmptySpaceException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -47,7 +50,9 @@ import org.duracloud.snapshot.service.AlternateIdAlreadyExistsException;
 import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManager;
+import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.SnapshotManager;
+import org.duracloud.snapshot.service.impl.StoreClientHelper;
 import org.easymock.Capture;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -92,6 +97,9 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Mock
     private EventLog eventLog;
 
+    @Mock
+    private StoreClientHelper helper;
+
     /*
      * (non-Javadoc)
      * 
@@ -105,7 +113,8 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                  snapshotManager,
                                  snapshotRepo,
                                  snapshotContentItemRepo,
-                                 eventLog);
+                                 eventLog,
+                                 helper);
     }
 
     @Test
@@ -145,7 +154,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testCreate() throws SnapshotException {
+    public void testCreate() throws Exception {
         String host = "host";
         String port = "444";
         String storeId = "storeId";
@@ -157,6 +166,20 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String email = "email";
         String dpnMemberUUID = "uuid";
 
+        SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
+        expect(jobManager.getConfig())
+            .andReturn(config);
+
+        expect(config.getDuracloudUsername()).andReturn("username");
+        expect(config.getDuracloudPassword()).andReturn("password");
+
+        ContentStore contentStore = createMock(ContentStore.class);
+        expect(helper.create(isA(DuracloudEndPointConfig.class),
+                             isA(String.class),
+                             isA(String.class))).andReturn(contentStore);
+
+        expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME,
+                                                                               "first-item").iterator());
         expect(jobManager.executeSnapshot(snapshotId))
                 .andReturn(BatchStatus.UNKNOWN);
 
@@ -195,7 +218,49 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
     }
 
+    @Test
+    public void testCreateFailDueToEmptySnapshot() throws Exception {
+        String host = "host";
+        String port = "444";
+        String storeId = "storeId";
+        String spaceId = "spaceId";
+        String snapshotId =
+            new SnapshotIdentifier("account-name", storeId, spaceId,
+                System.currentTimeMillis()).getSnapshotId();
+        String description = "description";
+        String email = "email";
+        String dpnMemberUUID = "uuid";
 
+        SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
+        expect(jobManager.getConfig())
+            .andReturn(config);
+
+        expect(config.getDuracloudUsername()).andReturn("username");
+        expect(config.getDuracloudPassword()).andReturn("password");
+
+        expect(snapshotRepo.findByName(snapshotId)).andReturn(null);
+
+        ContentStore contentStore = createMock(ContentStore.class);
+        expect(helper.create(isA(DuracloudEndPointConfig.class),
+            isA(String.class),
+            isA(String.class))).andReturn(contentStore);
+
+        expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME)
+                                                                       .iterator());
+        replayAll();
+
+        Response response = resource.create(snapshotId,
+                                    new CreateSnapshotBridgeParameters(host,
+                                        port,
+                                        storeId,
+                                        spaceId,
+                                        description,
+                                        email,
+                                        dpnMemberUUID));
+        assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
+        assertTrue(((ResponseDetails)response.getEntity()).getMessage().contains("empty space"));
+
+    }
     @Test
     public void testRestartSuccess() throws SnapshotException {
         String snapshotId = "snapshot-id";

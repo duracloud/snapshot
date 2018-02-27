@@ -493,7 +493,11 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         JobExecution ex = this.jobRepository.getLastJobExecution(jobName, params);
         return ex;
     }
-    
+
+    @Override
+    public SnapshotJobManagerConfig getConfig(){
+        return this.config;
+    }
     
     
 }

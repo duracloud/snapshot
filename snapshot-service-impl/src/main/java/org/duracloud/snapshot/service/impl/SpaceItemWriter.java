@@ -206,6 +206,11 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
             sw.stop();
 
+            if(null == props) { // Transfer failed
+                throw new IOException("Failed to retrieve " + contentId + " after " +
+                                      sw.getTime()/1000 + " seconds");
+            }
+
             log.info("Finished retrieving content: contentId={}, " +
                      " fileSize={}, file path={}, elapsedTimeMs={}, transferRateMbps={}",
                      contentId,

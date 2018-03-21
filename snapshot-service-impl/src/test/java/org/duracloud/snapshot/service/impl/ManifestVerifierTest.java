@@ -7,8 +7,12 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.anyLong;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -18,8 +22,6 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.batch.runtime.JobExecution;
 
 import org.apache.commons.io.FileUtils;
 import org.duracloud.common.util.ChecksumUtil;
@@ -60,6 +62,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
     private String restoreId = "restore-id";
 
     private int itemCount = 100;
+
     /**
      * @throws java.lang.Exception
      */
@@ -90,7 +93,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
     }
 
     /**
-     * 
+     *
      */
     private void createVerifier() {
         this.verifier = new ManifestVerifier(restoreId, restoreDir, restoreManager);
@@ -122,10 +125,10 @@ public class ManifestVerifierTest extends EasyMockSupport {
     }
 
     private void setupStepExecutionFailure() {
-       stepExecution.setTerminateOnly();
-       expectLastCall();
-       stepExecution.upgradeStatus(BatchStatus.FAILED);
-       expectLastCall();
+        stepExecution.setTerminateOnly();
+        expectLastCall();
+        stepExecution.upgradeStatus(BatchStatus.FAILED);
+        expectLastCall();
     }
 
     /**
@@ -154,23 +157,22 @@ public class ManifestVerifierTest extends EasyMockSupport {
         writer.close();
         return list;
     }
-    
-    private void setupStepExecution() throws Exception{
+
+    private void setupStepExecution() throws Exception {
         setupStepExecution(0, itemCount);
     }
-
 
     private void setupStepExecution(int errorCount, int itemCount) throws Exception {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.EXECUTING);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
-        
+
         expect(restoreManager.transitionRestoreStatus(eq(restoreId),
                                                       eq(RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));
-        
+
         ExecutionContext context = createMock(ExecutionContext.class);
-        expect(context.getLong(isA(String.class), anyLong())).andReturn((long)itemCount).anyTimes();
+        expect(context.getLong(isA(String.class), anyLong())).andReturn((long) itemCount).anyTimes();
 
         context.putLong(isA(String.class), anyLong());
         expectLastCall().atLeastOnce();
@@ -179,12 +181,12 @@ public class ManifestVerifierTest extends EasyMockSupport {
         expect(context.get(eq(StepExecutionSupport.ERRORS_KEY))).andReturn(errors).atLeastOnce();
         expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
 
-        if(errorCount > 0){
+        if (errorCount > 0) {
             context.put(isA(String.class), eq(errors));
             expectLastCall().times(errorCount);
             context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
             expectLastCall();
-         }
+        }
     }
 
     /**

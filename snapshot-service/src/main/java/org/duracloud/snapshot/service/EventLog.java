@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author Bill Branan
- *         Date: 2/18/2016
+ * Date: 2/18/2016
  */
 public class EventLog {
 
@@ -34,7 +34,7 @@ public class EventLog {
 
     public void logRestoreUpdate(Restoration restore) {
         Snapshot snapshot = restore.getSnapshot();
-        DuracloudEndPointConfig source =  snapshot.getSource();
+        DuracloudEndPointConfig source = snapshot.getSource();
         log.info(format(new Object[] {"RESTORE_UPDATE",
                                       restore.getRestorationId(),
                                       snapshot.getName(),

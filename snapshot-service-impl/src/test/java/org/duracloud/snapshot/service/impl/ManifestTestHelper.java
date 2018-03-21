@@ -20,6 +20,10 @@ import java.util.List;
  */
 public class ManifestTestHelper {
 
+    private ManifestTestHelper() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
     /**
      * @param manifestFile
      * @return

@@ -17,20 +17,22 @@ import org.springframework.stereotype.Repository;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
-@Repository(value="restoreRepo")
+@Repository(value = "restoreRepo")
 public interface RestoreRepo extends JpaRepository<Restoration, Long> {
 
     /**
      * Returns a list of restorations for a given destinantion host.
+     *
      * @param host
      * @return
      */
     public List<Restoration> findByDestinationHost(String host);
-    
+
     /**
      * Returns a list of restorations based on the restoration's snapshot name property.
+     *
      * @param name
      * @return
      */
@@ -44,16 +46,19 @@ public interface RestoreRepo extends JpaRepository<Restoration, Long> {
 
     /**
      * Returns a list of restorations based on the restoration's status
+     *
      * @param status
      * @return
      */
     public List<Restoration> findByStatus(RestoreStatus status);
-    
-    @Query("select r from Restoration r where r.status not in ('WAITING_FOR_DPN','RESTORATION_COMPLETE','RESTORATION_EXPIRED','ERROR')")
+
+    @Query("select r from Restoration r where r.status not in " +
+           "('WAITING_FOR_DPN','RESTORATION_COMPLETE','RESTORATION_EXPIRED','ERROR')")
     public List<Restoration> findRunning();
-    
+
     /**
      * Deletes the restore entity
+     *
      * @param restoreId
      */
     public void deleteByRestorationId(String restoreId);

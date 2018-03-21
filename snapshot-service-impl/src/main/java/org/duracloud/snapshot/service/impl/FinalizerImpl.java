@@ -10,11 +10,10 @@ package org.duracloud.snapshot.service.impl;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.annotation.PreDestroy;
 
-import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.Finalizer;
+import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author Daniel Bernstein
- *         Date: Aug 18, 2014
+ * Date: Aug 18, 2014
  */
 @Component
 public class FinalizerImpl implements Finalizer {
@@ -55,32 +54,32 @@ public class FinalizerImpl implements Finalizer {
      */
     @Override
     public void initialize(Integer pollingPeriodMs) {
-         if(timer == null){
+        if (timer == null) {
             timer = new Timer();
-            TimerTask task = new TimerTask(){
+            TimerTask task = new TimerTask() {
                 /* (non-Javadoc)
                  * @see java.util.TimerTask#run()
                  */
                 @Override
                 public void run() {
-                    try{
+                    try {
                         log.info("Launching periodic finalization...");
                         snapshotManager.finalizeSnapshots();
                         restoreManager.finalizeRestores();
-                    }catch(Exception ex){
+                    } catch (Exception ex) {
                         ex.printStackTrace();
                     }
                 }
             };
 
-            if(pollingPeriodMs  == null ||  pollingPeriodMs <  1){
+            if (pollingPeriodMs == null || pollingPeriodMs < 1) {
                 pollingPeriodMs = DEFAULT_POLLING_PERIOD_MS;
             }
 
             timer.schedule(task, new Date(), pollingPeriodMs);
             log.info("Finalization scheduled to run every "
-                + pollingPeriodMs + " milliseconds.");
-         }
+                     + pollingPeriodMs + " milliseconds.");
+        }
     }
 
     /* (non-Javadoc)
@@ -89,7 +88,7 @@ public class FinalizerImpl implements Finalizer {
     @Override
     @PreDestroy
     public void destroy() {
-        if(timer != null){
+        if (timer != null) {
             timer.cancel();
             timer = null;
         }

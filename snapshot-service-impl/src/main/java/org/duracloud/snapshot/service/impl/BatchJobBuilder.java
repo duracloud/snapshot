@@ -14,20 +14,21 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 25, 2014
+ * Date: Jul 25, 2014
  */
 public interface BatchJobBuilder<T> {
     /**
      * Creates a job for the specified entity;
+     *
      * @param entity
      * @param config
-     * @return a job object. 
+     * @return a job object.
      */
     Job buildJob(T entity, SnapshotJobManagerConfig config) throws SnapshotException;
-    
+
     JobParameters buildJobParameters(T entity);
 
     JobParameters buildIdentifyingJobParameters(T entity);
-    
+
     String getJobName();
 }

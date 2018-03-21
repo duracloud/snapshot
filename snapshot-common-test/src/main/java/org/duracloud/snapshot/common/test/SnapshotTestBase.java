@@ -18,32 +18,32 @@ import org.junit.runner.RunWith;
 
 /**
  * A handy base class to simplify the writing of unit tests with easymock.
+ *
  * @author Daniel Bernstein
- *         Date: Feb 12, 2014
+ * Date: Feb 12, 2014
  */
 @RunWith(EasyMockRunner.class)
-public class SnapshotTestBase extends EasyMockSupport{
+public class SnapshotTestBase extends EasyMockSupport {
 
     @BeforeClass
-    public static void beforeClass(){
+    public static void beforeClass() {
         String bridgeLogPropKey = "bridge.log.dir";
         File logDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "duracloud-bridge");
         logDir.mkdirs();
         System.setProperty(bridgeLogPropKey, logDir.getAbsolutePath());
     }
-    
+
     @Before
-    public void setup() throws Exception{
+    public void setup() throws Exception {
     }
 
-    
     @After
-    public void tearDown(){
+    public void tearDown() {
         verifyAll();
     }
 
     protected File getTempDir() {
-        File tempdir = new File(System.getProperty("java.io.tmpdir"), System.currentTimeMillis()+"");
+        File tempdir = new File(System.getProperty("java.io.tmpdir"), System.currentTimeMillis() + "");
         tempdir.deleteOnExit();
         return tempdir;
     }

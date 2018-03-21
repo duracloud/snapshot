@@ -11,7 +11,7 @@ import java.io.File;
 
 /**
  * @author Daniel Bernstein
- *         Date: Feb 14, 2014
+ * Date: Feb 14, 2014
  */
 public class SnapshotJobManagerConfig {
     private String duracloudUsername;
@@ -46,7 +46,7 @@ public class SnapshotJobManagerConfig {
     public String getDuracloudUsername() {
         return duracloudUsername;
     }
-    
+
     /**
      * @param password the password to set
      */

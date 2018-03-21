@@ -25,7 +25,7 @@ import org.springframework.batch.item.ExecutionContext;
 
 /**
  * This class serves as a base class for item readers and writers.
- * 
+ *
  * @author Daniel Bernstein Date: Jul 28, 2015
  */
 public abstract class StepExecutionSupport implements StepExecutionListener {
@@ -40,25 +40,25 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
         return this.stepExecution.getExecutionContext();
     }
 
-    protected synchronized void addError(String error){
-        synchronized(this.stepExecution){
+    protected synchronized void addError(String error) {
+        synchronized (this.stepExecution) {
             List<String> errors = getErrors();
             errors.add(error);
             getExecutionContext().put(ERRORS_KEY, errors);
         }
     }
 
-    protected synchronized void clearErrors(){
-        synchronized(this.stepExecution){
+    protected synchronized void clearErrors() {
+        synchronized (this.stepExecution) {
             List<String> errors = new LinkedList<>();
             getExecutionContext().put(ERRORS_KEY, errors);
         }
     }
-    
+
     protected void resetContextState() {
-        //items read state variable must be set back to zero to 
+        //items read state variable must be set back to zero to
         //ensure that the step will be run from top of the list on failure.
-        addToItemsRead(getItemsRead()*-1);
+        addToItemsRead(getItemsRead() * -1);
         clearErrors();
     }
 
@@ -73,37 +73,33 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
         return errors;
     }
 
-    protected void addToItemsRead(long value){
+    protected void addToItemsRead(long value) {
         addToLong(ITEMS_READ_KEY, value);
     }
-    
-    protected long getItemsRead(){
+
+    protected long getItemsRead() {
         return getLongValue(ITEMS_READ_KEY);
     }
-    
+
     /**
      * Skips the iterator ahead to the items read value stored in the execution context
+     *
      * @param it any iterator
      */
     protected void skipLinesAlreadyRead(Iterator it) {
         long linesRead = getItemsRead();
-        if(linesRead > 0){
-            for(long i = 0; i < linesRead; i++){
-                if(it.hasNext()){
+        if (linesRead > 0) {
+            for (long i = 0; i < linesRead; i++) {
+                if (it.hasNext()) {
                     it.next();
                 }
             }
         }
     }
 
-    
-
-    
-
- 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.
      * springframework.batch.core.StepExecution)
      */
@@ -111,13 +107,13 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
     public void beforeStep(StepExecution stepExecution) {
         this.stepExecution = stepExecution;
     }
-    
-    protected StepExecution getStepExecution(){
+
+    protected StepExecution getStepExecution() {
         return this.stepExecution;
     }
 
     /**
-     * 
+     *
      */
     protected void failExecution() {
         this.stepExecution.upgradeStatus(BatchStatus.FAILED);
@@ -126,7 +122,7 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.
      * springframework.batch.core.StepExecution)
      */
@@ -138,25 +134,26 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
 
     /**
      * Adds the specified value to the existing key.
+     *
      * @param key
      * @param value
      */
     protected void addToLong(String key, long value) {
-        synchronized(this.stepExecution){
+        synchronized (this.stepExecution) {
             long currentValue = getLongValue(key);
-            getExecutionContext().putLong(key,currentValue+value);
+            getExecutionContext().putLong(key, currentValue + value);
         }
 
     }
 
     protected long getLongValue(String key) {
-        synchronized(this.stepExecution){
-           return getExecutionContext().getLong(key,0l);
+        synchronized (this.stepExecution) {
+            return getExecutionContext().getLong(key, 0l);
         }
 
     }
 
-    protected List<String> verifySpace(final SpaceManifestDpnManifestVerifier verifier){
+    protected List<String> verifySpace(final SpaceManifestDpnManifestVerifier verifier) {
         List<String> errors = new LinkedList<>();
         String spaceId = verifier.getSpaceId();
         boolean verified = false;
@@ -179,11 +176,10 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
                 }
             });
 
-
         } catch (Exception e) {
             String message =
                 MessageFormat.format("unexpected error during space verification: step_execution_id={0} "
-                    + "job_execution_id={1}  spaceId={2}: message={3}",
+                                     + "job_execution_id={1}  spaceId={2}: message={3}",
                                      stepExecution.getId(),
                                      stepExecution.getJobExecutionId(),
                                      spaceId,
@@ -197,19 +193,17 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
             }
 
             errors.add(MessageFormat.format("space manifest does not match the dpn manifest: step_execution_id={0} "
-                + "job_execution_id={1}  spaceId={2}",
-                                          stepExecution.getId(),
-                                          stepExecution.getJobExecutionId(),
-                                          spaceId));
+                                            + "job_execution_id={1}  spaceId={2}",
+                                            stepExecution.getId(),
+                                            stepExecution.getJobExecutionId(),
+                                            spaceId));
         }
 
         return errors;
     }
-    
-    public void setIsTest(){
+
+    public void setIsTest() {
         this.test = true;
     }
-
-
 
 }

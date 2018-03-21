@@ -15,7 +15,7 @@ import org.duracloud.snapshot.db.model.Snapshot;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 30, 2014
+ * Date: Jul 30, 2014
  */
 public interface SnapshotManager {
 
@@ -26,16 +26,16 @@ public interface SnapshotManager {
      */
     public void addContentItem(Snapshot snapshot,
                                String contentId,
-                               Map<String, String> props) throws SnapshotException; 
- 
+                               Map<String, String> props) throws SnapshotException;
+
     /**
      * Adds a list of snapshot alternate Id's to a snapshot. To map DPN Bag Id's
      * to Duracloud Snapshot Id's
      *
      * @param snapshot
      * @param alternateIds
-     * @return 
-     * @throws AlternateIdAlreadyExistsException 
+     * @return
+     * @throws AlternateIdAlreadyExistsException
      */
     public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
         throws AlternateIdAlreadyExistsException;
@@ -62,21 +62,22 @@ public interface SnapshotManager {
      */
     public Snapshot transferError(String snapshotId, String errorDetails)
         throws SnapshotException;
-    
+
     /**
-     * This method runs through any snapshots with a status of CLEANING_UP and checks if the 
-     * corresponding space is empty. If so, the state is updated to complete and notification is 
+     * This method runs through any snapshots with a status of CLEANING_UP and checks if the
+     * corresponding space is empty. If so, the state is updated to complete and notification is
      * sent out to the user.
      */
     public void finalizeSnapshots();
 
     /**
      * Updates a snapshot's DPN history
+     *
      * @param snapshot
      * @param history
      * @return the altered snapshot
      */
-	public Snapshot updateHistory(Snapshot snapshot, String history);
-	
-	public void deleteSnapshot(String snapshotId);
+    public Snapshot updateHistory(Snapshot snapshot, String history);
+
+    public void deleteSnapshot(String snapshotId);
 }

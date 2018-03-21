@@ -7,6 +7,10 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_STAGED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ID_TITLE;
+
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
@@ -30,13 +34,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_STAGED;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ACTION_TITLE;
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.SNAPSHOT_ID_TITLE;
-
 /**
  * @author Erik Paulsson
- *         Date: 2/10/14
+ * Date: 2/10/14
  */
 @Component("jobListener")
 public class SnapshotJobExecutionListener implements JobExecutionListener {
@@ -46,7 +46,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private NotificationManager notificationManager;
-    
+
     @Autowired
     private SnapshotRepo snapshotRepo;
 
@@ -55,11 +55,8 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private EventLog eventLog;
-    
+
     private ExecutionListenerConfig config;
-    
-    private SnapshotJobParameterMarshaller parameterMarshaller =
-        new SnapshotJobParameterMarshaller();
 
     /**
      * @param notificationManager the notificationManager to set
@@ -67,7 +64,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     public void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
-    
+
     /**
      * @param snapshotRepo the snapshotRepo to set
      */
@@ -82,18 +79,18 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     @Transactional
     public void beforeJob(JobExecution jobExecution) {
         log.debug("entering beforeJob()");
-        
+
         JobParameters jobParams = jobExecution.getJobParameters();
-        
-        String snapshotId = this.parameterMarshaller.unmarshal(jobParams);
+
+        String snapshotId = SnapshotJobParameterMarshaller.unmarshal(jobParams);
         String jobName = jobExecution.getJobInstance().getJobName();
-       
-        if(jobName.equals(SnapshotServiceConstants.SNAPSHOT_JOB_NAME)){
+
+        if (jobName.equals(SnapshotServiceConstants.SNAPSHOT_JOB_NAME)) {
             SnapshotStatus status = SnapshotStatus.TRANSFERRING_FROM_DURACLOUD;
             log.debug("updating snapshot status to "
-                + status + " for snapshot.name = " + snapshotId
-                + "; jobParameters = " + jobParams);
-            Snapshot snapshot =  snapshotRepo.findByName(snapshotId);
+                      + status + " for snapshot.name = " + snapshotId
+                      + "; jobParameters = " + jobParams);
+            Snapshot snapshot = snapshotRepo.findByName(snapshotId);
             changeSnapshotStatus(snapshot, status, "");
         }
     }
@@ -103,15 +100,15 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         log.info("entering afterJob()...");
         JobParameters jobParams = jobExecution.getJobParameters();
         BatchStatus status = jobExecution.getStatus();
-        String snapshotId = this.parameterMarshaller.unmarshal(jobParams);
+        String snapshotId = SnapshotJobParameterMarshaller.unmarshal(jobParams);
 
         Snapshot snapshot = snapshotRepo.findByName(snapshotId);
         String snapshotPath =
             ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                config.getContentRoot());
         log.info("Completed snapshot: {} with status: {}", snapshotId, status);
-       
-        if(BatchStatus.COMPLETED.equals(status)) {
+
+        if (BatchStatus.COMPLETED.equals(status)) {
             File snapshotDir = new File(snapshotPath);
             snapshot.setTotalSizeInBytes(FileUtils.sizeOfDirectory(snapshotDir));
             // Job success. Email Chronopolis/DPN AND DuraSpace teams about
@@ -126,39 +123,39 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
                 "\nsnapshot-path=" + snapshotPath;
             sendEmail(subject, message,
                       config.getAllEmailAddresses());
-            
-            changeSnapshotStatus(snapshot,SnapshotStatus.WAITING_FOR_DPN,"");
+
+            changeSnapshotStatus(snapshot, SnapshotStatus.WAITING_FOR_DPN, "");
 
             // Add history event
             String history =
-                "[{'"+SNAPSHOT_ACTION_TITLE+"':'"+SNAPSHOT_ACTION_STAGED+"'}," +
-                "{'"+SNAPSHOT_ID_TITLE+"':'"+snapshotId+"'}]";
+                "[{'" + SNAPSHOT_ACTION_TITLE + "':'" + SNAPSHOT_ACTION_STAGED + "'}," +
+                "{'" + SNAPSHOT_ID_TITLE + "':'" + snapshotId + "'}]";
             snapshotManager.updateHistory(snapshot, history);
         } else {
             // Job failed.  Email DuraSpace team about failed snapshot attempt.
             String subject =
                 "DuraCloud content snapshot failed to complete";
-            
+
             String errorDescription = jobExecution.getExitStatus().getExitDescription();
             String message =
                 "A DuraCloud content snapshot has failed to complete.\n" +
                 "\nsnapshot-id=" + snapshot.getName() +
-                "\nsnapshot-path=" + snapshotPath + 
+                "\nsnapshot-path=" + snapshotPath +
                 "\nerror-description=" + errorDescription;
-            
+
             sendEmail(subject, message,
                       config.getDuracloudEmailAddresses());
             changeSnapshotStatus(snapshot,
                                  SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD,
                                  "batch job did not complete: batch status = "
-                                     + status);            
+                                 + status);
             log.error("transfer from duracloud failed: " + errorDescription);
         }
     }
 
     /**
      * @param snapshot
-     * @param status 
+     * @param status
      * @param msg
      */
     private void changeSnapshotStatus(Snapshot snapshot,
@@ -171,17 +168,17 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
     }
 
     private void sendEmail(String subject, String msg, String... destinations) {
-        try{
+        try {
             notificationManager.sendNotification(NotificationType.EMAIL,
                                                  subject,
                                                  msg.toString(),
                                                  destinations);
             log.info("sent email with subject=\""
-                + subject + "\" to " + StringUtils.join(destinations, ","));
-        }catch(Exception ex){
+                     + subject + "\" to " + StringUtils.join(destinations, ","));
+        } catch (Exception ex) {
             log.error("failed sent email with subject=\""
-                + subject + "\"  and body=\""+ msg + "\"to " + StringUtils.join(destinations, ","));
-            
+                      + subject + "\"  and body=\"" + msg + "\"to " + StringUtils.join(destinations, ","));
+
         }
 
     }

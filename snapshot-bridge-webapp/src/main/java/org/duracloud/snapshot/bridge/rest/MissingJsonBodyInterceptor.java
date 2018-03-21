@@ -9,7 +9,6 @@ package org.duracloud.snapshot.bridge.rest;
 
 import java.io.EOFException;
 import java.io.IOException;
-
 import javax.annotation.Priority;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
@@ -23,14 +22,15 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class ensures that improperly formatted request bodies will return the a 400 http code.
+ *
  * @author Daniel Bernstein
- *         Date: Oct 12, 2015
+ * Date: Oct 12, 2015
  */
 @Priority(0)
-public class MissingJsonBodyInterceptor implements ReaderInterceptor{
-    
+public class MissingJsonBodyInterceptor implements ReaderInterceptor {
+
     private static Logger log = LoggerFactory.getLogger(MissingJsonBodyInterceptor.class);
-    
+
     /* (non-Javadoc)
      * @see javax.ws.rs.ext.ReaderInterceptor#aroundReadFrom(javax.ws.rs.ext.ReaderInterceptorContext)
      */
@@ -38,19 +38,19 @@ public class MissingJsonBodyInterceptor implements ReaderInterceptor{
     public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
         try {
             return context.proceed();
-        }catch(Exception ex){
+        } catch (Exception ex) {
             log.error("request failed: " + ex.getCause().getMessage(), ex.getCause());
-            if(ex.getCause() instanceof EOFException){
+            if (ex.getCause() instanceof EOFException) {
                 WebApplicationException exception =
                     new WebApplicationException(Response.status(HttpStatus.SC_BAD_REQUEST)
                                                         .entity(new ResponseDetails("JSON body expected."))
                                                         .type(MediaType.APPLICATION_JSON)
                                                         .build());
                 throw exception;
-            }else{
+            } else {
                 throw ex;
             }
         }
     }
-    
+
 }

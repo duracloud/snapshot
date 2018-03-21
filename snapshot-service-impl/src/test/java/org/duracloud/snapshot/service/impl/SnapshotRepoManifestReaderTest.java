@@ -7,8 +7,11 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -31,9 +34,9 @@ import org.springframework.data.domain.Pageable;
 @RunWith(EasyMockRunner.class)
 public class SnapshotRepoManifestReaderTest extends EasyMockSupport {
 
-    @Mock 
+    @Mock
     private Page page;
-    
+
     @Mock
     private SnapshotContentItemRepo repo;
 
@@ -66,31 +69,31 @@ public class SnapshotRepoManifestReaderTest extends EasyMockSupport {
         setupRepo(count);
 
         replayAll();
-        SnapshotRepoManifestReader reader = new SnapshotRepoManifestReader(repo, snapshotName){
+        SnapshotRepoManifestReader reader = new SnapshotRepoManifestReader(repo, snapshotName) {
             protected long getItemsRead() {
                 return 0;
-            };
+            }
         };
-        
-        for(int i = 0; i < count;i++){
+
+        for (int i = 0; i < count; i++) {
             assertNotNull(reader.read());
         }
-        
+
         assertNull(reader.read());
     }
 
     /**
-     * 
+     *
      */
     private void setupRepo(int count) {
         List<SnapshotContentItem> items = new LinkedList<>();
-        for(int i = 0; i < count; i++){
+        for (int i = 0; i < count; i++) {
             items.add(new SnapshotContentItem());
         }
-        
+
         expect(page.getTotalPages()).andReturn(1);
         expect(page.getContent()).andReturn(items);
-        expect(repo.findBySnapshotName(eq(snapshotName),  isA(Pageable.class))).andReturn(page);
+        expect(repo.findBySnapshotName(eq(snapshotName), isA(Pageable.class))).andReturn(page);
     }
 
 }

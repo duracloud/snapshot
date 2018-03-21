@@ -22,12 +22,13 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 /**
  * This class is responsible for initializing the database.  This class has been
- * added as a replacement for jdbc:initialize tags in the spring config in order to 
+ * added as a replacement for jdbc:initialize tags in the spring config in order to
  * enable us to lazily initialize the database.
+ *
  * @author Daniel Bernstein
- *         Date: Feb 12, 2014
+ * Date: Feb 12, 2014
  */
-public class DatabaseInitializer implements ApplicationContextAware{
+public class DatabaseInitializer implements ApplicationContextAware {
 
     private static final Logger LOGGER =
         LoggerFactory.getLogger(DatabaseInitializer.class);
@@ -35,15 +36,17 @@ public class DatabaseInitializer implements ApplicationContextAware{
     private List<Resource> dropSchemas;
 
     private List<Resource> createSchemas;
-    
+
     private List<Resource> storedProcedureDefinitions;
-    
+
     private BasicDataSource dataSource;
-    
+
     private ApplicationContext context;
 
-    
-    public DatabaseInitializer(BasicDataSource dataSource, List<Resource> dropSchemas, List<Resource> createSchemas, List<Resource> storedProcedureDefinitions){
+    public DatabaseInitializer(BasicDataSource dataSource,
+                               List<Resource> dropSchemas,
+                               List<Resource> createSchemas,
+                               List<Resource> storedProcedureDefinitions) {
         this.dataSource = dataSource;
         this.dropSchemas = dropSchemas;
         this.createSchemas = createSchemas;
@@ -73,7 +76,7 @@ public class DatabaseInitializer implements ApplicationContextAware{
             // tables.  If the exception indicates that the database already
             // contains tables then ignore the exception and continue on,
             // otherwise throw the exception.
-            if(rootCause.getMessage().contains("already exists")) {
+            if (rootCause.getMessage().contains("already exists")) {
                 LOGGER.info("Database initialization - tables already exist: {}",
                             rootCause.getMessage());
             } else {
@@ -81,9 +84,10 @@ public class DatabaseInitializer implements ApplicationContextAware{
             }
         }
     }
-    
+
     /* (non-Javadoc)
-     * @see org.springframework.context.ApplicationContextAware#setApplicationContext(org.springframework.context.ApplicationContext)
+     * @see org.springframework.context.ApplicationContextAware#setApplicationContext(
+     * org.springframework.context.ApplicationContext)
      */
     @Override
     public void setApplicationContext(ApplicationContext applicationContext)
@@ -93,35 +97,35 @@ public class DatabaseInitializer implements ApplicationContextAware{
 
     private DatabasePopulator databasePopulator(DatabaseConfig databaseConfig) {
         final ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        if(databaseConfig.isClean()){
-            for(Resource schema : dropSchemas){
+        if (databaseConfig.isClean()) {
+            for (Resource schema : dropSchemas) {
                 populator.addScript(schema);
             }
         }
 
-        for(Resource schema : createSchemas){
+        for (Resource schema : createSchemas) {
             populator.addScript(schema);
         }
 
         return populator;
     }
-    
+
     private DatabasePopulator databaseStoreProcedurePopulator(DatabaseConfig databaseConfig) {
         final ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        
 
-        for(Resource schema : storedProcedureDefinitions){
+        for (Resource schema : storedProcedureDefinitions) {
             populator.addScript(schema);
         }
 
         //stored procedure scripts (in snapshot-common-db) are delimited with the # sign
-        //to get around this problem: http://stackoverflow.com/questions/15486516/using-springs-jdbcinitialize-database-how-do-i-run-a-script-with-a-stored-p
+        //to get around this problem:
+        // http://stackoverflow.com/questions/15486516/using-springs-jdbcinitialize-database-how-do-i-run-a-script-with-a-stored-p
         populator.setSeparator("#");
         return populator;
     }
 
     private Throwable getRootCause(Throwable throwable) {
-        if(throwable.getCause() != null) {
+        if (throwable.getCause() != null) {
             return getRootCause(throwable.getCause());
         }
         return throwable;

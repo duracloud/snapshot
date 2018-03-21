@@ -7,6 +7,8 @@
  */
 package org.duracloud.snapshot.db.repo;
 
+import java.util.List;
+
 import org.duracloud.snapshot.db.model.Snapshot;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.springframework.data.domain.Page;
@@ -15,20 +17,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 /**
  * @author Daniel Bernstein
- *         Date: Jul 31, 2014
+ * Date: Jul 31, 2014
  */
-@Repository(value="snapshotContentItemRepo")
-public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentItem,Long> {
+@Repository(value = "snapshotContentItemRepo")
+public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentItem, Long> {
 
-    public List<SnapshotContentItem>
-        findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(
-             @Param("snapshotName") String snapshotName,
-             @Param("contentId") String contentId,
-             Pageable pageable);
+    public List<SnapshotContentItem> findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(
+        @Param("snapshotName") String snapshotName,
+        @Param("contentId") String contentId,
+        Pageable pageable);
 
     public long countBySnapshotName(@Param("snapshotName") String snapshotName);
 
@@ -37,9 +36,8 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
      * @param pageable
      * @return
      */
-    public Page<SnapshotContentItem> 
-        findBySnapshotName(@Param("snapshotName") String snapshotName, 
-                           Pageable pageable);
+    public Page<SnapshotContentItem> findBySnapshotName(@Param("snapshotName") String snapshotName,
+                                                        Pageable pageable);
 
     /**
      * @param id
@@ -53,5 +51,4 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
      */
     public void deleteBySnapshotName(String snapshotId);
 
- 
 }

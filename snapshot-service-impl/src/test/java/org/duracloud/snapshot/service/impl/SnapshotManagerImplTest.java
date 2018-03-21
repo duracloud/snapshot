@@ -7,8 +7,18 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.anyLong;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.isNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -122,7 +132,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
                                                    isA(String.class))).andReturn(null);
 
         expect(this.snapshotContentItemRepo.save(capture(contentItemCapture)))
-              .andReturn(createMock(SnapshotContentItem.class));
+            .andReturn(createMock(SnapshotContentItem.class));
         replayAll();
         manager.addContentItem(snapshot, contentId, props);
 
@@ -136,7 +146,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testTransferToDpnNodeComplete() throws SnapshotException, ContentStoreException,IOException {
+    public void testTransferToDpnNodeComplete() throws SnapshotException, ContentStoreException, IOException {
         String snapshotId = "snapshot-name";
         String spaceId = "space-id";
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
@@ -147,7 +157,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         expect(snapshot.getName()).andReturn(snapshotId);
 
-        File root = new File(System.getProperty("java.io.tmpdir") + 
+        File root = new File(System.getProperty("java.io.tmpdir") +
                              File.separator + System.currentTimeMillis());
 
         System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY,
@@ -156,16 +166,15 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         File dir = new File(ContentDirUtils.getDestinationPath(snapshotId, BridgeConfiguration.getContentRootDir()));
         dir.mkdirs();
         assertTrue(dir.exists());
-        
-        
-        for(String f : SnapshotManagerImpl.METADATA_FILENAMES){
+
+        for (String f : SnapshotManagerImpl.METADATA_FILENAMES) {
             File file = new File(dir, f);
             file.deleteOnExit();
-            try(FileOutputStream fos = new FileOutputStream(file)){
+            try (FileOutputStream fos = new FileOutputStream(file)) {
                 IOUtils.write("test", fos);
             }
         }
-        
+
         ContentStore contentStore = createMock(ContentStore.class);
         expect(contentStore.getSpace(eq(Constants.SNAPSHOT_METADATA_SPACE),
                                      isNull(String.class),
@@ -180,13 +189,12 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
                                        eq("application/zip"),
                                        isA(String.class),
                                        (Map<String, String>) isNull())).andReturn("test");
-        
+
         expect(storeClientHelper.create(isA(DuracloudEndPointConfig.class),
                                         isA(String.class),
                                         isA(String.class))).andReturn(contentStore);
 
         setupEndpoint();
-
 
         setupTaskClientHelper();
         expect(this.endPointConfig.getSpaceId()).andReturn(spaceId);
@@ -229,7 +237,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         // Send email
         String add1 = "add-1";
         String add2 = "add-2";
-        String[] addresses = {add1,add2};
+        String[] addresses = {add1, add2};
         expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(addresses);
         notificationManager.sendNotification(eq(NotificationType.EMAIL),
                                              isA(String.class),
@@ -244,9 +252,9 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testAddDuplicateAlternateIdsInSameSnapshot() throws AlternateIdAlreadyExistsException{
+    public void testAddDuplicateAlternateIdsInSameSnapshot() throws AlternateIdAlreadyExistsException {
         String altTestId = "alt-test";
-        List<String> alternateIds = Arrays.asList(new String[]{altTestId});
+        List<String> alternateIds = Arrays.asList(new String[] {altTestId});
         String snapshotId = "test";
         expect(snapshot.getId()).andReturn(1l);
         expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
@@ -260,11 +268,11 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         replayAll();
         this.manager.addAlternateSnapshotIds(snapshot, alternateIds);
     }
-    
+
     @Test
-    public void testAddDuplicateAlternateIdsInDifferentSnapshot(){
+    public void testAddDuplicateAlternateIdsInDifferentSnapshot() {
         String altTestId = "alt-test";
-        List<String> alternateIds = Arrays.asList(new String[]{altTestId});
+        List<String> alternateIds = Arrays.asList(new String[] {altTestId});
         String snapshotId = "test";
         Snapshot snapshot2 = createMock(Snapshot.class);
         expect(snapshot.getName()).andReturn(snapshotId);
@@ -287,7 +295,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expect(snapshotTaskClientHelper.create(eq(endPointConfig),
                                                isA(String.class),
                                                isA(String.class)))
-        .andReturn(snapshotTaskClient);
+            .andReturn(snapshotTaskClient);
     }
 
     private void setupEndpoint() {
@@ -303,7 +311,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         snapshots.add(snapshot);
         expect(this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(eq(SnapshotStatus.CLEANING_UP)))
             .andReturn(snapshots);
-        
+
         expect(this.snapshot.getName()).andReturn("snapshot-id");
         ContentStore contentStore = createMock(ContentStore.class);
 
@@ -334,7 +342,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         expect(snapshot.getUserEmail()).andReturn(userEmail);
 
-        String[] stringArray = new String[] { adminEmail };
+        String[] stringArray = new String[] {adminEmail};
         expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray);
 
         expect(snapshotRepo.saveAndFlush(isA(Snapshot.class))).andReturn(snapshot);
@@ -364,7 +372,8 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
 
         List<Snapshot> snapshots = new ArrayList<>();
         snapshots.add(snapshot);
-        expect(this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(eq(SnapshotStatus.CLEANING_UP))).andReturn(snapshots).times(3);
+        expect(this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(eq(SnapshotStatus.CLEANING_UP)))
+            .andReturn(snapshots).times(3);
 
         expect(this.snapshot.getName()).andReturn("snapshot-id").times(3);
 
@@ -389,7 +398,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         c.add(Calendar.DATE, -1 * (SnapshotManagerImpl.MAX_DAYS_IN_CLEANUP + 1));
         expect(snapshot.getModified()).andReturn(c.getTime()).times(3);
 
-        String[] stringArray = new String[] { adminEmail };
+        String[] stringArray = new String[] {adminEmail};
         expect(bridgeConfig.getDuracloudEmailAddresses()).andReturn(stringArray).times(2);
 
         notificationManager.sendNotification(isA(NotificationType.class),

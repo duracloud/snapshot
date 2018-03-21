@@ -15,7 +15,7 @@ import org.junit.Test;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 31, 2014
+ * Date: Jul 31, 2014
  */
 public class PropertiesSerializerTest {
 
@@ -24,13 +24,11 @@ public class PropertiesSerializerTest {
      */
     @Test
     public void test() {
-        Map<String,String> map = new HashMap<>();
+        Map<String, String> map = new HashMap<>();
         map.put("key", "value");
         String json = PropertiesSerializer.serialize(map);
-        Map<String,String> map2 = PropertiesSerializer.deserialize(json);
+        Map<String, String> map2 = PropertiesSerializer.deserialize(json);
         Assert.assertEquals(map, map2);
     }
-
-   
 
 }

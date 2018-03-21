@@ -16,9 +16,9 @@ import org.springframework.stereotype.Repository;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
-@Repository(value="snapshotRepo")
+@Repository(value = "snapshotRepo")
 public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
 
     /**
@@ -39,7 +39,7 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
     public List<Snapshot> findBySourceStoreId(String storeId);
 
     /**
-     * @param host where snapshot originated
+     * @param host    where snapshot originated
      * @param storeId storage provider ID
      * @return all snapshots with the given host and store ID
      */
@@ -52,7 +52,7 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
     public List<Snapshot> findByStatusOrderBySnapshotDateAsc(SnapshotStatus status);
 
     /**
-     * @param host where snapshot originated
+     * @param host   where snapshot originated
      * @param status current snapshot status
      * @return all snapshots with the given host and status
      */
@@ -60,16 +60,16 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
 
     /**
      * @param storeId storage provider ID
-     * @param status current snapshot status
+     * @param status  current snapshot status
      * @return all snapshots with the given store ID and status
      */
     public List<Snapshot> findBySourceStoreIdAndStatus(String storeId,
                                                        SnapshotStatus status);
 
     /**
-     * @param host where snapshot originated
+     * @param host    where snapshot originated
      * @param storeId storage provider ID
-     * @param status current snapshot status
+     * @param status  current snapshot status
      * @return all snapshots with the given host, store ID, and status
      */
     public List<Snapshot> findBySourceHostAndSourceStoreIdAndStatus(String host,

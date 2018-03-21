@@ -7,7 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.text.ParseException;
 
@@ -17,7 +19,7 @@ import org.junit.Test;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 31, 2015
+ * Date: Jul 31, 2015
  */
 public class ManifestFileHelperTest {
 
@@ -42,25 +44,26 @@ public class ManifestFileHelperTest {
         // spaces
         verifySuccess("checksum", "contentId", ManifestFileHelper.parseManifestEntry("checksum  data/contentId"));
         // tabs and spaces
-        verifySuccess("checksum", "contentId", ManifestFileHelper.parseManifestEntry("checksum          data/contentId"));
+        verifySuccess("checksum", "contentId",
+                      ManifestFileHelper.parseManifestEntry("checksum          data/contentId"));
     }
 
     @Test
     public void testFailure() throws ParseException {
-        try{
+        try {
             ManifestFileHelper.parseManifestEntry("checksumcontentId");
             fail("unexpected failure");
-        }catch(ParseException ex){
+        } catch (ParseException ex) {
             assertTrue("expected failure", true);
         }
     }
 
     @Test
     public void testFailureWithNewLine() throws ParseException {
-        try{
+        try {
             ManifestFileHelper.parseManifestEntry("checksum\ncontentId");
             fail("unexpected failure");
-        }catch(ParseException ex){
+        } catch (ParseException ex) {
             assertTrue("expected failure", true);
         }
     }
@@ -73,7 +76,7 @@ public class ManifestFileHelperTest {
         assertEquals(checksum, entry.getChecksum());
         assertEquals(contentId, entry.getContentId());
     }
-    
+
     /**
      * @param string
      * @param string2

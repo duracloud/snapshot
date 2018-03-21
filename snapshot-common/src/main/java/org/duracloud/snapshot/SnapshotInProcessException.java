@@ -9,10 +9,10 @@ package org.duracloud.snapshot;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 14, 2014
+ * Date: Jul 14, 2014
  */
 public class SnapshotInProcessException extends SnapshotException {
-    public SnapshotInProcessException(String message){
+    public SnapshotInProcessException(String message) {
         super(message, null);
     }
 }

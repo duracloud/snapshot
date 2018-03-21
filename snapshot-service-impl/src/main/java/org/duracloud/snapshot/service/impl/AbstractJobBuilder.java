@@ -14,7 +14,7 @@ import org.springframework.batch.core.step.factory.SimpleStepFactoryBean;
 
 /**
  * @author Daniel Bernstein
- *         Date: Nov 2, 2016
+ * Date: Nov 2, 2016
  */
 public class AbstractJobBuilder {
 
@@ -23,7 +23,7 @@ public class AbstractJobBuilder {
     /**
      * @param stepFactory
      */
-    protected void setThrottleLimitForContentTransfers(SimpleStepFactoryBean<?,?> stepFactory) {
+    protected void setThrottleLimitForContentTransfers(SimpleStepFactoryBean<?, ?> stepFactory) {
         int threadsPerJob = BridgeConfiguration.getBridgeThreadsPerJob();
         log.info("Setting threadsPerJob = {}", threadsPerJob);
         stepFactory.setThrottleLimit(threadsPerJob);

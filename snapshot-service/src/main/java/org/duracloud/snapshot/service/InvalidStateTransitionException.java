@@ -11,13 +11,13 @@ import org.duracloud.snapshot.SnapshotException;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 30, 2014
+ * Date: Jul 30, 2014
  */
 public class InvalidStateTransitionException extends SnapshotException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidStateTransitionException(String oldState, String newState){
+    public InvalidStateTransitionException(String oldState, String newState) {
         super("Moving from " + oldState + " to " + newState + " is not allowed.", null);
     }
 }

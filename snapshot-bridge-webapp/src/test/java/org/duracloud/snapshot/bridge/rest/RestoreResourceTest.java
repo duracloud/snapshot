@@ -7,14 +7,16 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Date;
-
 import javax.ws.rs.core.Response;
 
 import org.codehaus.jettison.json.JSONException;
 import org.duracloud.snapshot.SnapshotException;
-import org.duracloud.snapshot.bridge.rest.RestoreResource;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -26,21 +28,18 @@ import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
-import static org.easymock.EasyMock.*;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 /**
  * @author Daniel Bernstein
- *         Date: Feb 4, 2014
+ * Date: Feb 4, 2014
  */
 
 public class RestoreResourceTest extends SnapshotTestBase {
-    
+
     @Mock
     private RestoreManager manager;
 
@@ -55,7 +54,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
 
     @TestSubject
     private RestoreResource resource;
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
@@ -64,12 +63,12 @@ public class RestoreResourceTest extends SnapshotTestBase {
         super.setup();
         resource = new RestoreResource(manager, snapshotManager);
     }
-    
+
     @Test
     public void testRestoreSnapshot() throws SnapshotException {
         String restorationId = "restoration-id";
         String userEmail = "user-email";
-        
+
         EasyMock.expect(manager.restoreSnapshot(EasyMock.isA(String.class),
                                                 EasyMock.isA(DuracloudEndPointConfig.class),
                                                 EasyMock.isA(String.class)))
@@ -100,8 +99,8 @@ public class RestoreResourceTest extends SnapshotTestBase {
         String history = historyCapture.getValue();
         String expectedHistory =
             "[{'restore-action':'RESTORE_INITIATED'}," +
-             "{'restore-id':'"+restorationId+"'}," +
-             "{'initiating-user':'"+userEmail+"'}]";
+            "{'restore-id':'" + restorationId + "'}," +
+            "{'initiating-user':'" + userEmail + "'}]";
         assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
 
@@ -134,22 +133,21 @@ public class RestoreResourceTest extends SnapshotTestBase {
         String history = historyCapture.getValue();
         String expectedHistory =
             "[{'restore-action':'RESTORE_REQUESTED'}," +
-             "{'initiating-user':'"+userEmail+"'}]";
+            "{'initiating-user':'" + userEmail + "'}]";
         assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
 
+    @Test
+    public void testRestorationComplete() throws SnapshotException {
+        String restorationId = "restoration-id";
+        expect(restoration.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expect(restoration.getStatusText()).andReturn(isA(String.class));
 
-  @Test
-  public void testRestorationComplete() throws SnapshotException {
-      String restorationId = "restoration-id";
-      expect(restoration.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
-      expect(restoration.getStatusText()).andReturn(isA(String.class));
-
-      expect(manager.restoreCompleted(restorationId))
-              .andReturn(restoration);
-      replayAll();
-      resource.restoreComplete(restorationId);
-  }
+        expect(manager.restoreCompleted(restorationId))
+            .andReturn(restoration);
+        replayAll();
+        resource.restoreComplete(restorationId);
+    }
 
     @Test
     public void testCancelSnapshot() throws SnapshotException {
@@ -161,7 +159,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         expectLastCall();
         replayAll();
         resource.cancel(restorationId);
-        
+
     }
 
     @Test
@@ -174,7 +172,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         Assert.assertNotNull(response);
         Assert.assertNotNull(response.getEntity());
     }
-    
+
     @Test
     public void testGetRestoreBySnapshot() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-id";
@@ -206,7 +204,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         expect(dest.getPort()).andReturn(443);
         expect(dest.getStoreId()).andReturn("store-id");
         expect(dest.getSpaceId()).andReturn("space-id");
-        
+
         return r;
     }
 

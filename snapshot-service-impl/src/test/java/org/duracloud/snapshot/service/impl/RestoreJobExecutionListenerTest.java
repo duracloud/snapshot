@@ -7,8 +7,12 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.Date;
@@ -35,7 +39,6 @@ import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameter;
@@ -43,7 +46,7 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Bill Branan
- *         Date: 2/18/14
+ * Date: 2/18/14
  */
 public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
@@ -71,7 +74,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
     @Mock
     private Snapshot snapshot;
 
-    @Mock 
+    @Mock
     private Restoration restoration;
 
     @Mock
@@ -79,20 +82,20 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private EventLog eventLog;
-    
+
     @TestSubject
-    private  RestoreJobExecutionListener executionListener = new  RestoreJobExecutionListener();
+    private RestoreJobExecutionListener executionListener = new RestoreJobExecutionListener();
 
     private String restorationId = "restorationId";
     private String snapshotName = "snapshot-name";
     private String contentDir = "content-dir";
     private int daysToExpire = 2;
     private JobParameters jobParams;
-    
+
     @Before
     public void setup() throws Exception {
         super.setup();
-        
+
         Map<String, JobParameter> jobParamMap = new HashMap<>();
         jobParamMap.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
                         new JobParameter(restorationId));
@@ -112,7 +115,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         endPointConfig.setSpaceId(spaceId);
 
         expect(jobExecution.getExitStatus())
-                .andReturn(ExitStatus.COMPLETED);
+            .andReturn(ExitStatus.COMPLETED);
 
         Capture<String> messageCapture = new Capture<>();
         notificationManager.sendNotification(
@@ -129,7 +132,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         restoration.setEndDate(EasyMock.isA(Date.class));
         expectLastCall();
         expect(restoration.getDestination()).andReturn(endPointConfig);
-        expect(executionConfig.getDuracloudEmailAddresses()).andReturn(new String[]{duracloudEmail});
+        expect(executionConfig.getDuracloudEmailAddresses()).andReturn(new String[] {duracloudEmail});
         expect(restoration.getUserEmail()).andReturn(userEmail);
 
         restoration.setExpirationDate(EasyMock.isA(Date.class));
@@ -162,26 +165,25 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         assertTrue(message.contains("EXPIRE"));
         assertTrue(message.contains(String.valueOf(daysToExpire)));
 
-
         Date expDate = executionListener.getExpirationDate(new Date(), daysToExpire);
         String formattedExpDate = DateUtil.convertToStringShort(expDate.getTime());
         String history = historyCapture.getValue();
         String expectedHistory =
             "[{'restore-action':'RESTORE_COMPLETED'}," +
-            "{'restore-id':'"+restorationId+"'}," +
-            "{'expiration-date':'"+formattedExpDate+"'}]";
+            "{'restore-id':'" + restorationId + "'}," +
+            "{'expiration-date':'" + formattedExpDate + "'}]";
         assertEquals(expectedHistory, history.replaceAll("\\s", ""));
     }
 
     private void setupCommon() {
         executionListener.init(executionConfig, daysToExpire);
         expect(jobExecution.getJobParameters())
-                .andReturn(jobParams);
+            .andReturn(jobParams);
         expect(executionConfig.getContentRoot()).andReturn(new File(contentDir));
         expect(restoration.getRestorationId()).andReturn(restorationId).atLeastOnce();
         restoration.setStatusText(isA(String.class));
         expectLastCall();
-        
+
         expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
         expect(restoration.getSnapshot()).andReturn(snapshot);
         expect(snapshot.getName()).andReturn(snapshotName);
@@ -192,12 +194,12 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
 
     @Test
     public void testAfterJobFailure() {
-         setupCommon();
+        setupCommon();
 
         String duracloudEmail = "duracloud-email";
 
         expect(jobExecution.getExitStatus())
-                .andReturn(ExitStatus.FAILED);
+            .andReturn(ExitStatus.FAILED);
 
         Capture<String> messageCapture = new Capture<>();
         notificationManager.sendNotification(
@@ -208,7 +210,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expectLastCall();
 
         expect(executionConfig.getDuracloudEmailAddresses())
-                .andReturn(new String[]{duracloudEmail});
+            .andReturn(new String[] {duracloudEmail});
 
         restoration.setStatus(RestoreStatus.ERROR);
         expectLastCall();

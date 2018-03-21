@@ -21,48 +21,50 @@ import org.duracloud.common.notification.NotificationType;
 
 /**
  * Sends an email to the admins if multiple retries fail.
+ *
  * @author Daniel Bernstein
- *         Date: Jan 13, 2016
+ * Date: Jan 13, 2016
  */
 @Aspect
 class BridgeRetryAdvice extends RetryAdvice {
-    
-    private NotificationManager notificationManager;
-    private Map<Object,Date> lastNotificationSentMap = new HashMap<>();
-    private long minWaitBetweenNotificationsInSeconds = 3600;
 
+    private NotificationManager notificationManager;
+    private Map<Object, Date> lastNotificationSentMap = new HashMap<>();
+    private long minWaitBetweenNotificationsInSeconds = 3600;
 
     public BridgeRetryAdvice(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
         setMaxRetries(3);
         setWaitTime(3000);
     }
-    
+
     @Pointcut("(execution(public * org.duracloud.client.ContentStore.*(..)) and "
-            + "  !execution(public * org.duracloud.client.ContentStore.addContent(..))) "
-            + " or execution(public * org.duracloud.client.util.StoreClientUtil.*(..))")
+              + "  !execution(public * org.duracloud.client.ContentStore.addContent(..))) "
+              + " or execution(public * org.duracloud.client.util.StoreClientUtil.*(..))")
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        try { 
+        try {
             return super.invoke(invocation);
-        }catch(Throwable t){
+        } catch (Throwable t) {
             try {
                 Date lastNotifcationSent = this.lastNotificationSentMap.get(invocation.getThis());
                 Date nextNotification = new Date();
-                if(lastNotifcationSent != null){
-                    nextNotification = new Date(lastNotifcationSent.getTime()+(minWaitBetweenNotificationsInSeconds*1000));
+                if (lastNotifcationSent != null) {
+                    nextNotification = new Date(lastNotifcationSent.getTime() +
+                                                (minWaitBetweenNotificationsInSeconds * 1000));
                 }
-                
-                if(nextNotification.getTime() <= System.currentTimeMillis()){
+
+                if (nextNotification.getTime() <= System.currentTimeMillis()) {
                     InetAddress lh = InetAddress.getLocalHost();
-                    this.notificationManager.sendAdminNotification(NotificationType.EMAIL,
-                                                                   "The bridge (" + lh.getHostName() + "/" + lh.getHostAddress() +") " +
-                                                                    "failed to access duracloud instance with store client: ",
-                                                                   t.getMessage() + "-->"+ invocation.getThis());
+                    String subject = "The bridge (" + lh.getHostName() + "/" + lh.getHostAddress() + ") " +
+                                     "failed to access duracloud instance with store client: ";
+                    String message = t.getMessage() + "-->" + invocation.getThis();
+                    this.notificationManager.sendAdminNotification(NotificationType.EMAIL, subject, message);
                     this.lastNotificationSentMap.put(invocation.getThis(), new Date());
                 }
-            }catch(Exception ex){
-                ApplicationConfig.log.error("failed to send notification: " + ex.getMessage() + "->" + t.getMessage(), ex);
+            } catch (Exception ex) {
+                ApplicationConfig.log.error("failed to send notification: " + ex.getMessage()
+                                            + "->" + t.getMessage(), ex);
             }
             throw t;
         }

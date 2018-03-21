@@ -7,6 +7,18 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_EXPIRED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ID_TITLE;
+
+import java.io.File;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
@@ -14,7 +26,6 @@ import org.duracloud.common.util.DateUtil;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.SnapshotInProcessException;
 import org.duracloud.snapshot.SnapshotNotFoundException;
-import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.db.ContentDirUtils;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
 import org.duracloud.snapshot.db.model.Restoration;
@@ -24,6 +35,7 @@ import org.duracloud.snapshot.db.repo.SnapshotRepo;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.service.BridgeConfiguration;
+import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.InvalidStateTransitionException;
 import org.duracloud.snapshot.service.NoRestorationInProcessException;
 import org.duracloud.snapshot.service.RestorationNotFoundException;
@@ -39,22 +51,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.io.File;
-import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
-
 /**
  * @author Daniel Bernstein
- *         Date: Jul 15, 2014
+ * Date: Jul 15, 2014
  */
 @Component
-public class RestoreManagerImpl  implements RestoreManager{
+public class RestoreManagerImpl implements RestoreManager {
     private static Logger log =
         LoggerFactory.getLogger(RestoreManagerImpl.class);
     private RestoreManagerConfig config;
@@ -81,22 +83,23 @@ public class RestoreManagerImpl  implements RestoreManager{
     @Autowired
     private EventLog eventLog;
 
-    public RestoreManagerImpl() {}    
-    
+    public RestoreManagerImpl() {
+    }
+
     /**
      * @param snapshotRepo the snapshotRepo to set
      */
     public void setSnapshotRepo(SnapshotRepo snapshotRepo) {
         this.snapshotRepo = snapshotRepo;
     }
-    
+
     /**
      * @param notificationManager the notificationManager to set
      */
     public void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
-    
+
     /**
      * @param restoreRepo the restoreRepo to set
      */
@@ -119,19 +122,20 @@ public class RestoreManagerImpl  implements RestoreManager{
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.RestorationManager#restoreSnapshot(java.lang.String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig)
+     * @see org.duracloud.snapshot.service.RestorationManager#restoreSnapshot(java.lang.String,
+     * org.duracloud.snapshot.db.model.DuracloudEndPointConfig)
      */
     @Override
     public Restoration restoreSnapshot(String snapshotId,
                                        DuracloudEndPointConfig destination,
                                        String userEmail)
         throws SnapshotNotFoundException, SnapshotInProcessException, SnapshotException {
-        
+
         checkInitialized();
-        
+
         Snapshot snapshot = getSnapshot(snapshotId);
-        
-        if(!snapshot.getStatus().equals(SnapshotStatus.SNAPSHOT_COMPLETE)){
+
+        if (!snapshot.getStatus().equals(SnapshotStatus.SNAPSHOT_COMPLETE)) {
             throw new SnapshotInProcessException("Snapshot is not complete. " +
                                                  "Restoration can only occur on a " +
                                                  "completed snapshot.");
@@ -140,11 +144,9 @@ public class RestoreManagerImpl  implements RestoreManager{
         Restoration restoration =
             createRestoration(snapshot, destination, userEmail);
 
-        validateAndSet(restoration,
-                                RestoreStatus.WAITING_FOR_DPN,
-                                "Restoration request issued");
+        validateAndSet(restoration, RestoreStatus.WAITING_FOR_DPN, "Restoration request issued");
 
-        restoration =  save(restoration);
+        restoration = save(restoration);
 
         String restorationId = restoration.getRestorationId();
         File restoreDir = getRestoreDir(restorationId);
@@ -165,7 +167,8 @@ public class RestoreManagerImpl  implements RestoreManager{
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.RestoreManager#requestRestoreSnapshot(java.lang.String, org.duracloud.snapshot.db.model.DuracloudEndPointConfig, java.lang.String)
+     * @see org.duracloud.snapshot.service.RestoreManager#requestRestoreSnapshot(java.lang.String, org.duracloud
+     * .snapshot.db.model.DuracloudEndPointConfig, java.lang.String)
      */
     @Override
     public Snapshot requestRestoreSnapshot(String snapshotId, DuracloudEndPointConfig destination, String userEmail)
@@ -176,19 +179,19 @@ public class RestoreManagerImpl  implements RestoreManager{
         Snapshot snapshot = getSnapshot(snapshotId);
 
         String host = destination.getHost();
-        String port = destination.getPort()+"";
+        String port = destination.getPort() + "";
         String storeId = destination.getStoreId();
-        
+
         String url =
             "http"
-                + (port.endsWith("443") ? "s" : "") + "://" + host + ":" + port + "/duradmin/spaces/sm/" + storeId + "/"
-                + snapshotId + "?snapshot=true";
+            + (port.endsWith("443") ? "s" : "") + "://" + host + ":" + port + "/duradmin/spaces/sm/" + storeId + "/"
+            + snapshotId + "?snapshot=true";
         // send email to DPN
         String subject = "Snapshot Restoration Request for Snapshot ID = " + snapshotId;
         String format =
             "Please initiate a snapshot restore via the duracloud interface ( {0} ).\n"
-                + "\nSnapshot ID: {1}\nHost:{2}\nPort: {3}\nStore ID: {4}\nRequestor email: {5}";
-        String body = MessageFormat.format(format, url, snapshotId, host,port,storeId,userEmail);
+            + "\nSnapshot ID: {1}\nHost:{2}\nPort: {3}\nStore ID: {4}\nRequestor email: {5}";
+        String body = MessageFormat.format(format, url, snapshotId, host, port, storeId, userEmail);
         String[] duracloudEmailAddresses = this.config.getDuracloudEmailAddresses();
         notificationManager.sendNotification(NotificationType.EMAIL, subject, body, duracloudEmailAddresses);
 
@@ -201,7 +204,7 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param restoration
      */
     private Restoration save(Restoration restoration) {
-        Restoration saved =  restoreRepo.saveAndFlush(restoration);
+        Restoration saved = restoreRepo.saveAndFlush(restoration);
         eventLog.logRestoreUpdate(restoration);
         log.debug("saved {}", saved);
         return saved;
@@ -211,18 +214,18 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param snapshotId
      * @return
      */
-    private Snapshot getSnapshot(String snapshotId) throws SnapshotNotFoundException{
+    private Snapshot getSnapshot(String snapshotId) throws SnapshotNotFoundException {
         Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
-        if(snapshot == null){
+        if (snapshot == null) {
             throw new SnapshotNotFoundException(snapshotId);
         }
-        
+
         return snapshot;
     }
 
     /**
      * @param snapshot
-     * @param userEmail 
+     * @param userEmail
      * @return
      */
     private Restoration createRestoration(Snapshot snapshot,
@@ -234,17 +237,17 @@ public class RestoreManagerImpl  implements RestoreManager{
         restoration.setSnapshot(snapshot);
         restoration.setUserEmail(userEmail);
         restoration.setStartDate(new Date());
-        
+
         String restoreStartDate =
             DateUtil.convertToStringPlain(restoration.getStartDate().getTime());
         DuracloudEndPointConfig source = snapshot.getSource();
-        
+
         String accountId = extractAccountId(source.getHost());
-        
-        String restorationId =  accountId + "_" + 
-                                source.getStoreId() + "_" + 
-                                source.getSpaceId() + "_" +
-                                restoreStartDate;
+
+        String restorationId = accountId + "_" +
+                               source.getStoreId() + "_" +
+                               source.getSpaceId() + "_" +
+                               restoreStartDate;
         restoration.setRestorationId(restorationId);
         return restoration;
     }
@@ -253,7 +256,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         String accountId = host.split("[.]")[0];
         return accountId;
     }
-    
+
     private String[] getAllEMailAddresses(RestoreManagerConfig config) {
         List<String> allAddresses = new ArrayList<String>();
         allAddresses.addAll(Arrays.asList(config.getDuracloudEmailAddresses()));
@@ -263,17 +266,17 @@ public class RestoreManagerImpl  implements RestoreManager{
 
     /**
      * @param restorationId of the restore object
-     * @return the restoration 
+     * @return the restoration
      * @throws RestorationNotFoundException if the restoration is not found
      */
 
     public Restoration getRestoration(String restorationId)
         throws RestorationNotFoundException {
-        Restoration restoration =  this.restoreRepo.findByRestorationId(restorationId);
-        if(restoration == null){
+        Restoration restoration = this.restoreRepo.findByRestorationId(restorationId);
+        if (restoration == null) {
             throw new RestorationNotFoundException(restorationId);
         }
-        
+
         return restoration;
     }
 
@@ -287,27 +290,24 @@ public class RestoreManagerImpl  implements RestoreManager{
      */
     @Override
     public Restoration restoreCompleted(String restorationId)
-        throws SnapshotNotFoundException,
-            SnapshotInProcessException,
-            NoRestorationInProcessException,
-            SnapshotException {
-        
+        throws SnapshotNotFoundException, SnapshotInProcessException,
+        NoRestorationInProcessException, SnapshotException {
+
         Restoration restoration = getRestoration(restorationId);
-        
+
         return restoreCompleted(restoration);
-        
+
     }
 
     private Restoration restoreCompleted(Restoration restoration)
-        throws InvalidStateTransitionException,
-            RestorationNotFoundException,
-            SnapshotException {
+        throws InvalidStateTransitionException, RestorationNotFoundException,
+        SnapshotException {
         RestoreStatus status = restoration.getStatus();
         final String restoreId = restoration.getRestorationId();
-        if(status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)){
+        if (status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)) {
             log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
-        } else if(status.equals(RestoreStatus.WAITING_FOR_DPN)){
+        } else if (status.equals(RestoreStatus.WAITING_FOR_DPN)) {
             log.info("caller has indicated that restoration request {} is complete.",
                      restoration);
             Restoration updatedRestoration =
@@ -315,64 +315,65 @@ public class RestoreManagerImpl  implements RestoreManager{
                                          "Completed restore to bridge storage",
                                          restoration);
 
-            new Thread(new Runnable(){
+            new Thread(new Runnable() {
                 /* (non-Javadoc)
                  * @see java.lang.Runnable#run()
                  */
                 @Override
                 public void run() {
                     try {
-                        jobManager.executeRestoration(restoreId);                    
-                    }catch(Exception ex){
-                        log.error("failed to restart restore: " + restoreId +": message="+ ex.getMessage(), ex);
+                        jobManager.executeRestoration(restoreId);
+                    } catch (Exception ex) {
+                        log.error("failed to restart restore: " + restoreId + ": message=" + ex.getMessage(), ex);
                     }
                 }
             }).start();
             return updatedRestoration;
-        } else{
+        } else {
             String message =
                 "restore status type "
-                    + status + " not recognized. (restorationId = "
-                    + restoreId + ")";
+                + status + " not recognized. (restorationId = "
+                + restoreId + ")";
             log.error(message);
-            throw new SnapshotException(message,null);
+            throw new SnapshotException(message, null);
         }
     }
-    
+
     private void checkInitialized() throws SnapshotException {
-        if(this.config == null){
+        if (this.config == null) {
             throw new SnapshotException("The snapshot restoration manager has not " +
                                         "been initialized.", null);
         }
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#init(org.duracloud.snapshot.restoration.RestorationConfig)
+     * @see org.duracloud.snapshot.restoration.SnapshotRestorationManager#init(
+     * org.duracloud.snapshot.restoration.RestorationConfig)
      */
     @Override
     public void init(RestoreManagerConfig config, SnapshotJobManager jobManager) {
         this.config = config;
         this.jobManager = jobManager;
     }
-    
+
     private String getRestorationContentDir(String restorationId) {
         return ContentDirUtils.getSourcePath(restorationId,
                                              new File(this.config.getRestorationRootDir()));
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.bridge.service.RestorationManager#getStatus(java.lang.String)
      */
     @Override
     public Restoration get(String restorationId)
         throws RestorationNotFoundException {
-        Restoration restoration =  this.restoreRepo.findByRestorationId(restorationId);
-        if(restoration == null){
+        Restoration restoration = this.restoreRepo.findByRestorationId(restorationId);
+        if (restoration == null) {
             log.debug("Restoration returned null for {}. Throwing exception...",
                       restorationId);
             throw new RestorationNotFoundException(restorationId);
         }
-        
+
         log.debug("got restoration {}", restoration);
         return restoration;
     }
@@ -383,20 +384,20 @@ public class RestoreManagerImpl  implements RestoreManager{
     @Override
     public Restoration getBySnapshotId(String snapshotId)
         throws RestorationNotFoundException {
-        List<Restoration> restorations =  this.restoreRepo.findBySnapshotNameOrderByModifiedDesc(snapshotId);
-        if(CollectionUtils.isEmpty(restorations)){
+        List<Restoration> restorations = this.restoreRepo.findBySnapshotNameOrderByModifiedDesc(snapshotId);
+        if (CollectionUtils.isEmpty(restorations)) {
             log.debug("Restoration returned null for snapshot id {}. Throwing exception...",
                       snapshotId);
             throw new RestorationNotFoundException(
                 "No restorations associated with snapshot " + snapshotId);
         }
-        
+
         return restorations.get(0);
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.service.restore.RestoreManager#transitionRestoreStatus
      * (java.lang.Long, org.duracloud.snapshot.dto.RestoreStatus,
@@ -407,8 +408,8 @@ public class RestoreManagerImpl  implements RestoreManager{
     public Restoration transitionRestoreStatus(String restorationId,
                                                RestoreStatus status,
                                                String message)
-        throws  InvalidStateTransitionException, RestorationNotFoundException {
-        
+        throws InvalidStateTransitionException, RestorationNotFoundException {
+
         Restoration restoration = getRestoration(restorationId);
         return _transitionRestoreStatus(status, message, restoration);
     }
@@ -420,11 +421,13 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @return
      * @throws InvalidStateTransitionException
      */
-    private Restoration _transitionRestoreStatus(RestoreStatus status, String message, Restoration restoration)
+    private Restoration _transitionRestoreStatus(RestoreStatus status,
+                                                 String message,
+                                                 Restoration restoration)
         throws InvalidStateTransitionException {
         validateAndSet(restoration, status, message);
         restoration = save(restoration);
-        
+
         log.debug("transitioned restore status to {} for {}", status, restoration);
         return restoration;
     }
@@ -435,8 +438,9 @@ public class RestoreManagerImpl  implements RestoreManager{
      * @param message
      * @throws InvalidStateTransitionException
      */
-    private void validateAndSet(Restoration restoration, RestoreStatus status,
-                                         String message)
+    private void validateAndSet(Restoration restoration,
+                                RestoreStatus status,
+                                String message)
         throws InvalidStateTransitionException {
         RestorationStateTransitionValidator.validate(restoration.getStatus(), status);
         restoration.setStatus(status);
@@ -453,9 +457,9 @@ public class RestoreManagerImpl  implements RestoreManager{
         List<Restoration> completedRestores =
             restoreRepo.findByStatus(RestoreStatus.RESTORATION_COMPLETE);
 
-        for(Restoration restoration : completedRestores){
+        for (Restoration restoration : completedRestores) {
             Date expirationDate = restoration.getExpirationDate();
-            if(expirationDate.before(new Date())) { // Only continue if expired
+            if (expirationDate.before(new Date())) { // Only continue if expired
                 DuracloudEndPointConfig destination = restoration.getDestination();
                 ContentStore store =
                     storeClientHelper.create(destination,
@@ -463,8 +467,8 @@ public class RestoreManagerImpl  implements RestoreManager{
                                              bridgeConfig.getDuracloudPassword());
                 try {
                     String spaceId = destination.getSpaceId();
-                    Iterator<String> it  = store.getSpaceContents(spaceId);
-                    if(!it.hasNext()) { // if space is empty
+                    Iterator<String> it = store.getSpaceContents(spaceId);
+                    if (!it.hasNext()) { // if space is empty
                         // Call DuraCloud to remove space
                         log.info("Deleting expired restoration space: " + spaceId +
                                  " at host: " + destination.getHost());
@@ -472,17 +476,17 @@ public class RestoreManagerImpl  implements RestoreManager{
 
                         // Update restore status
                         validateAndSet(restoration,
-                                                RestoreStatus.RESTORATION_EXPIRED,
-                                                "Restoration expired");
-                        restoration =  save(restoration);
+                                       RestoreStatus.RESTORATION_EXPIRED,
+                                       "Restoration expired");
+                        restoration = save(restoration);
                         log.info("Transition of restore " +
                                  restoration.getRestorationId() +
                                  " to expired state completed successfully");
 
                         // Add history event
                         String history =
-                            "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_EXPIRED+"'}," +
-                            "{'"+RESTORE_ID_TITLE+"':'"+restoration.getRestorationId()+"'}]";
+                            "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_EXPIRED + "'}," +
+                            "{'" + RESTORE_ID_TITLE + "':'" + restoration.getRestorationId() + "'}]";
                         snapshotManager.updateHistory(restoration.getSnapshot(), history);
                     }
                 } catch (Exception e) {
@@ -493,7 +497,7 @@ public class RestoreManagerImpl  implements RestoreManager{
             }
         }
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.RestoreManager#cancelRestore(java.lang.String)
      */
@@ -503,7 +507,7 @@ public class RestoreManagerImpl  implements RestoreManager{
         this.jobManager.cancelRestore(restoreId);
         this.restoreRepo.deleteByRestorationId(restoreId);
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.RestoreManager#restartRestore(java.lang.String)
      */

@@ -55,12 +55,12 @@ import org.springframework.batch.item.ItemWriter;
  * This class is responsible for reading the contents and properties of a duracloud content item,
  * writing it to disk,  appending its md5 and sha256 to separate text files, appending
  * the item properties to a json file, and writing the item to the snapshot content repo.
- * 
+ *
  * @author Erik Paulsson
- *         Date: 2/7/14
+ * Date: 2/7/14
  */
 public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<ContentItem>,
-                                        ItemWriteListener<ContentItem> {
+                                                                     ItemWriteListener<ContentItem> {
 
     private static final Logger log =
         LoggerFactory.getLogger(SpaceItemWriter.class);
@@ -77,9 +77,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private List<String> errors = new LinkedList<String>();
     private SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier;
     private ChunkUtil chunkUtil = new ChunkUtil();
-    private Map<String,String> md5Cache = new HashMap<>();
-    private Map<String,String> sha256Cache = new HashMap<>();
-    private Map<String,String> propsCache = new HashMap<>();
+    private Map<String, String> md5Cache = new HashMap<>();
+    private Map<String, String> sha256Cache = new HashMap<>();
+    private Map<String, String> propsCache = new HashMap<>();
     private File md5ManifestFile;
     private File sha256ManifestFile;
     private File propsFile;
@@ -88,7 +88,6 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private int totalChecksumsPerformed = 0;
 
     /**
-     *
      * @param snapshot
      * @param retrievalSource
      * @param contentDir
@@ -117,26 +116,26 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         this.sha256ManifestFile = sha256ManifestFile;
         this.snapshotManager = snapshotManager;
         this.spaceManifestDpnManifestVerifier = spaceManifestDpnManifestVerifier;
-        this.dbFile = new File(contentDir, snapshot.getName()+".db");
+        this.dbFile = new File(contentDir, snapshot.getName() + ".db");
         this.propsFile = propsFile;
     }
 
-    private DB makeDatabase(){
+    private DB makeDatabase() {
         return DBMaker.fileDB(this.dbFile).transactionEnable().closeOnJvmShutdown().make();
     }
 
-    protected void closeDatabase(){
-        if(this.db != null){
+    protected void closeDatabase() {
+        if (this.db != null) {
             this.db.close();
         }
     }
 
-    protected void deleteDatabase(){
+    protected void deleteDatabase() {
         closeDatabase();
         this.dbFile.delete();
     }
 
-    private BufferedWriter createWriter(File file) throws IOException{
+    private BufferedWriter createWriter(File file) throws IOException {
         BufferedWriter writer =
             Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8);
         return writer;
@@ -144,11 +143,11 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
     @Override
     public void write(List<? extends ContentItem> items) throws IOException {
-        for(ContentItem contentItem: items) {
+        for (ContentItem contentItem : items) {
             String contentId = contentItem.getContentId();
             log.debug("writing: {}", contentId);
 
-            if(!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
+            if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                 File dataDir = getDataDir();
                 retrieveFile(contentItem, dataDir);
             } else {
@@ -164,18 +163,18 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     }
 
     protected void retrieveFile(ContentItem contentItem, File directory)
-            throws IOException {
+        throws IOException {
         retrieveFile(contentItem, directory, true, false);
     }
 
-    private void cacheValue(Map<String,String> cache, String key, String value){
+    private void cacheValue(Map<String, String> cache, String key, String value) {
         cache.put(key, value);
         db.commit();
     }
 
     protected void retrieveFile(ContentItem contentItem, File directory,
                                 boolean writeChecksums, boolean lastItem)
-            throws IOException {
+        throws IOException {
 
         String contentId = chunkUtil.preChunkedContentId(contentItem.getContentId());
 
@@ -183,7 +182,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         String md5Checksum = md5Cache.get(contentId);
         String sha256 = sha256Cache.get(contentId);
 
-        Map<String,String> props = null;
+        Map<String, String> props = null;
 
         RetrievalWorker retrievalWorker =
             new RetrievalWorker(contentItem, retrievalSource, directory,
@@ -191,7 +190,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
         File localFile = retrievalWorker.getLocalFile();
 
-        if(md5Checksum == null) { // File is not in MD5 cache
+        if (md5Checksum == null) { // File is not in MD5 cache
             StopWatch sw = new StopWatch();
             sw.start();
 
@@ -206,9 +205,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
             sw.stop();
 
-            if(null == props) { // Transfer failed
+            if (null == props) { // Transfer failed
                 throw new IOException("Failed to retrieve " + contentId + " after " +
-                                      sw.getTime()/1000 + " seconds");
+                                      sw.getTime() / 1000 + " seconds");
             }
 
             log.info("Finished retrieving content: contentId={}, " +
@@ -217,7 +216,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                      localFile.length(),
                      localFile.getAbsolutePath(),
                      sw.getTime(),
-                     (localFile.length() * 0.008)/sw.getTime());
+                     (localFile.length() * 0.008) / sw.getTime());
 
             // cache props
             cacheValue(propsCache, contentId, PropertiesSerializer.serialize(props));
@@ -237,7 +236,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
             // Get the props from cache, otherwise retrieve them.
             String propsStr = propsCache.get(contentId);
-            if(propsStr != null){
+            if (propsStr != null) {
                 props = PropertiesSerializer.deserialize(propsStr);
                 log.info("Props found in cache for {}.", contentId);
             } else {
@@ -248,11 +247,11 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             }
         }
 
-        if(localFile.exists() && md5Checksum != null) {
+        if (localFile.exists() && md5Checksum != null) {
             try {
                 if (writeChecksums) {
                     writeMD5Checksum(contentId, md5Checksum);
-                    if(sha256 == null){
+                    if (sha256 == null) {
                         ChecksumUtil sha256ChecksumUtil =
                             new ChecksumUtil(ChecksumUtil.Algorithm.SHA_256);
                         StopWatch sw = new StopWatch();
@@ -285,7 +284,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
                 writeToSnapshotManager(contentId, props);
                 writeContentProperties(contentId, props, lastItem);
-            }catch(IOException ioe) {
+            } catch (IOException ioe) {
                 log.error("Error writing snapshot details: " + ioe.getMessage());
                 throw ioe;
             }
@@ -294,9 +293,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             String baseError = "Retrieved item " + contentItem.getContentId() +
                                " from space " + contentItem.getSpaceId() + " could not " +
                                "be processed due to: ";
-            if(!localFile.exists()) {
+            if (!localFile.exists()) {
                 String error = baseError + "The local file at path " +
-                               localFile.getAbsolutePath()+ " could not be found.";
+                               localFile.getAbsolutePath() + " could not be found.";
                 log.error(error);
                 throw new IOException(error);
             } else {
@@ -307,7 +306,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
-    protected int getTotalChecksumsPerformed(){
+    protected int getTotalChecksumsPerformed() {
         return totalChecksumsPerformed;
     }
 
@@ -316,7 +315,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
      * @param props
      */
     private void writeToSnapshotManager(final String contentId,
-                                        final Map<String, String> props) throws IOException{
+                                        final Map<String, String> props) throws IOException {
         try {
             new Retrier().execute(new Retriable() {
                 @Override
@@ -340,30 +339,28 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         }
     }
 
-
-
     protected void writeSHA256Checksum(String contentId,
                                        String sha256Checksum) throws IOException {
 
-        synchronized (sha256Writer){
+        synchronized (sha256Writer) {
             ManifestFileHelper.writeManifestEntry(sha256Writer, contentId, sha256Checksum);
         }
     }
 
     protected void writeContentProperties(String contentId,
-                                          Map<String,String> props,
+                                          Map<String, String> props,
                                           boolean lastItem)
-            throws IOException {
+        throws IOException {
         Set<String> propKeys = props.keySet();
         StringBuffer sb = new StringBuffer(100);
         sb.append("{\n  \"" + contentId + "\": {\n");
-        for(String propKey: propKeys) {
+        for (String propKey : propKeys) {
             sb.append("    \"" + propKey + "\": \"" + props.get(propKey) + "\",\n");
         }
         sb.deleteCharAt(sb.length() - 2); // delete comma after last key/value pair
 
         sb.append("  }\n}");
-        if(! lastItem) {
+        if (!lastItem) {
             sb.append(",");
         }
         sb.append("\n");
@@ -375,7 +372,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     }
 
     protected void retrieveSnapshotProperties() {
-        if(snapshotPropsContentItem != null) {
+        if (snapshotPropsContentItem != null) {
             try {
                 retrieveFile(snapshotPropsContentItem, contentDir, false, true);
                 log.info("Snapshot properties retrieved");
@@ -402,17 +399,17 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         retrieveSnapshotProperties();
         closePropsWriter();
 
-        if(errors.size() == 0){
-           log.info("No errors in retrieval of snapshot {}; " +
-                    "Proceeding with space manifest - dpn manifest verification...",
-                    snapshot.getName());
-           errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
+        if (errors.size() == 0) {
+            log.info("No errors in retrieval of snapshot {}; " +
+                     "Proceeding with space manifest - dpn manifest verification...",
+                     snapshot.getName());
+            errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
         }
 
-        if(errors.size() > 0){
+        if (errors.size() > 0) {
             stepExecution.upgradeStatus(BatchStatus.FAILED);
             status = status.and(ExitStatus.FAILED);
-            for(String error : errors){
+            for (String error : errors) {
                 status = status.addExitDescription(error);
             }
             log.error("Space item writer failed due to the following error(s): " +
@@ -443,28 +440,28 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private void close(String writerName, Object writer) {
         try {
 
-            if(writer instanceof Closeable){
-                ((Closeable)writer).close();
-            }else if(writer instanceof OutputWriter){
-                ((OutputWriter)writer).close();
-            }else {
+            if (writer instanceof Closeable) {
+                ((Closeable) writer).close();
+            } else if (writer instanceof OutputWriter) {
+                ((OutputWriter) writer).close();
+            } else {
                 throw new DuraCloudRuntimeException(writerName +
                                                     " is not a supported parameter type for this method.");
             }
             log.info("closed {}", writerName);
         } catch (IOException ioe) {
-            String message = "Error closing "+writerName+" BufferedWriter: " + ioe.getMessage();
+            String message = "Error closing " + writerName + " BufferedWriter: " + ioe.getMessage();
             errors.add(message);
             log.error(message, ioe);
         }
     }
 
-    private void loadCacheFromFile(Map<String,String> cache,
+    private void loadCacheFromFile(Map<String, String> cache,
                                    File file,
-                                   Function<String,Boolean> isValidChecksum) throws IOException{
+                                   Function<String, Boolean> isValidChecksum) throws IOException {
         //if the cache is empty check if there is are md5 and sha256 manifests
         //that can be used to prepopulate the cache.
-        if(cache.isEmpty() && file.exists()){
+        if (cache.isEmpty() && file.exists()) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
                 String line = null;
                 while ((line = reader.readLine()) != null) {
@@ -472,9 +469,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                         ManifestEntry entry = ManifestFileHelper.parseManifestEntry(line);
                         String contentId = entry.getContentId();
                         String checksum = entry.getChecksum();
-                        if(isValidChecksum.apply(checksum)){
+                        if (isValidChecksum.apply(checksum)) {
                             cacheValue(cache, contentId, checksum);
-                        }else{
+                        } else {
                             log.info("Checksum {} in manifest file {} was not a valid checksum: skipping.",
                                      checksum, file.getAbsolutePath());
                         }
@@ -494,26 +491,29 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         try {
             this.db = makeDatabase();
 
-            md5Cache = db
-                .treeMap("md5Cache", Serializer.STRING, Serializer.STRING)
-                .createOrOpen();
-            sha256Cache = db
-                .treeMap("sha256Cache", Serializer.STRING, Serializer.STRING)
-                .createOrOpen();
-            propsCache = db
-                .treeMap("propsCache", Serializer.STRING, Serializer.STRING)
-                .createOrOpen();
+            md5Cache = db.treeMap("md5Cache", Serializer.STRING, Serializer.STRING)
+                         .createOrOpen();
+            sha256Cache = db.treeMap("sha256Cache", Serializer.STRING, Serializer.STRING)
+                            .createOrOpen();
+            propsCache = db.treeMap("propsCache", Serializer.STRING, Serializer.STRING)
+                           .createOrOpen();
 
             //load caches from files left from previously unsuccessful run.
-            loadCacheFromFile(this.md5Cache, this.md5ManifestFile, x->  x  != null && x.matches("[a-fA-F0-9]{32}"));
-            loadCacheFromFile(this.sha256Cache, this.sha256ManifestFile, x-> x != null && x.matches("[a-fA-F0-9]{64}"));
+            loadCacheFromFile(
+                this.md5Cache,
+                this.md5ManifestFile,
+                x -> x != null && x.matches("[a-fA-F0-9]{32}"));
+            loadCacheFromFile(
+                this.sha256Cache,
+                this.sha256ManifestFile,
+                x -> x != null && x.matches("[a-fA-F0-9]{64}"));
 
             //initialize writers after loading cache from files.
             try {
                 this.propsWriter = createWriter(propsFile);
                 this.md5Writer = createWriter(this.md5ManifestFile);
                 this.sha256Writer = createWriter(this.sha256ManifestFile);
-            }catch(IOException ex){
+            } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
 
@@ -524,7 +524,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
             }
         } catch (IOException ioe) {
             log.error("Error writing start of content property " +
-                             "manifest: ", ioe);
+                      "manifest: ", ioe);
         }
     }
 
@@ -532,13 +532,13 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     @Override
     public void onWriteError(Exception e, List<? extends ContentItem> items) {
         StringBuilder sb = new StringBuilder();
-        for(ContentItem item: items) {
+        for (ContentItem item : items) {
             sb.append(item.getContentId() + ", ");
         }
-        
+
         String message = "Error writing item(s): " + e.getMessage() + ": items=" + sb.toString();
         this.errors.add(message);
-        log.error(message,e);
+        log.error(message, e);
     }
 
     // Method defined in ItemWriteListener interface

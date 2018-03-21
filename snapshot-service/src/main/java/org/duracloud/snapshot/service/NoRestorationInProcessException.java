@@ -9,16 +9,15 @@ package org.duracloud.snapshot.service;
 
 import org.duracloud.snapshot.SnapshotException;
 
-
 /**
  * @author Daniel Bernstein
- *         Date: Jul 14, 2014
+ * Date: Jul 14, 2014
  */
 public class NoRestorationInProcessException extends SnapshotException {
     /**
-     * 
+     *
      */
     public NoRestorationInProcessException(String message) {
-            super(message, null);
+        super(message, null);
     }
 }

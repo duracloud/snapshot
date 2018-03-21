@@ -21,13 +21,14 @@ import org.springframework.batch.item.UnexpectedInputException;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 16, 2014
+ * Date: Jul 16, 2014
  */
-public class FileSystemReader extends StepExecutionSupport implements ItemReader<File>{
-    
+public class FileSystemReader extends StepExecutionSupport implements ItemReader<File> {
+
     private SimpleDirectoryWalker walker;
     private File rootDirectory = null;
-    public FileSystemReader(File rootDirectory){
+
+    public FileSystemReader(File rootDirectory) {
         this.rootDirectory = rootDirectory;
     }
 
@@ -36,18 +37,15 @@ public class FileSystemReader extends StepExecutionSupport implements ItemReader
      */
     @Override
     public synchronized File read()
-        throws Exception,
-            UnexpectedInputException,
-            ParseException,
-            NonTransientResourceException {
-    
-        if(walker == null){
+        throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+
+        if (walker == null) {
             this.walker = new SimpleDirectoryWalker(rootDirectory);
             this.walker.start();
             //skip ahead if items have already been processed.
             long itemsRead = getItemsRead();
-            if(itemsRead > 0){
-                for(int i = 0; i < itemsRead; i++){
+            if (itemsRead > 0) {
+                for (int i = 0; i < itemsRead; i++) {
                     this.walker.next();
                 }
             }
@@ -55,21 +53,22 @@ public class FileSystemReader extends StepExecutionSupport implements ItemReader
 
         return this.walker.next();
     }
-    
+
     private class SimpleDirectoryWalker extends DirectoryWalker<File> {
         private SynchronousQueue<File> queue = new SynchronousQueue<>();
         private File root;
-        public SimpleDirectoryWalker(final File root){
-            
+
+        public SimpleDirectoryWalker(final File root) {
+
             this.root = root;
         }
-        
+
         /**
-         * 
+         *
          */
         public void start() {
             Thread t = new Thread(new Runnable() {
-                
+
                 @Override
                 public void run() {
                     try {
@@ -79,33 +78,32 @@ public class FileSystemReader extends StepExecutionSupport implements ItemReader
                     }
                 }
             });
-            
+
             t.start();
         }
-        
+
         /* (non-Javadoc)
          * @see org.apache.commons.io.DirectoryWalker#handleFile(java.io.File, int, java.util.Collection)
          */
         @Override
-        protected void
-            handleFile(File file, int depth, Collection<File> results)
-                throws IOException {
+        protected void handleFile(File file, int depth, Collection<File> results) throws IOException {
             try {
-                if(file.isFile())
+                if (file.isFile()) {
                     queue.put(file);
+                }
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
-        
+
         public File next() {
             try {
                 return queue.poll(5000, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            
+
             return null;
         }
     }

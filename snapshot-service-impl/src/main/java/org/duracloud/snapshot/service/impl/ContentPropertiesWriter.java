@@ -24,8 +24,8 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ItemWriter;
 
 /**
- * @author Daniel Bernstein 
- *         Date: Aug 22, 2014
+ * @author Daniel Bernstein
+ * Date: Aug 22, 2014
  */
 public class ContentPropertiesWriter extends StepExecutionSupport
     implements ItemWriter<ContentProperties>, ItemWriteListener<ContentProperties> {
@@ -52,7 +52,7 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.
      * springframework.batch.core.StepExecution)
      */
@@ -69,9 +69,9 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
             failExecution();
             resetContextState();
-            
+
             log.error("content properties step finished with errors: step_execution_id={} "
-                + "job_execution_id={} store_id={} status=\"{}\"",
+                      + "job_execution_id={} store_id={} status=\"{}\"",
                       stepExecution.getId(),
                       stepExecution.getJobExecutionId(),
                       contentStore.getStoreId(),
@@ -80,7 +80,7 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
             status = status.and(ExitStatus.COMPLETED);
             log.info("content properties step finished: step_execution_id={} "
-                + "job_execution_id={} store_id={}  exit_status={} ",
+                     + "job_execution_id={} store_id={}  exit_status={} ",
                      stepExecution.getId(),
                      stepExecution.getJobExecutionId(),
                      contentStore.getStoreId(),
@@ -92,7 +92,7 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#afterWrite(java.util
      * .List)
@@ -104,7 +104,7 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#beforeWrite(java.util
      * .List)
@@ -117,7 +117,7 @@ public class ContentPropertiesWriter extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#onWriteError(java.lang
      * .Exception, java.util.List)
@@ -127,13 +127,13 @@ public class ContentPropertiesWriter extends StepExecutionSupport
         log.error("firing onWriteError: currrently not handling: exception message=" + exception.getMessage(),
                   exception);
         for (ContentProperties props : items) {
-            addError("item failed: " + props + "; exception="+exception.getMessage());
+            addError("item failed: " + props + "; exception=" + exception.getMessage());
         }
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.item.ItemWriter#write(java.util.List)
      */
     @Override
@@ -144,31 +144,26 @@ public class ContentPropertiesWriter extends StepExecutionSupport
                 @Override
                 public Object retry() throws Exception {
                     try {
-                    contentStore.setContentProperties(destinationSpaceId, props.getContentId(), props.getProperties());
-                    log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
-                              props,
-                              destinationSpaceId,
-                              storeId,
-                              storageProviderType);
-                    return null;
-                    }catch(ContentStoreException ex){
-                        log.warn("failed to update content properties ({}) to space({}); on store({}/{}). Trying with chunk manifest extension.",
-                                 props,
-                                 destinationSpaceId,
-                                 storeId,
-                                 storageProviderType);
+                        contentStore.setContentProperties(destinationSpaceId,
+                                                          props.getContentId(),
+                                                          props.getProperties());
+                        log.debug("wrote content properties ({}) to space ({}) on store ({}/{}):",
+                                  props, destinationSpaceId, storeId, storageProviderType);
+                        return null;
+                    } catch (ContentStoreException ex) {
+                        log.warn("failed to update content properties ({}) to space({}); on store({}/{}). " +
+                                 "Trying with chunk manifest extension.",
+                                 props, destinationSpaceId, storeId, storageProviderType);
 
-                        //make sure the chunk manifest's properties are layed on top of the stitched file 
+                        //make sure the chunk manifest's properties are layed on top of the stitched file
                         //properties to ensure that mutable "system-ish" properties such as content type are not
                         //overwritten.
                         String manifestId = props.getContentId() + ChunksManifest.manifestSuffix;
-                        Map<String,String> properties = new HashMap<>(props.getProperties());
+                        Map<String, String> properties = new HashMap<>(props.getProperties());
                         Map<String, String> chunkManifestProperties =
                             contentStore.getContentProperties(destinationSpaceId, manifestId);
                         properties.putAll(chunkManifestProperties);
-                        contentStore.setContentProperties(destinationSpaceId,
-                                                          manifestId,
-                                                          properties);                        
+                        contentStore.setContentProperties(destinationSpaceId, manifestId, properties);
                         return null;
                     }
                 }

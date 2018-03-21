@@ -18,9 +18,13 @@ import org.codehaus.jackson.type.TypeReference;
  */
 public class PropertiesSerializer {
     private static ObjectMapper mapper = new ObjectMapper();
-    private static  TypeReference<HashMap<String, String>> mapTypeRef =
+    private static TypeReference<HashMap<String, String>> mapTypeRef =
         new TypeReference<HashMap<String, String>>() {
         };
+
+    private PropertiesSerializer() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
 
     public static String serialize(Map<String, String> props) {
         try {
@@ -36,13 +40,12 @@ public class PropertiesSerializer {
 
         try {
             props =
-                new ObjectMapper().readValue(src,
-                                            mapTypeRef);
+                new ObjectMapper().readValue(src, mapTypeRef);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
-        
+
         return props;
 
     }

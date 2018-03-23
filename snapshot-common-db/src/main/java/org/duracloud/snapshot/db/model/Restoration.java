@@ -8,7 +8,6 @@
 package org.duracloud.snapshot.db.model;
 
 import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -22,7 +21,7 @@ import org.duracloud.snapshot.dto.RestoreStatus;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
 @Entity
 //@Table

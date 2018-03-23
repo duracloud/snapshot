@@ -7,6 +7,10 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.easymock.EasyMock.anyLong;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -19,13 +23,9 @@ import org.junit.Test;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ExecutionContext;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.anyLong;
-
 /**
  * @author Daniel Bernstein
- *         Date: Jul 16, 2014
+ * Date: Jul 16, 2014
  */
 public class FileSystemReaderTest extends SnapshotTestBase {
 
@@ -36,10 +36,11 @@ public class FileSystemReaderTest extends SnapshotTestBase {
     public void setUp() throws Exception {
         super.setup();
     }
-    
+
     /**
      * Test method for {@link org.duracloud.snapshot.service.impl.FileSystemReader#read()}.
-     * @throws IOException 
+     *
+     * @throws IOException
      */
     @Test
     public void testRead() throws Exception {
@@ -47,30 +48,30 @@ public class FileSystemReaderTest extends SnapshotTestBase {
         ExecutionContext context = createMock(ExecutionContext.class);
         expect(stepExecution.getExecutionContext()).andReturn(context);
         expect(context.getLong(isA(String.class), anyLong())).andReturn(0l);
-        
+
         File rootDirectory =
             new File(System.getProperty("java.io.tmpdir")
-                + File.separator + "FileSystemReaderTest" + System.currentTimeMillis());
+                     + File.separator + "FileSystemReaderTest" + System.currentTimeMillis());
         rootDirectory.mkdirs();
         rootDirectory.deleteOnExit();
-        
+
         Set<File> files = new HashSet<>();
         Set<File> results = new HashSet<>();
 
-        for(int i = 0; i < 10; i++){
-            File f = File.createTempFile("test-"+i, ".txt", rootDirectory);
+        for (int i = 0; i < 10; i++) {
+            File f = File.createTempFile("test-" + i, ".txt", rootDirectory);
             f.createNewFile();
             f.deleteOnExit();
             files.add(f);
         }
-        
+
         replayAll();
-        
+
         FileSystemReader reader = new FileSystemReader(rootDirectory);
         reader.beforeStep(stepExecution);
-        while(true){
+        while (true) {
             File file = reader.read();
-            if(file == null){
+            if (file == null) {
                 break;
             }
             results.add(file);
@@ -78,7 +79,7 @@ public class FileSystemReaderTest extends SnapshotTestBase {
 
         Assert.assertEquals(files.size(), results.size());
         Assert.assertTrue(files.containsAll(results));
-        
+
     }
 
 }

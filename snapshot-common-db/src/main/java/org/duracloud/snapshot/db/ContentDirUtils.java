@@ -8,24 +8,26 @@
 package org.duracloud.snapshot.db;
 
 import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 
 /**
  * @author Daniel Bernstein
- *         Date: Feb 19, 2014
+ * Date: Feb 19, 2014
  */
 public class ContentDirUtils {
-    
+
+    private ContentDirUtils() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
     public static String getDestinationPath(String snapshotId, File rootDir) {
         return rootDir.getAbsolutePath()
-            + File.separator + "snapshots" + File.separator
-            + snapshotId;
+               + File.separator + "snapshots" + File.separator
+               + snapshotId;
     }
 
     public static String getSourcePath(String restorationId, File rootDir) {
         return rootDir.getAbsolutePath()
-            + File.separator + "restorations" + File.separator
-            + restorationId;
+               + File.separator + "restorations" + File.separator
+               + restorationId;
     }
 }

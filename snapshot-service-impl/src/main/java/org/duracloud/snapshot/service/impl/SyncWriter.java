@@ -32,7 +32,7 @@ import org.springframework.util.CollectionUtils;
 
 /**
  * This class is responsible for syncing content from the bridge to DuraCloud.
- * 
+ *
  * @author Daniel Bernstein Date: Jul 17, 2014
  */
 public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>, ItemWriteListener<File> {
@@ -71,14 +71,14 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
     // StepExecution Interface
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.
      * springframework.batch.core.StepExecution)
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus status = stepExecution.getExitStatus();
-        
+
         List<String> errors = getErrors();
         if (errors.isEmpty()) {
             try {
@@ -97,23 +97,23 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
             }
 
         } else {
-            
+
             status = status.and(ExitStatus.FAILED);
             status.addExitDescription("Transfer to DuraCloud failed: " +
                                       errors.size() + " items failed.");
             for (String error : errors) {
                 status.addExitDescription(error);
             }
-            
+
             resetContextState();
-            
+
             return status;
         }
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.
      * springframework.batch.core.StepExecution)
      */
@@ -126,7 +126,8 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
             Space space = this.contentStore.getSpace(destinationSpaceId, null, 1, null);
             if (!CollectionUtils.isEmpty(space.getContentIds())) {
                 stepExecution.addFailureException(new RuntimeException("destination space "
-                    + destinationSpaceId + " must be empty to receive restored content"));
+                                                                       + destinationSpaceId +
+                                                                       " must be empty to receive restored content"));
             }
         } catch (NotFoundException ex) {
             try {
@@ -144,7 +145,7 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#beforeWrite(java.util.
      * List)
@@ -155,7 +156,7 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.item.ItemWriter#write(java.util.List)
      */
     @Override
@@ -200,7 +201,7 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#afterWrite(java.util.
      * List)
@@ -213,7 +214,7 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
     // ItemWriteListener
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#onWriteError(java.lang.
      * Exception, java.util.List)

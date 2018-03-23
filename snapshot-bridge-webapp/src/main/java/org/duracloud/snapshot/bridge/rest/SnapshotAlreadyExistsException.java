@@ -9,7 +9,7 @@ package org.duracloud.snapshot.bridge.rest;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 23, 2014
+ * Date: Jul 23, 2014
  */
 public class SnapshotAlreadyExistsException extends Exception {
     public SnapshotAlreadyExistsException(String message) {

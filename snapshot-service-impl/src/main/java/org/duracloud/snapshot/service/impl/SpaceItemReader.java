@@ -18,7 +18,7 @@ import org.springframework.batch.item.UnexpectedInputException;
 
 /**
  * @author Erik Paulsson
- *         Date: 1/31/14
+ * Date: 1/31/14
  */
 public class SpaceItemReader implements ItemReader<ContentItem> {
 
@@ -33,19 +33,18 @@ public class SpaceItemReader implements ItemReader<ContentItem> {
 
     @Override
     public synchronized ContentItem read()
-        throws Exception, UnexpectedInputException, ParseException,
-               NonTransientResourceException {
+        throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 
         try {
             ContentItem contentItem = retrievalSource.getNextContentItem();
-            if(contentItem != null) {
+            if (contentItem != null) {
                 LOGGER.debug("contentItem: {}", contentItem.getContentId());
             } else {
                 LOGGER.debug("contentItem is null");
             }
             return contentItem;
 
-        } catch(Exception ex){
+        } catch (Exception ex) {
             LOGGER.error("item read failed:  " + ex.getMessage(), ex);
             throw ex;
         }

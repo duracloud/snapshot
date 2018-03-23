@@ -11,13 +11,13 @@ import org.duracloud.snapshot.SnapshotException;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 31, 2014
+ * Date: Jul 31, 2014
  */
 public class SnapshotManagerException extends SnapshotException {
     /**
-     * 
+     *
      */
     public SnapshotManagerException(String message) {
-        super(message,null);
+        super(message, null);
     }
 }

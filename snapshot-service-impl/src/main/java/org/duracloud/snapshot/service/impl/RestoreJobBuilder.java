@@ -57,13 +57,13 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
     private StoreClientHelper storeClientHelper;
 
     @Autowired
-    public RestoreJobBuilder(   RestoreJobExecutionListener jobListener, 
-                                JobRepository jobRepository,
-                                PlatformTransactionManager transactionManager, 
-                                @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor, 
-                                RestoreManager restoreManager,
-                                SnapshotContentItemRepo snapshotContentItemRepo,
-                                StoreClientHelper storeClientHelper) {
+    public RestoreJobBuilder(RestoreJobExecutionListener jobListener,
+                             JobRepository jobRepository,
+                             PlatformTransactionManager transactionManager,
+                             @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor,
+                             RestoreManager restoreManager,
+                             SnapshotContentItemRepo snapshotContentItemRepo,
+                             StoreClientHelper storeClientHelper) {
         this.jobListener = jobListener;
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
@@ -75,7 +75,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java
      * .lang.Object,
@@ -92,7 +92,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
             String restoreId = restoration.getRestorationId();
 
             ContentStore contentStore =
-                this.storeClientHelper.create(destination, 
+                this.storeClientHelper.create(destination,
                                               jobManagerConfig.getDuracloudUsername(),
                                               jobManagerConfig.getDuracloudPassword());
 
@@ -127,7 +127,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
      */
     private Step buildVerifyDpnTransferUsingSnapshotRepoStep(String restoreId,
                                                              SnapshotJobManagerConfig jobManagerConfig)
-                                                                 throws Exception {
+        throws Exception {
         File restoreDir = new File(ContentDirUtils.getSourcePath(restoreId, jobManagerConfig.getContentRootDir()));
         Restoration restore = this.restoreManager.get(restoreId);
         SnapshotRepoManifestReader reader =
@@ -148,7 +148,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         stepFactory.setCommitInterval(50);
         stepFactory.setThrottleLimit(1);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[] { writer });
+        stepFactory.setListeners(new StepListener[] {writer});
         return stepFactory.getObject();
     }
 
@@ -173,9 +173,9 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
             new SpaceManifestDpnManifestVerifier(md5Manifest,
                                                  new StitchedManifestGenerator(contentStore),
                                                  destinationSpaceId);
-        SpaceVerifier writer = new SpaceVerifier(restoreId, 
-                                                 spaceManifestVerifier, 
-                                                 destinationSpaceId, 
+        SpaceVerifier writer = new SpaceVerifier(restoreId,
+                                                 spaceManifestVerifier,
+                                                 destinationSpaceId,
                                                  restoreManager);
 
         SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
@@ -187,7 +187,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         stepFactory.setCommitInterval(10000);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[] { writer });
+        stepFactory.setListeners(new StepListener[] {writer});
         stepFactory.setAllowStartIfComplete(false);
         return stepFactory.getObject();
     }
@@ -219,7 +219,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[] { writer, reader });
+        stepFactory.setListeners(new StepListener[] {writer, reader});
         return stepFactory.getObject();
     }
 
@@ -245,7 +245,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
         if (!contentDir.exists()) {
             throw new RuntimeException("The content direcotry is missing for restoration:  "
-                + contentDir.getAbsolutePath());
+                                       + contentDir.getAbsolutePath());
         }
         return contentDir;
     }
@@ -260,7 +260,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
         if (!restoreDir.exists()) {
             throw new RuntimeException("The directory for the restored snapshot "
-                + "does not exist in bridge storage: missing: " + restoreDir.getAbsolutePath());
+                                       + "does not exist in bridge storage: missing: " + restoreDir.getAbsolutePath());
         }
         return restoreDir;
     }
@@ -276,7 +276,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
         if (!contentPropertiesJsonFile.exists()) {
             throw new RuntimeException("The restored content properties file is missing : "
-                + contentPropertiesJsonFile.getAbsolutePath());
+                                       + contentPropertiesJsonFile.getAbsolutePath());
         }
 
         ContentPropertiesFileReader reader = new ContentPropertiesFileReader(contentPropertiesJsonFile);
@@ -292,7 +292,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         stepFactory.setCommitInterval(1);
         stepFactory.setThrottleLimit(20);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[] { writer });
+        stepFactory.setListeners(new StepListener[] {writer});
         return stepFactory.getObject();
     }
 
@@ -307,26 +307,27 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
                                            destinationSpaceId,
                                            false,
                                            true,
-                                           1000*1000*1000); // 1GB chunk size
+                                           1000 * 1000 * 1000); // 1GB chunk size
         endpoint.addEndPointListener(new EndPointLogger());
 
         File watchDir =
             new File(ContentDirUtils.getSourcePath(restorationId, jobManagerConfig.getContentRootDir())
-                + File.separator + "data");
+                     + File.separator + "data");
 
         if (!watchDir.exists()) {
             throw new RuntimeException("The content directory for the restored "
-                + "snapshot does not exist in bridge storage: " + "missing watchDir: " + watchDir.getAbsolutePath());
+                                       + "snapshot does not exist in bridge storage: " + "missing watchDir: " +
+                                       watchDir.getAbsolutePath());
         }
 
         FileSystemReader reader = new FileSystemReader(watchDir);
 
         SyncWriter writer =
-            new SyncWriter(restorationId, 
-                           watchDir, 
-                           endpoint, 
-                           contentStore, 
-                           destinationSpaceId, 
+            new SyncWriter(restorationId,
+                           watchDir,
+                           endpoint,
+                           contentStore,
+                           destinationSpaceId,
                            restoreManager);
 
         SimpleStepFactoryBean<File, File> stepFactory = new SimpleStepFactoryBean<>();
@@ -338,13 +339,13 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         stepFactory.setCommitInterval(1);
         setThrottleLimitForContentTransfers(stepFactory);
         stepFactory.setTaskExecutor(taskExecutor);
-        stepFactory.setListeners(new StepListener[] { writer });
+        stepFactory.setListeners(new StepListener[] {writer});
         return stepFactory.getObject();
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#
      * buildIdentifyingJobParameters(java.lang.Object)
      */
@@ -355,7 +356,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#
      * buildJobParameters(java.lang.Object)
      */
@@ -363,7 +364,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
     public JobParameters buildJobParameters(Restoration entity) {
         return buildIdentifyingJobParameters(entity);
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.impl.BatchJobBuilder#getJobName()
      */

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 25, 2014
+ * Date: Jul 25, 2014
  */
 @Component
 public class BridgeConfiguration {
@@ -75,30 +75,31 @@ public class BridgeConfiguration {
      * @return the bridge root dir.
      */
     public static File getBridgeRootDir() {
-        String rootDir =  System.getProperty(DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY);
-        if(rootDir == null){
-            throw new RuntimeException("Unable to locate  bridge root directory because the "
-                + DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY
-                + " system property was not set.  Please specify a java command line parameter (e.g. -D"
-                + DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY + "=/path/to/root/dir)");
+        String rootDir = System.getProperty(DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY);
+        if (rootDir == null) {
+            String error = "Unable to locate  bridge root directory because the " +
+                           DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY
+                           + " system property was not set.  Please specify a java command line parameter (e.g. -D"
+                           + DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY + "=/path/to/root/dir)";
+            throw new RuntimeException(error);
         }
-        File file =  createDirectoryIfNotExists(rootDir);
-        if(!file.exists()){
+        File file = createDirectoryIfNotExists(rootDir);
+        if (!file.exists()) {
             file.mkdirs();
         }
         return file;
     }
-    
+
     private static File createDirectoryIfNotExists(String path) {
         File wdir = new File(path);
-        if(!wdir.exists()){
+        if (!wdir.exists()) {
             if (!wdir.mkdirs()) {
                 throw new RuntimeException("failed to initialize "
-                    + path + ": directory could not be created.");
+                                           + path + ": directory could not be created.");
             }
         }
-        
-        if(!wdir.canWrite()){
+
+        if (!wdir.canWrite()) {
             throw new RuntimeException(wdir.getAbsolutePath() + " must be writable.");
         }
 
@@ -111,9 +112,9 @@ public class BridgeConfiguration {
     public static File getContentRootDir() {
         return createDirectoryIfNotExists(new File(getBridgeRootDir(), "content").getAbsolutePath());
     }
-    
+
     /**
-     * @return a file representing the bridge work dir 
+     * @return a file representing the bridge work dir
      */
     public static File getBridgeWorkDir() {
         return createDirectoryIfNotExists(new File(getBridgeRootDir(), "work").getAbsolutePath());
@@ -121,10 +122,10 @@ public class BridgeConfiguration {
 
     public static int getBridgeThreadsPerJob() {
         String threadsPerJobConfig = System.getProperty(DURACLOUD_BRIDGE_THREADS_PER_JOB);
-        if(null != threadsPerJobConfig) {
+        if (null != threadsPerJobConfig) {
             try {
                 return Integer.parseInt(threadsPerJobConfig);
-            } catch(NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 log.warn("Could not parse system property " +
                          DURACLOUD_BRIDGE_THREADS_PER_JOB +
                          " with value " + threadsPerJobConfig +
@@ -133,7 +134,7 @@ public class BridgeConfiguration {
         }
 
         int availableProcessors = Runtime.getRuntime().availableProcessors();
-        if(availableProcessors > 1) {
+        if (availableProcessors > 1) {
             return availableProcessors - 1;
         } else {
             return 1;

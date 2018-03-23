@@ -7,21 +7,20 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.internal.runners.statements.Fail;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.util.CollectionUtils;
 
-import java.io.File;
-
 /**
  * @author Daniel Bernstein
- *         Date: Aug 22, 2014
+ * Date: Aug 22, 2014
  */
 public class ContentPropertiesFileReaderTest {
 
@@ -41,30 +40,31 @@ public class ContentPropertiesFileReaderTest {
 
     /**
      * Test method for {@link org.duracloud.snapshot.service.impl.ContentPropertiesFileReader#read()}.
-     * @throws Exception 
-     * @throws NonTransientResourceException 
-     * @throws ParseException 
-     * @throws UnexpectedInputException 
+     *
+     * @throws Exception
+     * @throws NonTransientResourceException
+     * @throws ParseException
+     * @throws UnexpectedInputException
      */
     @Test
     public void testRead() throws Exception {
         String testJsonFile =
             getClass().getResource("/content-properties.json").getFile();
         ContentPropertiesFileReader reader =
-            new ContentPropertiesFileReader(new File(testJsonFile)){
-            @Override
-            protected long getItemsRead() {
-                return 0;
-            }
-        };
+            new ContentPropertiesFileReader(new File(testJsonFile)) {
+                @Override
+                protected long getItemsRead() {
+                    return 0;
+                }
+            };
 
         ContentProperties props = null;
         int count = 0;
-        while((props = reader.read()) !=null){
+        while ((props = reader.read()) != null) {
             verifyProps(props);
             count++;
         }
-        
+
         //verify that once the reader returns null, it will always return null.
         Assert.assertNull(reader.read());
 
@@ -79,7 +79,7 @@ public class ContentPropertiesFileReaderTest {
         Assert.assertTrue(!CollectionUtils.isEmpty(props.getProperties()));
 
         // Verify that the property names do not match their values
-        for(String key : props.getProperties().keySet()) {
+        for (String key : props.getProperties().keySet()) {
             Assert.assertNotEquals(key, props.getProperties().get(key));
         }
     }

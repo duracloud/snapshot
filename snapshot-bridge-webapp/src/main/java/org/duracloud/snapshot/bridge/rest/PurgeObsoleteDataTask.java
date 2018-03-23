@@ -18,27 +18,26 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jan 15, 2016
+ * Date: Jan 15, 2016
  */
 @Component
-public class PurgeObsoleteDataTask implements Runnable{
+public class PurgeObsoleteDataTask implements Runnable {
 
     private Logger log = LoggerFactory.getLogger(PurgeObsoleteDataTask.class);
     @PersistenceContext
     private EntityManager entityManager;
 
-    
     /* (non-Javadoc)
      * @see java.util.TimerTask#run()
      */
     @Override
     @Transactional
     public void run() {
-       String storedProc = "purge_obsolete_batch_data";
-       boolean result = entityManager.createStoredProcedureQuery(storedProc)
-                                     .registerStoredProcedureParameter(0, Integer.class, ParameterMode.IN)
-                                     .setParameter(0, 90)
-                                     .execute();
-       log.info("executed {} : resultset ? {}", storedProc, result);
+        String storedProc = "purge_obsolete_batch_data";
+        boolean result = entityManager.createStoredProcedureQuery(storedProc)
+                                      .registerStoredProcedureParameter(0, Integer.class, ParameterMode.IN)
+                                      .setParameter(0, 90)
+                                      .execute();
+        log.info("executed {} : resultset ? {}", storedProc, result);
     }
 }

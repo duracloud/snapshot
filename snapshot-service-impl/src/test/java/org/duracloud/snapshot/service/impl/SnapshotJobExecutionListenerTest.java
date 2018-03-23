@@ -1,5 +1,5 @@
 /*
-  * The contents of this file are subject to the license and copyright
+ * The contents of this file are subject to the license and copyright
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree and available online at
  *
@@ -44,7 +44,7 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Bill Branan
- *         Date: 2/18/14
+ * Date: 2/18/14
  */
 public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
@@ -59,11 +59,11 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private SnapshotRepo snapshotRepo;
-    
+
     @Mock
     private JobInstance job;
 
-    @Mock 
+    @Mock
     private Snapshot snapshot;
 
     @Mock
@@ -71,7 +71,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
     @Mock
     private EventLog eventLog;
-    
+
     @TestSubject
     private SnapshotJobExecutionListener executionListener = new SnapshotJobExecutionListener();
 
@@ -79,11 +79,10 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
     private String contentDir = "content-dir";
     private JobParameters jobParams;
 
-    
     @Before
     public void setup() throws Exception {
         super.setup();
-        
+
         Map<String, JobParameter> jobParamMap = new HashMap<>();
         jobParamMap.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
                         new JobParameter(snapshotId));
@@ -105,7 +104,8 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         snapshot.setStatusText("");
         expectLastCall();
         expect(snapshotRepo.save(snapshot))
-            .andReturn(snapshot);;
+            .andReturn(snapshot);
+        ;
         eventLog.logSnapshotUpdate(snapshot);
         expectLastCall();
 
@@ -134,7 +134,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         expectLastCall();
 
         expect(executionConfig.getAllEmailAddresses())
-            .andReturn(new String[]{dpnEmail, duracloudEmail});
+            .andReturn(new String[] {dpnEmail, duracloudEmail});
 
         snapshot.setStatus(SnapshotStatus.WAITING_FOR_DPN);
         snapshot.setTotalSizeInBytes(0l);
@@ -148,7 +148,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         replayAll();
 
         File contentDirFile = new File(contentDir);
-        
+
         new File(ContentDirUtils.getDestinationPath(snapshotId,
                                                     contentDirFile)).mkdirs();
         executionListener.afterJob(jobExecution);
@@ -160,7 +160,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         String history = historyCapture.getValue();
         String expectedHistory =
             "[{'snapshot-action':'SNAPSHOT_STAGED'}," +
-            "{'snapshot-id':'"+snapshotId+"'}]";
+            "{'snapshot-id':'" + snapshotId + "'}]";
         assertEquals(expectedHistory, history.replaceAll("\\s", ""));
 
         try {
@@ -178,10 +178,10 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
         expect(jobExecution.getJobParameters())
             .andReturn(jobParams);
-        
+
         expect(executionConfig.getContentRoot())
             .andReturn(new File(contentDir));
-        
+
         expect(snapshot.getName())
             .andReturn(snapshotId).atLeastOnce();
         snapshot.setStatusText(isA(String.class));
@@ -195,7 +195,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
 
     @Test
     public void testAfterJobFailure() {
-         setupCommon();
+        setupCommon();
 
         String duracloudEmail = "duracloud-email";
 
@@ -213,7 +213,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
         expectLastCall();
 
         expect(executionConfig.getDuracloudEmailAddresses())
-                .andReturn(new String[]{duracloudEmail});
+            .andReturn(new String[] {duracloudEmail});
 
         snapshot.setStatus(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD);
         expectLastCall();

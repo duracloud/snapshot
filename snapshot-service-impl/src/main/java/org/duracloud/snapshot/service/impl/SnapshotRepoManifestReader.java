@@ -20,15 +20,15 @@ import org.springframework.data.domain.Pageable;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 28, 2015
+ * Date: Jul 28, 2015
  */
-public class SnapshotRepoManifestReader extends StepExecutionSupport  implements ItemReader<SnapshotContentItem>{
-        
+public class SnapshotRepoManifestReader extends StepExecutionSupport implements ItemReader<SnapshotContentItem> {
+
     private SnapshotContentItemRepo repo;
     private StreamingIterator<SnapshotContentItem> items;
     private String snapshotName;
-    
-    public SnapshotRepoManifestReader(SnapshotContentItemRepo repo,  String snapshotName){
+
+    public SnapshotRepoManifestReader(SnapshotContentItemRepo repo, String snapshotName) {
         this.repo = repo;
         this.snapshotName = snapshotName;
     }
@@ -37,18 +37,14 @@ public class SnapshotRepoManifestReader extends StepExecutionSupport  implements
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
-    public synchronized SnapshotContentItem read() 
-        throws Exception,
-            UnexpectedInputException,
-            ParseException,
-            NonTransientResourceException {
-        if(this.items == null){
+    public synchronized SnapshotContentItem read()
+        throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+
+        if (this.items == null) {
             this.items =
-                new StreamingIterator<>(new JpaIteratorSource<SnapshotContentItemRepo,
-                                                              SnapshotContentItem>(repo) {
+                new StreamingIterator<>(new JpaIteratorSource<SnapshotContentItemRepo, SnapshotContentItem>(repo) {
                     @Override
-                    protected Page<SnapshotContentItem> getNextPage(Pageable pageable,
-                                                                    SnapshotContentItemRepo repo) {
+                    protected Page<SnapshotContentItem> getNextPage(Pageable pageable, SnapshotContentItemRepo repo) {
                         return repo.findBySnapshotName(snapshotName, pageable);
                     }
                 });

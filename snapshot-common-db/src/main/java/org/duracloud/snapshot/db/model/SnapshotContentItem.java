@@ -8,12 +8,10 @@
 package org.duracloud.snapshot.db.model;
 
 import java.util.Comparator;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -21,23 +19,24 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
 @Entity
-@Table (name="snapshot_content_item", uniqueConstraints=@UniqueConstraint(columnNames={"snapshot_id","content_id_hash" }))
+@Table(name = "snapshot_content_item",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"snapshot_id", "content_id_hash"}))
 public class SnapshotContentItem extends BaseEntity implements Comparator<SnapshotContentItem> {
 
-    @Column(name="content_id", nullable=false, length = 1024)
+    @Column(name = "content_id", nullable = false, length = 1024)
     private String contentId;
-    
-    @Column(name="content_id_hash", nullable=false, length=50)
+
+    @Column(name = "content_id_hash", nullable = false, length = 50)
     private String contentIdHash;
-    
-    @ManyToOne(optional=false,targetEntity=Snapshot.class)
-    @JoinColumn(name="snapshot_id", columnDefinition = "bigint(20)", nullable=false)
+
+    @ManyToOne(optional = false, targetEntity = Snapshot.class)
+    @JoinColumn(name = "snapshot_id", columnDefinition = "bigint(20)", nullable = false)
     private Snapshot snapshot;
-    
-    @Column(length=1024)
+
+    @Column(length = 1024)
     private String metadata;
 
     /**
@@ -81,8 +80,7 @@ public class SnapshotContentItem extends BaseEntity implements Comparator<Snapsh
     public void setMetadata(String metadata) {
         this.metadata = metadata;
     }
-    
-    
+
     /* (non-Javadoc)
      * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
      */
@@ -104,7 +102,7 @@ public class SnapshotContentItem extends BaseEntity implements Comparator<Snapsh
     public void setContentIdHash(String contentIdHash) {
         this.contentIdHash = contentIdHash;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

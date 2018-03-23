@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.duracloud.client.ContentStore;
 import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.constant.ManifestFormat;
@@ -30,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * side. Additionally, since the DPN manifest is a stitched view of what should
  * be in the space, the stitched, rather than the unstitched, view of the space
  * is used for comparison. and it will only compare
- * 
+ *
  * @author Daniel Bernstien
  */
 public class SpaceManifestDpnManifestVerifier {
@@ -48,22 +47,24 @@ public class SpaceManifestDpnManifestVerifier {
         this.spaceId = spaceId;
     }
 
-    public String getSpaceId(){
+    public String getSpaceId() {
         return this.spaceId;
     }
+
     /**
      * Performs the verification.
+     *
      * @return true if verification was a success. Otherwise false. Errors can
-     *         be obtained by calling getErrors() after execution completes.
+     * be obtained by calling getErrors() after execution completes.
      */
     public boolean verify() {
 
         this.errors = new LinkedList<>();
         try (BufferedReader reader =
-                new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)))){
+                 new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)))) {
             WriteOnlyStringSet dpnManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
             log.info("loaded manifest set into memory.");
-            
+
             ManifestFormatter formatter = new TsvManifestFormatter();
             // skip header
             if (formatter.getHeader() != null) {
@@ -79,7 +80,7 @@ public class SpaceManifestDpnManifestVerifier {
                     if (!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId,
                                                                                          item.getContentChecksum()))) {
                         String message = "DPN manifest does not contain content id/checksum combination ("
-                            + contentId + ", " + item.getContentChecksum();
+                                         + contentId + ", " + item.getContentChecksum();
                         errors.add(message);
                     }
                     stitchedManifestCount++;
@@ -88,8 +89,8 @@ public class SpaceManifestDpnManifestVerifier {
 
             int dpnCount = dpnManifest.size();
             if (stitchedManifestCount != dpnCount) {
-                String message = "DPN Manifest size ("
-                    + dpnCount + ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")";
+                String message = "DPN Manifest size (" + dpnCount +
+                                 ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")";
                 errors.add(message);
                 log.error(message);
             }

@@ -12,17 +12,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * @author Daniel Bernstein
- *         Date: Feb 4, 2014
+ * Date: Feb 4, 2014
  */
 public class ApplicationConfigTest {
 
     private static Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
-    
+
     @Test
-    public void test(){
+    public void test() {
         log.debug("placeholder");
     }
 

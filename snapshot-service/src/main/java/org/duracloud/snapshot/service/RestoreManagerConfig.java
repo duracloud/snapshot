@@ -9,7 +9,7 @@ package org.duracloud.snapshot.service;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 15, 2014
+ * Date: Jul 15, 2014
  */
 public class RestoreManagerConfig {
     private String restorationRootDir;
@@ -18,8 +18,9 @@ public class RestoreManagerConfig {
     private String[] duracloudEmailAddresses;
     private String[] dpnEmailAddresses;
 
-    public RestoreManagerConfig(){}
-    
+    public RestoreManagerConfig() {
+    }
+
     /**
      * @return the restorationRootDir
      */
@@ -89,7 +90,5 @@ public class RestoreManagerConfig {
     public void setDuracloudPassword(String duracloudPassword) {
         this.duracloudPassword = duracloudPassword;
     }
-
-    
 
 }

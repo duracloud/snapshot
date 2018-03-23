@@ -11,7 +11,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 17, 2014
+ * Date: Jul 17, 2014
  */
 public class RestorationConfig {
     private String host;
@@ -19,6 +19,7 @@ public class RestorationConfig {
     private String spaceId;
     private String snapshotId;
     private String storeId;
+
     /**
      * @param host
      * @param port
@@ -35,7 +36,6 @@ public class RestorationConfig {
         this.spaceId = spaceId;
         this.snapshotId = snapshotId;
     }
-
 
     /**
      * @param snapshot the snapshot to set
@@ -65,39 +65,44 @@ public class RestorationConfig {
         this.spaceId = spaceId;
     }
 
-    public RestorationConfig() {}
+    public RestorationConfig() {
+    }
+
     /**
      * @return the host
      */
     public String getHost() {
         return host;
     }
+
     /**
      * @return the port
      */
     public int getPort() {
         return port;
     }
+
     /**
      * @return the spaceId
      */
     public String getSpaceId() {
         return spaceId;
     }
+
     /**
      * @return the snapshot
      */
     public String getSnapshotId() {
         return snapshotId;
     }
-    
+
     /**
      * @return
      */
     public String getStoreId() {
         return storeId;
     }
-    
+
     /**
      * @param storeId the storeId to set
      */
@@ -105,7 +110,6 @@ public class RestorationConfig {
         this.storeId = storeId;
     }
 
-    
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

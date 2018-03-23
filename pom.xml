@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.duracloud.snapshot</groupId>
@@ -279,7 +279,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.16</version>
         <configuration>
-          <systemProperties />
+          <systemProperties/>
         </configuration>
         <executions>
           <execution>
@@ -290,7 +290,7 @@
             </goals>
             <configuration>
               <skip>${skipTests}</skip>
-              <systemProperties />
+              <systemProperties/>
               <excludes>
                 <exclude>${integrationTests}</exclude>
                 <exclude>${instrumentedTests}</exclude>
@@ -320,9 +320,9 @@
             </configuration>
           </execution>
           <execution>
-            <!-- This execution 'default-test' overrides the built-in default 
-              execution for the test phase. Thus unit tests aren't run when you running 
-              integration tests. It comes in handy when trying to debug a single integration 
+            <!-- This execution 'default-test' overrides the built-in default
+              execution for the test phase. Thus unit tests aren't run when you running
+              integration tests. It comes in handy when trying to debug a single integration
               test as you only need to attach your debugger once. -->
             <id>default-test</id>
             <configuration>
@@ -374,7 +374,7 @@
             </goals>
             <configuration>
               <rules>
-                <dependencyConvergence />
+                <dependencyConvergence/>
                 <bannedDependencies>
                   <searchTransitive>true</searchTransitive>
                   <excludes>
@@ -403,6 +403,45 @@
           </execution>
         </executions>
       </plugin>
+
+      <!-- Used to validate all code style rules in source code using Checkstyle -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>verify-style</id>
+            <!-- Bind to process-classes so it runs after compile, but before package -->
+            <phase>process-classes</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <configLocation>
+            https://raw.githubusercontent.com/duraspace/resources/master/checkstyle/duraspace-checkstyle.xml
+          </configLocation>
+          <suppressionsLocation>
+            https://raw.githubusercontent.com/duraspace/resources/master/checkstyle/duraspace-checkstyle-suppressions.xml
+          </suppressionsLocation>
+          <encoding>UTF-8</encoding>
+          <consoleOutput>true</consoleOutput>
+          <logViolationsToConsole>true</logViolationsToConsole>
+          <failOnViolation>true</failOnViolation>
+          <includeTestSourceDirectory>true</includeTestSourceDirectory>
+        </configuration>
+        <dependencies>
+          <!-- Override dependencies to use latest version of checkstyle -->
+          <dependency>
+            <groupId>com.puppycrawl.tools</groupId>
+            <artifactId>checkstyle</artifactId>
+            <version>8.8</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+
     </plugins>
   </build>
 
@@ -447,9 +486,9 @@
         </exclusions>
       </dependency>
 
-       <dependency>
-         <groupId>org.springframework</groupId>
-         <artifactId>spring-tx</artifactId>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-tx</artifactId>
         <version>${springframework.version}</version>
       </dependency>
 

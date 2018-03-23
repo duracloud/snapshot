@@ -9,13 +9,12 @@ package org.duracloud.snapshot.service;
 
 import org.duracloud.snapshot.SnapshotException;
 
-
 /**
  * @author Daniel Bernstein
- *         Date: Jul 23, 2014
+ * Date: Jul 23, 2014
  */
 public class RestorationNotFoundException extends SnapshotException {
-    public RestorationNotFoundException(String restorationId){
-        super("No restoration with restorationId = " + restorationId + " found.",null);
+    public RestorationNotFoundException(String restorationId) {
+        super("No restoration with restorationId = " + restorationId + " found.", null);
     }
 }

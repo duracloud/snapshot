@@ -64,7 +64,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * The default implementation of the <code>SnapshotJobManager</code> interface.
  * Uses spring-batch componentry.
- * 
+ *
  * @author Daniel Bernstein Date: Feb 11, 2014
  */
 @Component
@@ -100,7 +100,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.rest.SnapshotJobManager#initialize(org.duracloud
      * .snapshot.rest.InitParams)
@@ -120,7 +120,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
         log.info("initialized successfully.");
 
-        if(attemptRestart) {
+        if (attemptRestart) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -136,7 +136,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     }
 
     /**
-     * 
+     *
      */
     private void restartIncompleteJobs() throws Exception {
         log.info("checking for incomplete snapshot jobs.");
@@ -146,9 +146,9 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
         log.info("checking for incomplete restore jobs.");
         for (Restoration restore : this.restoreRepo.findRunning()) {
-            try{
+            try {
                 resumeJob(SnapshotServiceConstants.RESTORE_JOB_NAME, restore);
-            }catch(SnapshotException ex){
+            } catch (SnapshotException ex) {
                 log.error("unable to resume restore " + restore, ex);
             }
         }
@@ -156,9 +156,9 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     private void resumeByStatus(final SnapshotStatus status) {
         for (Snapshot snapshot : this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(status)) {
-            try{
+            try {
                 resumeJob(SnapshotServiceConstants.SNAPSHOT_JOB_NAME, snapshot);
-            }catch(SnapshotException ex){
+            } catch (SnapshotException ex) {
                 log.error("unable to resume snapshot " + snapshot, ex);
             }
         }
@@ -171,11 +171,10 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         JobParameters params = builder.buildIdentifyingJobParameters(entity);
         JobExecution jobExecution = this.jobRepository.getLastJobExecution(jobName, params);
 
-
         if (jobExecution != null) {
-            if(!jobExecution.getStatus().isRunning()){
+            if (!jobExecution.getStatus().isRunning()) {
                 return;
-            }else{
+            } else {
                 log.debug("found job execution in running state for {} (job execution = {})", entity, jobExecution);
                 jobExecution.setStatus(BatchStatus.STOPPED);
                 jobExecution.setExitStatus(ExitStatus.STOPPED);
@@ -185,7 +184,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
                          entity,
                          jobExecution);
             }
-        } 
+        }
 
         try {
             JobExecution execution = jobLauncher.run(job, params);
@@ -247,7 +246,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.manager.SnapshotJobManager#executeRestoration(java
      * .lang.String)
@@ -271,7 +270,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.manager.SnapshotJobManager#executeSnapshot(java.
      * lang.String)
@@ -282,11 +281,13 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         return executeJob(getSnapshot(snapshotId));
     }
 
-    private boolean stop(JobExecution jobExecution, Job job) throws NoSuchJobExecutionException, JobExecutionNotRunningException {
+    private boolean stop(JobExecution jobExecution, Job job)
+        throws NoSuchJobExecutionException, JobExecutionNotRunningException {
 
         BatchStatus status = jobExecution.getStatus();
         if (!(status == BatchStatus.STARTED || status == BatchStatus.STARTING)) {
-            throw new JobExecutionNotRunningException("JobExecution must be running so that it can be stopped: "+jobExecution);
+            throw new JobExecutionNotRunningException(
+                "JobExecution must be running so that it can be stopped: " + jobExecution);
         }
         jobExecution.setStatus(BatchStatus.STOPPING);
         jobRepository.update(jobExecution);
@@ -295,26 +296,26 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
             if (stepExecution.getStatus().isRunning()) {
                 try {
                     //have the step execution that's running -> need to 'stop' it
-                    Step step = ((StepLocator)job).getStep(stepExecution.getStepName());
+                    Step step = ((StepLocator) job).getStep(stepExecution.getStepName());
                     if (step instanceof TaskletStep) {
-                        Tasklet tasklet = ((TaskletStep)step).getTasklet();
+                        Tasklet tasklet = ((TaskletStep) step).getTasklet();
                         if (tasklet instanceof StoppableTasklet) {
                             StepSynchronizationManager.register(stepExecution);
-                            ((StoppableTasklet)tasklet).stop();
+                            ((StoppableTasklet) tasklet).stop();
                             StepSynchronizationManager.release();
                         }
                     }
-                }
-                catch (NoSuchStepException e) {
-                    log.warn("Step not found",e);
+                } catch (NoSuchStepException e) {
+                    log.warn("Step not found", e);
                 }
             }
         }
         return true;
     }
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.service.SnapshotJobManager#cancelSnapshot(java.
      * lang.String)
@@ -328,42 +329,42 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         String snapshotDir = ContentDirUtils.getDestinationPath(snapshotId, this.config.getContentRootDir());
         deleteDirectory(snapshotDir);
 
-        new Thread(new Runnable(){
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 final DuracloudEndPointConfig source = snapshot.getSource();
                 final String spaceId = source.getSpaceId();
                 final ContentStore contentStore =
                     storeClientHelper.create(source,
-                                                  config.getDuracloudUsername(),
-                                                  config.getDuracloudPassword());
+                                             config.getDuracloudUsername(),
+                                             config.getDuracloudPassword());
                 try {
-                    String result = new Retrier().execute(new Retriable(){
+                    String result = new Retrier().execute(new Retriable() {
                         /* (non-Javadoc)
                          * @see org.duracloud.common.retry.Retriable#retry()
                          */
                         @Override
                         public Object retry() throws Exception {
-                            CompleteCancelSnapshotTaskParameters params = 
+                            CompleteCancelSnapshotTaskParameters params =
                                 new CompleteCancelSnapshotTaskParameters();
                             params.setSpaceId(spaceId);
-                            return contentStore.performTask(SnapshotConstants.COMPLETE_SNAPSHOT_CANCEL_TASK_NAME, 
-                                                     params.serialize());
+                            return contentStore.performTask(SnapshotConstants.COMPLETE_SNAPSHOT_CANCEL_TASK_NAME,
+                                                            params.serialize());
                         }
                     });
-                    
+
                     log.info("snapshot cancellation is complete: {}", result);
 
                     snapshot.setStatus(SnapshotStatus.CANCELLED);
                     snapshot.setStatusText("");
                     eventLog.logSnapshotUpdate(snapshot);
-                }catch(Exception ex){
+                } catch (Exception ex) {
                     log.error("failed to complete cancellation on the durastore side for space {}:  {}",
                               spaceId,
                               ex.getMessage(),
                               ex);
                 }
-                
+
             }
         }).start();
     }
@@ -373,7 +374,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     public Restoration stopRestore(String restoreId) throws SnapshotException {
         return stopRestoreInternal(restoreId);
     }
-    
+
     @Transactional
     public void cancelRestore(String restoreId) throws SnapshotException {
         checkInitialized();
@@ -381,37 +382,36 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
         String restoreDir = ContentDirUtils.getSourcePath(restoreId, this.config.getContentRootDir());
         deleteDirectory(restoreDir);
         final DuracloudEndPointConfig destination = restore.getDestination();
-        
-        new Thread(new Runnable(){
+
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 final String spaceId = destination.getSpaceId();
-                @SuppressWarnings("unused")
-                final ContentStore contentStore =
+                @SuppressWarnings("unused") final ContentStore contentStore =
                     storeClientHelper.create(destination,
-                                                  config.getDuracloudUsername(),
-                                                  config.getDuracloudPassword());
+                                             config.getDuracloudUsername(),
+                                             config.getDuracloudPassword());
                 try {
-                    String result = new Retrier().execute(new Retriable(){
+                    String result = new Retrier().execute(new Retriable() {
                         @Override
                         public Object retry() throws Exception {
                             contentStore.deleteSpace(spaceId);
                             return null;
                         }
                     });
-                    
+
                     log.info("restore cancellation is complete: {}", result);
 
                     restore.setStatus(RestoreStatus.CANCELLED);
                     restore.setStatusText("");
                     eventLog.logRestoreUpdate(restore);
-                }catch(Exception ex){
+                } catch (Exception ex) {
                     log.error("failed to delete restore space {} as part of cleanup:  {}",
                               spaceId,
                               ex.getMessage(),
                               ex);
                 }
-                
+
             }
         }).start();
     }
@@ -433,7 +433,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
      */
     private void stop(final BaseEntity entity) throws SnapshotException {
         JobExecution execution = getJobExecution(entity);
-        if(execution == null){
+        if (execution == null) {
             log.info("no job executions associated with {}", entity);
             return;
         }
@@ -447,7 +447,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
             log.warn("job execution not running: " + e1.getMessage());
         }
     }
-  /**
+
+    /**
      * @param path
      */
     private void deleteDirectory(String path) {
@@ -469,7 +470,7 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.duracloud.snapshot.rest.SnapshotJobManager#getJobExecution(java.lang
      * .String)
@@ -495,9 +496,8 @@ public class SnapshotJobManagerImpl implements SnapshotJobManager {
     }
 
     @Override
-    public SnapshotJobManagerConfig getConfig(){
+    public SnapshotJobManagerConfig getConfig() {
         return this.config;
     }
-    
-    
+
 }

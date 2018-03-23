@@ -12,11 +12,12 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 23, 2014
+ * Date: Jul 23, 2014
  */
 public class JobRequest {
     private Job job;
     private JobParameters jobParameters;
+
     /**
      * @param job
      * @param jobParameters
@@ -26,18 +27,19 @@ public class JobRequest {
         this.job = job;
         this.jobParameters = jobParameters;
     }
+
     /**
      * @return the job
      */
     public Job getJob() {
         return job;
     }
+
     /**
      * @return the jobParameters
      */
     public JobParameters getJobParameters() {
         return jobParameters;
     }
-    
-    
+
 }

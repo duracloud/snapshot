@@ -17,9 +17,13 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Daniel Bernstein
- *         Date: Oct 28, 2014
+ * Date: Oct 28, 2014
  */
 public class SnapshotJobParameterMarshaller {
+
+    private SnapshotJobParameterMarshaller() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
 
     /**
      * @param snapshot
@@ -31,9 +35,9 @@ public class SnapshotJobParameterMarshaller {
                 new JobParameter(snapshot.getName(), true));
         return map;
     }
-    
-    public static String unmarshal(JobParameters parameters){
-       return parameters.getString(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID);
+
+    public static String unmarshal(JobParameters parameters) {
+        return parameters.getString(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID);
     }
 
 }

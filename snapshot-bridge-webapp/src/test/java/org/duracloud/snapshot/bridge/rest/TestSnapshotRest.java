@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
@@ -23,13 +22,9 @@ import javax.ws.rs.core.MediaType;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.duracloud.snapshot.bridge.rest.Application;
-import org.duracloud.snapshot.bridge.rest.InitParams;
-import org.duracloud.snapshot.bridge.rest.ResponseDetails;
-import org.duracloud.snapshot.bridge.rest.SnapshotObjectMapperProvider;
-import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.SnapshotStatus;
 import org.duracloud.snapshot.dto.SnapshotSummary;
+import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -39,11 +34,12 @@ import org.junit.Test;
 
 /**
  * @author Daniel Bernstein
- *         Date: Feb 5, 2014
+ * Date: Feb 5, 2014
  */
 public class TestSnapshotRest extends JerseyTest {
 
     private WebTarget target;
+
     /* (non-Javadoc)
      * @see org.glassfish.jersey.test.JerseyTest#setUp()
      */
@@ -60,8 +56,8 @@ public class TestSnapshotRest extends JerseyTest {
      */
     private void doInit()
         throws IOException,
-            JsonParseException,
-            JsonMappingException {
+        JsonParseException,
+        JsonMappingException {
         InputStream is = getClass().getResourceAsStream("/test-init.json");
         ObjectMapper mapper = new ObjectMapper();
         InitParams params = mapper.readValue(is, InitParams.class);
@@ -72,7 +68,7 @@ public class TestSnapshotRest extends JerseyTest {
                   .post(entity, ResponseDetails.class);
         assertNotNull(details);
     }
-    
+
     @Override
     protected ResourceConfig configure() {
         enable(TestProperties.LOG_TRAFFIC);
@@ -86,24 +82,22 @@ public class TestSnapshotRest extends JerseyTest {
         config.register(new JacksonFeature()).register(SnapshotObjectMapperProvider.class);
     }
 
-
     @Test
     public void testVersion() {
-        Builder b =  target.path("version").request(MediaType.APPLICATION_JSON);
+        Builder b = target.path("version").request(MediaType.APPLICATION_JSON);
         Map response = b.get(Map.class);
-        
+
         assertNotNull(response);
         assertNotNull(response.get("version"));
-        
-    }
 
+    }
 
     @Test
     public void testList() {
         List<SnapshotSummary> responseMsg =
             (List<SnapshotSummary>) target.path("list")
-                         .request(MediaType.APPLICATION_JSON)
-                         .get(List.class);
+                                          .request(MediaType.APPLICATION_JSON)
+                                          .get(List.class);
         assertNotNull(responseMsg);
     }
 
@@ -120,20 +114,20 @@ public class TestSnapshotRest extends JerseyTest {
         String email = props.getProperty("email");
         String dpnMemberUUID = props.getProperty("uuid");
 
-        String snapshotId = System.currentTimeMillis()+"";
+        String snapshotId = System.currentTimeMillis() + "";
         String description = "description";
         CreateSnapshotBridgeParameters params =
             new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, dpnMemberUUID);
         Entity<CreateSnapshotBridgeParameters> entity =
-            Entity.entity(params, MediaType.APPLICATION_JSON);        
-        
+            Entity.entity(params, MediaType.APPLICATION_JSON);
+
         SnapshotStatus responseMsg =
-            target.path("snapshot/"+snapshotId)
+            target.path("snapshot/" + snapshotId)
                   .request(MediaType.APPLICATION_JSON)
                   .put(entity, SnapshotStatus.class);
         assertNotNull(responseMsg);
-        
-        Thread.sleep(5*1000);
+
+        Thread.sleep(5 * 1000);
         responseMsg =
             target.path(snapshotId)
                   .request(MediaType.APPLICATION_JSON)
@@ -141,7 +135,5 @@ public class TestSnapshotRest extends JerseyTest {
         assertNotNull(responseMsg);
         assertNotNull(responseMsg);
     }
-
-
 
 }

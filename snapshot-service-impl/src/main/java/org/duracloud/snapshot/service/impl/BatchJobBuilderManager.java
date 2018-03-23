@@ -19,30 +19,29 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 25, 2014
+ * Date: Jul 25, 2014
  */
 @Component
-public class BatchJobBuilderManager  {
-    
+public class BatchJobBuilderManager {
+
     private static Logger log = LoggerFactory.getLogger(BatchJobBuilderManager.class);
-    
+
     @SuppressWarnings("rawtypes")
-    private Map<Class,BatchJobBuilder> builders = new HashMap<>();
-    
+    private Map<Class, BatchJobBuilder> builders = new HashMap<>();
+
     @Autowired
     public BatchJobBuilderManager(SnapshotJobBuilder snapshot,
-                                  RestoreJobBuilder restoration){
+                                  RestoreJobBuilder restoration) {
         this.builders.put(Snapshot.class, snapshot);
         this.builders.put(Restoration.class, restoration);
     }
-    
-    public BatchJobBuilder getBuilder(Object entity)  {
+
+    public BatchJobBuilder getBuilder(Object entity) {
         BatchJobBuilder builder = this.builders.get(entity.getClass());
         if (builder == null) {
-            throw new RuntimeException("No builder registered for "
-                + entity.getClass());
+            throw new RuntimeException("No builder registered for " + entity.getClass());
         }
-        
+
         log.debug("found {} for {}", builder, entity);
         return builder;
     }

@@ -185,7 +185,7 @@
     <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
     <hibernate.version>5.1.0.Final</hibernate.version>
     <mysql.connector.version>5.1.38</mysql.connector.version>
-    <duracloud.version>4.4.0</duracloud.version>
+    <duracloud.version>4.5.0-SNAPSHOT</duracloud.version>
     <duracloud.db.version>4.1.1</duracloud.db.version>
     <enforce-victims.rule.version>1.3.4</enforce-victims.rule.version>
     <bridge.log.dir>/var/log/duracloud</bridge.log.dir>

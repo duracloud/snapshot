@@ -29,7 +29,7 @@ public interface SnapshotManager {
                                Map<String, String> props) throws SnapshotException;
 
     /**
-     * Adds a list of snapshot alternate Id's to a snapshot. To map DPN Bag Id's
+     * Adds a list of snapshot alternate Id's to a snapshot. To map Bag Id's
      * to Duracloud Snapshot Id's
      *
      * @param snapshot
@@ -41,14 +41,14 @@ public interface SnapshotManager {
         throws AlternateIdAlreadyExistsException;
 
     /**
-     * Notifies the bridge that the snapshot's transfer to DPN node is complete.
+     * Notifies the bridge that the snapshot's transfer to storage is complete.
      * This call is initiated via the bridge REST API by the entity retrieving the
      * snapshot from bridge storage.
      *
      * @param snapshotId
      * @throws SnapshotException
      */
-    public Snapshot transferToDpnNodeComplete(String snapshotId) throws SnapshotException;
+    public Snapshot transferToStorageComplete(String snapshotId) throws SnapshotException;
 
     /**
      * Notifies the bridge that the snapshot transfer action failed to complete due
@@ -71,7 +71,7 @@ public interface SnapshotManager {
     public void finalizeSnapshots();
 
     /**
-     * Updates a snapshot's DPN history
+     * Updates a snapshot's history
      *
      * @param snapshot
      * @param history

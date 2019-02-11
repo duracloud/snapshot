@@ -219,7 +219,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         manager =
             new RestoreManagerImpl();
         RestoreManagerConfig config = new RestoreManagerConfig();
-        config.setDpnEmailAddresses(new String[] {"a"});
+        config.setTargetStoreEmailAddresses(new String[] {"a"});
         config.setDuracloudEmailAddresses(new String[] {duracloudEmail});
         config.setRestorationRootDir(System.getProperty("java.io.tmpdir")
                                      + File.separator + System.currentTimeMillis());
@@ -246,7 +246,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
 
         restoration.setStatusText(isA(String.class));
         expectLastCall();
-        restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        restoration.setStatus(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE);
         expectLastCall();
 
         replayAll();
@@ -262,7 +262,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
      */
     private void setupGetRestoreStatus() {
         expect(this.restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
-        expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN);
+        expect(restoration.getStatus()).andReturn(RestoreStatus.RETRIEVING_FROM_STORAGE);
     }
 
     @Test
@@ -354,11 +354,11 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         eventLog.logRestoreUpdate(restoration);
         expectLastCall().times(2);
         restoration.setEndDate(null);
-        restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
+        restoration.setStatus(RestoreStatus.RETRIEVING_FROM_STORAGE);
         expectLastCall();
 
-        expect(restoration.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN).times(2);
-        restoration.setStatus(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expect(restoration.getStatus()).andReturn(RestoreStatus.RETRIEVING_FROM_STORAGE).times(2);
+        restoration.setStatus(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE);
         expectLastCall();
         restoration.setStatusText(isA(String.class));
         expectLastCall();

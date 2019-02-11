@@ -106,14 +106,14 @@ public class ManifestVerifier extends StepExecutionSupport implements ItemWriter
                  */
                 @Override
                 public Object retry() throws Exception {
-                    RestoreStatus newStatus = RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER;
+                    RestoreStatus newStatus = RestoreStatus.VERIFYING_RETRIEVED_CONTENT;
                     restoreManager.transitionRestoreStatus(restorationId, newStatus, "");
                     return null;
                 }
             });
         } catch (Exception ex) {
             addError("failed to transition status to "
-                     + RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER + ": " + ex.getMessage());
+                     + RestoreStatus.VERIFYING_RETRIEVED_CONTENT + ": " + ex.getMessage());
             stepExecution.addFailureException(ex);
             failExecution();
         }

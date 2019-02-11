@@ -430,7 +430,7 @@ public class SnapshotResource {
 
     /**
      * Notifies the bridge that the snapshot transfer from the bridge storage to
-     * the DPN node is complete. Also sets a snapshot's alternate id's if they
+     * the preservation storage is complete. Also sets a snapshot's alternate id's if they
      * are passed in.
      *
      * @param snapshotId
@@ -475,9 +475,9 @@ public class SnapshotResource {
                 "{'" + SNAPSHOT_ALT_IDS_TITLE + "':" + altIds + "}]";
             snapshotManager.updateHistory(snapshot, history);
 
-            snapshot = this.snapshotManager.transferToDpnNodeComplete(snapshotId);
+            snapshot = this.snapshotManager.transferToStorageComplete(snapshotId);
 
-            log.info("successfully processed snapshot complete notification from DPN: {}", snapshot);
+            log.info("successfully processed snapshot complete notification: {}", snapshot);
 
             return Response.ok(null)
                            .entity(new CompleteSnapshotBridgeResult(snapshot.getStatus(),
@@ -514,7 +514,7 @@ public class SnapshotResource {
         try {
             Snapshot snapshot =
                 snapshotManager.transferError(snapshotId, params.getError());
-            log.info("Processed snapshot error notification from DPN: {}", snapshot);
+            log.info("Processed snapshot error notification: {}", snapshot);
 
             return Response.ok(new SnapshotErrorBridgeResult(snapshot.getStatus(),
                                                              snapshot.getStatusText()))
@@ -633,7 +633,7 @@ public class SnapshotResource {
     }
 
     /**
-     * Updates a snapshot's DPN history
+     * Updates a snapshot's history
      *
      * @param snapshotId - a snapshot's ID or it's alternate ID
      * @param params     - JSON object that contains the history String and a
@@ -666,10 +666,10 @@ public class SnapshotResource {
                     snapshot = this.snapshotManager.updateHistory(snapshot,
                                                                   params.getHistory());
                     log.info("successfully processed snapshot " +
-                             "history update from DPN: {}", snapshot);
+                             "history update: {}", snapshot);
                 } else {
                     log.info("did not process empty or null snapshot " +
-                             "history update from DPN: {}", snapshot);
+                             "history update: {}", snapshot);
                 }
                 SnapshotSummary snapSummary = createSnapshotSummary(snapshot);
                 List<SnapshotHistory> snapMeta = snapshot.getSnapshotHistory();

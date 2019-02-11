@@ -16,7 +16,7 @@ public class RestoreManagerConfig {
     private String duracloudUsername;
     private String duracloudPassword;
     private String[] duracloudEmailAddresses;
-    private String[] dpnEmailAddresses;
+    private String[] targetStoreEmailAddresses;
 
     public RestoreManagerConfig() {
     }
@@ -50,17 +50,17 @@ public class RestoreManagerConfig {
     }
 
     /**
-     * @return the dpnEmailAddresses
+     * @return the targetStoreEmailAddresses
      */
-    public String[] getDpnEmailAddresses() {
-        return dpnEmailAddresses;
+    public String[] getTargetStoreEmailAddresses() {
+        return targetStoreEmailAddresses;
     }
 
     /**
-     * @param dpnEmailAddresses the dpnEmailAddresses to set
+     * @param targetStoreEmailAddresses the targetStoreEmailAddresses to set
      */
-    public void setDpnEmailAddresses(String[] dpnEmailAddresses) {
-        this.dpnEmailAddresses = dpnEmailAddresses;
+    public void setTargetStoreEmailAddresses(String[] targetStoreEmailAddresses) {
+        this.targetStoreEmailAddresses = targetStoreEmailAddresses;
     }
 
     /**

@@ -24,7 +24,7 @@ import org.junit.runner.RunWith;
  * Date: Jul 29, 2015
  */
 @RunWith(EasyMockRunner.class)
-public class DpnManifestReaderTest extends EasyMockSupport {
+public class SnapshotManifestReaderTest extends EasyMockSupport {
 
     /**
      * @throws java.lang.Exception
@@ -42,7 +42,7 @@ public class DpnManifestReaderTest extends EasyMockSupport {
     }
 
     /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.DpnManifestReader#read()}.
+     * Test method for {@link SnapshotManifestReader#read()}.
      */
     @Test
     public void testRead() throws Exception {
@@ -51,7 +51,7 @@ public class DpnManifestReaderTest extends EasyMockSupport {
         List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile, 100, "checksum", "contentid");
 
         replayAll();
-        DpnManifestReader reader = new DpnManifestReader(manifestFile) {
+        SnapshotManifestReader reader = new SnapshotManifestReader(manifestFile) {
             protected long getItemsRead() {
                 return 0;
             }

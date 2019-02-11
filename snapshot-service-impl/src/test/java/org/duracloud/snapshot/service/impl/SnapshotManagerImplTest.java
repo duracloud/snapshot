@@ -146,7 +146,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testTransferToDpnNodeComplete() throws SnapshotException, ContentStoreException, IOException {
+    public void testTransferToSnapshotStorageComplete() throws SnapshotException, ContentStoreException, IOException {
         String snapshotId = "snapshot-name";
         String spaceId = "space-id";
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
@@ -208,7 +208,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expectLastCall();
         replayAll();
 
-        Snapshot snapshot = this.manager.transferToDpnNodeComplete(snapshotId);
+        Snapshot snapshot = this.manager.transferToStorageComplete(snapshotId);
         assertNotNull(snapshot);
         assertFalse(new File(dir.getAbsolutePath()).exists());
 

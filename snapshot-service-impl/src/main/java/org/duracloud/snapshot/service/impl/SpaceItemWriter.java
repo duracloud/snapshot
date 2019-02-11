@@ -75,7 +75,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
     private SnapshotManager snapshotManager;
     private Snapshot snapshot;
     private List<String> errors = new LinkedList<String>();
-    private SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier;
+    private SpaceManifestSnapshotManifestVerifier spaceManifestSnapshotManifestVerifier;
     private ChunkUtil chunkUtil = new ChunkUtil();
     private Map<String, String> md5Cache = new HashMap<>();
     private Map<String, String> sha256Cache = new HashMap<>();
@@ -96,7 +96,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
      * @param md5ManifestFile
      * @param sha256ManifestFile
      * @param snapshotManager
-     * @param spaceManifestDpnManifestVerifier
+     * @param spaceManifestSnapshotManifestVerifier
      */
     public SpaceItemWriter(Snapshot snapshot,
                            RetrievalSource retrievalSource,
@@ -106,7 +106,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
                            File md5ManifestFile,
                            File sha256ManifestFile,
                            SnapshotManager snapshotManager,
-                           SpaceManifestDpnManifestVerifier spaceManifestDpnManifestVerifier) {
+                           SpaceManifestSnapshotManifestVerifier spaceManifestSnapshotManifestVerifier) {
         super();
         this.snapshot = snapshot;
         this.retrievalSource = retrievalSource;
@@ -115,7 +115,7 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         this.md5ManifestFile = md5ManifestFile;
         this.sha256ManifestFile = sha256ManifestFile;
         this.snapshotManager = snapshotManager;
-        this.spaceManifestDpnManifestVerifier = spaceManifestDpnManifestVerifier;
+        this.spaceManifestSnapshotManifestVerifier = spaceManifestSnapshotManifestVerifier;
         this.dbFile = new File(contentDir, snapshot.getName() + ".db");
         this.propsFile = propsFile;
     }
@@ -401,9 +401,9 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
 
         if (errors.size() == 0) {
             log.info("No errors in retrieval of snapshot {}; " +
-                     "Proceeding with space manifest - dpn manifest verification...",
+                     "Proceeding with space manifest - snapshot manifest verification...",
                      snapshot.getName());
-            errors.addAll(verifySpace(spaceManifestDpnManifestVerifier));
+            errors.addAll(verifySpace(spaceManifestSnapshotManifestVerifier));
         }
 
         if (errors.size() > 0) {

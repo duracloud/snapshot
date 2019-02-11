@@ -21,7 +21,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize;
 public class InitParams {
     private String originatorEmailAddress = null;
     private String[] duracloudEmailAddresses = null;
-    private String[] dpnEmailAddresses = null;
+    private String[] targetStoreEmailAddresses = null;
     private String awsAccessKey;
     private String awsSecretKey;
     private String databaseUser;
@@ -79,17 +79,17 @@ public class InitParams {
     }
 
     /**
-     * @return the dpnEmailAddresses
+     * @return the targetStoreEmailAddresses
      */
-    public String[] getDpnEmailAddresses() {
-        return dpnEmailAddresses;
+    public String[] getTargetStoreEmailAddresses() {
+        return targetStoreEmailAddresses;
     }
 
     /**
-     * @param dpnEmailAddresses the dpnEmailAddresses to set
+     * @param targetStoreEmailAddresses the targetStoreEmailAddresses to set
      */
-    public void setDpnEmailAddresses(String[] dpnEmailAddresses) {
-        this.dpnEmailAddresses = dpnEmailAddresses;
+    public void setTargetStoreEmailAddresses(String[] targetStoreEmailAddresses) {
+        this.targetStoreEmailAddresses = targetStoreEmailAddresses;
     }
 
     /**

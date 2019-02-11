@@ -179,7 +179,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         expect(snapshot.getName()).andReturn(snapshotName).times(2);
 
-        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+        SpaceManifestSnapshotManifestVerifier spaceManifestVerifier = createMock(
+            SpaceManifestSnapshotManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(manifestVerificationSuccessful);
         expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
@@ -263,8 +264,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         expect(snapshot.getName()).andReturn(snapshotName).times(3);
 
-        SpaceManifestDpnManifestVerifier spaceManifestVerifier =
-            createMock(SpaceManifestDpnManifestVerifier.class);
+        SpaceManifestSnapshotManifestVerifier spaceManifestVerifier =
+            createMock(SpaceManifestSnapshotManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(true);
         expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);
@@ -343,7 +344,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         expect(snapshot.getName()).andReturn(snapshotName).times(3);
 
-        SpaceManifestDpnManifestVerifier spaceManifestVerifier = createMock(SpaceManifestDpnManifestVerifier.class);
+        SpaceManifestSnapshotManifestVerifier spaceManifestVerifier = createMock(
+            SpaceManifestSnapshotManifestVerifier.class);
 
         expect(spaceManifestVerifier.verify()).andReturn(true);
         expect(spaceManifestVerifier.getSpaceId()).andReturn(spaceId);

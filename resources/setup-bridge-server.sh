@@ -33,7 +33,7 @@ sudo update-java-alternatives -s default-java
 # Install Tomcat
 apt-get install $TOMCAT_NAME -y
 
-# Download and deploy the Duracloud / DPN bridge application
+# Download and deploy the Duracloud Bridge application
 wget -O /var/lib/$TOMCAT_NAME/webapps/snapshot.war $MVN_REPO_URL/$MVN_REPO_FILE
 
 groupadd duraspace

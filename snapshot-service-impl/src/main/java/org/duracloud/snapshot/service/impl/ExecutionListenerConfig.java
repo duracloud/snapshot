@@ -22,7 +22,7 @@ public class ExecutionListenerConfig {
     private String sesPassword;
     private String originatorEmailAddress;
     private String[] duracloudEmailAddresses;
-    private String[] dpnEmailAddresses;
+    private String[] targetStoreEmailAddresses;
     private File contentRoot;
 
     public String getSesUsername() {
@@ -57,18 +57,18 @@ public class ExecutionListenerConfig {
         this.duracloudEmailAddresses = duracloudEmailAddresses;
     }
 
-    public String[] getDpnEmailAddresses() {
-        return dpnEmailAddresses;
+    public String[] getTargetStoreEmailAddresses() {
+        return targetStoreEmailAddresses;
     }
 
-    public void setDpnEmailAddresses(String[] dpnEmailAddresses) {
-        this.dpnEmailAddresses = dpnEmailAddresses;
+    public void setTargetStoreEmailAddresses(String[] targetStoreEmailAddresses) {
+        this.targetStoreEmailAddresses = targetStoreEmailAddresses;
     }
 
     public String[] getAllEmailAddresses() {
         List<String> allAddresses = new ArrayList<String>();
         allAddresses.addAll(Arrays.asList(duracloudEmailAddresses));
-        allAddresses.addAll(Arrays.asList(dpnEmailAddresses));
+        allAddresses.addAll(Arrays.asList(targetStoreEmailAddresses));
         return allAddresses.toArray(new String[allAddresses.size()]);
     }
 

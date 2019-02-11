@@ -112,12 +112,12 @@ public class TestSnapshotRest extends JerseyTest {
         String storeId = props.getProperty("storeId");
         String spaceId = props.getProperty("spaceId");
         String email = props.getProperty("email");
-        String dpnMemberUUID = props.getProperty("uuid");
+        String memberID = props.getProperty("uuid");
 
         String snapshotId = System.currentTimeMillis() + "";
         String description = "description";
         CreateSnapshotBridgeParameters params =
-            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, dpnMemberUUID);
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, memberID);
         Entity<CreateSnapshotBridgeParameters> entity =
             Entity.entity(params, MediaType.APPLICATION_JSON);
 

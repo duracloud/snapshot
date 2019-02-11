@@ -144,7 +144,7 @@ public class RestoreManagerImpl implements RestoreManager {
         Restoration restoration =
             createRestoration(snapshot, destination, userEmail);
 
-        validateAndSet(restoration, RestoreStatus.WAITING_FOR_DPN, "Restoration request issued");
+        validateAndSet(restoration, RestoreStatus.RETRIEVING_FROM_STORAGE, "Restoration request issued");
 
         restoration = save(restoration);
 
@@ -152,7 +152,7 @@ public class RestoreManagerImpl implements RestoreManager {
         File restoreDir = getRestoreDir(restorationId);
         restoreDir.mkdirs();
 
-        //send email to DPN
+        //send email to snapshot storage owner to request restore
         String subject = "Snapshot Restoration Request for Snapshot ID = " +
                          snapshotId;
         String body = "Please perform a snapshot restore.\n" +
@@ -186,7 +186,7 @@ public class RestoreManagerImpl implements RestoreManager {
             "http"
             + (port.endsWith("443") ? "s" : "") + "://" + host + ":" + port + "/duradmin/spaces/sm/" + storeId + "/"
             + snapshotId + "?snapshot=true";
-        // send email to DPN
+        // send email to DuraCloud team to request starting a restore
         String subject = "Snapshot Restoration Request for Snapshot ID = " + snapshotId;
         String format =
             "Please initiate a snapshot restore via the duracloud interface ( {0} ).\n"
@@ -260,7 +260,7 @@ public class RestoreManagerImpl implements RestoreManager {
     private String[] getAllEMailAddresses(RestoreManagerConfig config) {
         List<String> allAddresses = new ArrayList<String>();
         allAddresses.addAll(Arrays.asList(config.getDuracloudEmailAddresses()));
-        allAddresses.addAll(Arrays.asList(config.getDpnEmailAddresses()));
+        allAddresses.addAll(Arrays.asList(config.getTargetStoreEmailAddresses()));
         return allAddresses.toArray(new String[allAddresses.size()]);
     }
 
@@ -304,14 +304,14 @@ public class RestoreManagerImpl implements RestoreManager {
         SnapshotException {
         RestoreStatus status = restoration.getStatus();
         final String restoreId = restoration.getRestorationId();
-        if (status.equals(RestoreStatus.DPN_TRANSFER_COMPLETE)) {
+        if (status.equals(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE)) {
             log.warn("restoration {} already completed. Ignoring...", restoration);
             return restoration;
-        } else if (status.equals(RestoreStatus.WAITING_FOR_DPN)) {
+        } else if (status.equals(RestoreStatus.RETRIEVING_FROM_STORAGE)) {
             log.info("caller has indicated that restoration request {} is complete.",
                      restoration);
             Restoration updatedRestoration =
-                _transitionRestoreStatus(RestoreStatus.DPN_TRANSFER_COMPLETE,
+                _transitionRestoreStatus(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE,
                                          "Completed restore to bridge storage",
                                          restoration);
 
@@ -516,7 +516,7 @@ public class RestoreManagerImpl implements RestoreManager {
     public Restoration restartRestore(String restoreId) throws SnapshotException {
         Restoration restoration = this.jobManager.stopRestore(restoreId);
         restoration.setEndDate(null);
-        restoration.setStatus(RestoreStatus.WAITING_FOR_DPN);
+        restoration.setStatus(RestoreStatus.RETRIEVING_FROM_STORAGE);
         restoration = restoreRepo.save(restoration);
         eventLog.logRestoreUpdate(restoration);
         return this.restoreCompleted(restoration);

@@ -18,12 +18,12 @@ import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
 /**
- * This class reads a DPN manifest
+ * This class reads a snapshot manifest
  *
  * @author Daniel Bernstein
  * Date: Jul 28, 2015
  */
-public class DpnManifestReader extends StepExecutionSupport implements ItemReader<ManifestEntry> {
+public class SnapshotManifestReader extends StepExecutionSupport implements ItemReader<ManifestEntry> {
 
     private File manifestFile;
     private BufferedReader reader;
@@ -31,7 +31,7 @@ public class DpnManifestReader extends StepExecutionSupport implements ItemReade
     /**
      * @param manifestFile an md5 manifest file.
      */
-    public DpnManifestReader(File manifestFile) {
+    public SnapshotManifestReader(File manifestFile) {
         this.manifestFile = manifestFile;
     }
 

@@ -168,7 +168,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                    System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
-        String dpnMemberUUID = "uuid";
+        String memberID = "uuid";
 
         SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
         expect(jobManager.getConfig())
@@ -206,7 +206,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         replayAll();
 
         CreateSnapshotBridgeParameters params =
-            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, dpnMemberUUID);
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, memberID);
         CreateSnapshotBridgeResult result = (CreateSnapshotBridgeResult) resource.create(snapshotId, params)
                                                                                  .getEntity();
 
@@ -227,7 +227,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                    System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
-        String dpnMemberUUID = "uuid";
+        String memberID = "uuid";
 
         SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
         expect(jobManager.getConfig())
@@ -248,7 +248,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         replayAll();
 
         CreateSnapshotBridgeParameters params =
-            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, dpnMemberUUID);
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, memberID);
         Response response = resource.create(snapshotId, params);
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
         assertTrue(((ResponseDetails) response.getEntity()).getMessage().contains("empty space"));
@@ -326,7 +326,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                                   "{'alternate-ids':['" + altId1 + "','" + altId2 + "']}]"))
             .andReturn(snapshot);
 
-        expect(this.snapshotManager.transferToDpnNodeComplete(snapshotId)).andReturn(snapshot);
+        expect(this.snapshotManager.transferToStorageComplete(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
         expect(snapshot.getStatusText()).andReturn("ok");
         replayAll();

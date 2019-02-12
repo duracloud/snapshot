@@ -188,11 +188,11 @@ public class SnapshotManagerImpl implements SnapshotManager {
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(java.lang.String)
+     * @see org.duracloud.snapshot.service.SnapshotManager#transferToStorageComplete(java.lang.String)
      */
     @Override
     @Transactional
-    public Snapshot transferToDpnNodeComplete(String snapshotId)
+    public Snapshot transferToStorageComplete(String snapshotId)
         throws SnapshotException {
         try {
             Snapshot snapshot = getSnapshot(snapshotId);

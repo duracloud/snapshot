@@ -117,10 +117,10 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
             File md5File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
             File sha256File = new File(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
-            SpaceManifestDpnManifestVerifier verifier =
-                new SpaceManifestDpnManifestVerifier(md5File,
-                                                     new StitchedManifestGenerator(contentStore),
-                                                     source.getSpaceId());
+            SpaceManifestSnapshotManifestVerifier verifier =
+                new SpaceManifestSnapshotManifestVerifier(md5File,
+                                                          new StitchedManifestGenerator(contentStore),
+                                                          source.getSpaceId());
             ItemWriter itemWriter =
                 new SpaceItemWriter(snapshot,
                                     retrievalSource,

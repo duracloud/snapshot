@@ -50,7 +50,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
     private RestoreManager restoreManager;
 
     @Mock
-    private SpaceManifestDpnManifestVerifier spaceManifestVerifier;
+    private SpaceManifestSnapshotManifestVerifier spaceManifestVerifier;
 
     private String restoreId = "restore-id";
 

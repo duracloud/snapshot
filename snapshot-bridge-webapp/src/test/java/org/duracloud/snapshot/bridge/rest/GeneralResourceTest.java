@@ -58,7 +58,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private String awsSecretKey = "aws-secret-key";
     private String originatorEmailAddress = "orig-email";
     private String[] duracloudEmailAddresses = {"duracloud-email"};
-    private String[] dpnEmailAddresses = {"dpn-email"};
+    private String[] targetStoreEmailAddresses = {"target-email"};
     private String duracloudUsername = "duracloud-username";
     private String duracloudPassword = "duracloud-password";
     private Integer finalizerPeriodMs = 1000;
@@ -187,8 +187,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
                      snapshotNotifyConfig.getOriginatorEmailAddress());
         assertEquals(duracloudEmailAddresses[0],
                      snapshotNotifyConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     snapshotNotifyConfig.getDpnEmailAddresses()[0]);
+        assertEquals(targetStoreEmailAddresses[0],
+                     snapshotNotifyConfig.getTargetStoreEmailAddresses()[0]);
 
         ExecutionListenerConfig restoreNotifyConfig =
             restoreListenerConfigCapture.getValue();
@@ -198,8 +198,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
                      restoreNotifyConfig.getOriginatorEmailAddress());
         assertEquals(duracloudEmailAddresses[0],
                      restoreNotifyConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     restoreNotifyConfig.getDpnEmailAddresses()[0]);
+        assertEquals(targetStoreEmailAddresses[0],
+                     restoreNotifyConfig.getTargetStoreEmailAddresses()[0]);
 
         SnapshotJobManagerConfig jobManagerConfig = duracloudConfigCapture.getValue();
 
@@ -211,8 +211,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
         RestoreManagerConfig restorationConfig = restorationConfigCapture.getValue();
         assertEquals(duracloudEmailAddresses[0],
                      restorationConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     restorationConfig.getDpnEmailAddresses()[0]);
+        assertEquals(targetStoreEmailAddresses[0],
+                     restorationConfig.getTargetStoreEmailAddresses()[0]);
 
         InitParams params = resource.getStoredInitParams();
 
@@ -264,7 +264,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         initParams.setAwsSecretKey(awsSecretKey);
         initParams.setOriginatorEmailAddress(originatorEmailAddress);
         initParams.setDuracloudEmailAddresses(duracloudEmailAddresses);
-        initParams.setDpnEmailAddresses(dpnEmailAddresses);
+        initParams.setTargetStoreEmailAddresses(targetStoreEmailAddresses);
         initParams.setDuracloudUsername(duracloudUsername);
         initParams.setDuracloudPassword(duracloudPassword);
         initParams.setFinalizerPeriodMs(finalizerPeriodMs);

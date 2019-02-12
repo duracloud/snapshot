@@ -254,7 +254,7 @@ public class GeneralResource {
     private void initRestorationResource(InitParams initParams) {
         RestoreManagerConfig config = new RestoreManagerConfig();
         config.setRestorationRootDir(BridgeConfiguration.getContentRootDir().getAbsolutePath());
-        config.setDpnEmailAddresses(initParams.getDpnEmailAddresses());
+        config.setTargetStoreEmailAddresses(initParams.getTargetStoreEmailAddresses());
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
@@ -293,8 +293,8 @@ public class GeneralResource {
         notifyConfig.setSesPassword(initParams.getAwsSecretKey());
         notifyConfig.setDuracloudEmailAddresses(
             initParams.getDuracloudEmailAddresses());
-        notifyConfig.setDpnEmailAddresses(
-            initParams.getDpnEmailAddresses());
+        notifyConfig.setTargetStoreEmailAddresses(
+            initParams.getTargetStoreEmailAddresses());
         notifyConfig.setOriginatorEmailAddress(
             initParams.getOriginatorEmailAddress());
         notifyConfig.setContentRoot(BridgeConfiguration.getContentRootDir());

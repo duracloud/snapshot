@@ -99,8 +99,8 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
             JobBuilderFactory jobBuilderFactory = new JobBuilderFactory(jobRepository);
             JobBuilder jobBuilder = jobBuilderFactory.get(getJobName());
             SimpleJobBuilder simpleJobBuilder =
-                jobBuilder.start(buildVerifyDpnTransferUsingDpnManifestStep(restoreId, jobManagerConfig))
-                          .next(buildVerifyDpnTransferUsingSnapshotRepoStep(restoreId, jobManagerConfig))
+                jobBuilder.start(buildVerifyTransferUsingManifestStep(restoreId, jobManagerConfig))
+                          .next(buildVerifyTransferUsingSnapshotRepoStep(restoreId, jobManagerConfig))
                           .next(buildRestoreContentStep(restoreId, destinationSpaceId, contentStore, jobManagerConfig))
                           .next(buildRestoreContentPropertiesStep(restoreId,
                                                                   destinationSpaceId,
@@ -125,8 +125,8 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
      * @param jobManagerConfig
      * @return
      */
-    private Step buildVerifyDpnTransferUsingSnapshotRepoStep(String restoreId,
-                                                             SnapshotJobManagerConfig jobManagerConfig)
+    private Step buildVerifyTransferUsingSnapshotRepoStep(String restoreId,
+                                                          SnapshotJobManagerConfig jobManagerConfig)
         throws Exception {
         File restoreDir = new File(ContentDirUtils.getSourcePath(restoreId, jobManagerConfig.getContentRootDir()));
         Restoration restore = this.restoreManager.get(restoreId);
@@ -142,7 +142,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
-        stepFactory.setBeanName("verifyDpnTransferUsingSnapshotRepo");
+        stepFactory.setBeanName("verifyTransferUsingSnapshotRepo");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
         stepFactory.setCommitInterval(50);
@@ -168,11 +168,11 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
 
         File md5Manifest = getRestoreMd5Manifest(restoreDir);
 
-        DpnManifestReader reader = new DpnManifestReader(md5Manifest);
-        SpaceManifestDpnManifestVerifier spaceManifestVerifier =
-            new SpaceManifestDpnManifestVerifier(md5Manifest,
-                                                 new StitchedManifestGenerator(contentStore),
-                                                 destinationSpaceId);
+        SnapshotManifestReader reader = new SnapshotManifestReader(md5Manifest);
+        SpaceManifestSnapshotManifestVerifier spaceManifestVerifier =
+            new SpaceManifestSnapshotManifestVerifier(md5Manifest,
+                                                      new StitchedManifestGenerator(contentStore),
+                                                      destinationSpaceId);
         SpaceVerifier writer = new SpaceVerifier(restoreId,
                                                  spaceManifestVerifier,
                                                  destinationSpaceId,
@@ -197,14 +197,14 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
      * @param jobManagerConfig
      * @return
      */
-    private Step buildVerifyDpnTransferUsingDpnManifestStep(String restoreId, SnapshotJobManagerConfig jobManagerConfig)
+    private Step buildVerifyTransferUsingManifestStep(String restoreId, SnapshotJobManagerConfig jobManagerConfig)
         throws Exception {
 
         File restoreDir = getRestoreDir(restoreId, jobManagerConfig);
 
         File md5Manifest = getRestoreMd5Manifest(restoreDir);
 
-        DpnManifestReader reader = new DpnManifestReader(md5Manifest);
+        SnapshotManifestReader reader = new SnapshotManifestReader(md5Manifest);
 
         File contentDir = getRestoreContentDir(restoreDir);
 
@@ -213,7 +213,7 @@ public class RestoreJobBuilder extends AbstractJobBuilder implements BatchJobBui
         SimpleStepFactoryBean<ManifestEntry, ManifestEntry> stepFactory = new SimpleStepFactoryBean<>();
         stepFactory.setJobRepository(jobRepository);
         stepFactory.setTransactionManager(transactionManager);
-        stepFactory.setBeanName("verifyDpnTransferUsingDpnManifest");
+        stepFactory.setBeanName("verifyTransferUsingManifest");
         stepFactory.setItemReader(reader);
         stepFactory.setItemWriter(writer);
         stepFactory.setCommitInterval(1);

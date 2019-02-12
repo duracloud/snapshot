@@ -59,7 +59,7 @@ public interface RestoreManager {
 
     /**
      * Called by the process responsible for performing the restoration from
-     * DPN to Bridge Storage upon completion of the transfer.
+     * preservation storage to Bridge Storage upon completion of the transfer.
      *
      * @param restorationId
      * @return
@@ -114,7 +114,8 @@ public interface RestoreManager {
     public void cancelRestore(String restoreId) throws SnapshotException;
 
     /**
-     * Restarts a restore.  Assumes that the DPN transfer was successful.
+     * Restarts a restore.  Assumes that the transfer from preservation storage
+     * was successful.
      *
      * @param restoreId
      * @throws SnapshotException

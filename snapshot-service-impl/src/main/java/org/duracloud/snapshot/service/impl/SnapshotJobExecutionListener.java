@@ -111,8 +111,8 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
         if (BatchStatus.COMPLETED.equals(status)) {
             File snapshotDir = new File(snapshotPath);
             snapshot.setTotalSizeInBytes(FileUtils.sizeOfDirectory(snapshotDir));
-            // Job success. Email Chronopolis/DPN AND DuraSpace teams about
-            // snapshot ready for transfer into preservation storage.
+            // Job success. Email everyone that a snapshot is ready for
+            // transfer into preservation storage.
             String subject =
                 "DuraCloud content snapshot ready for preservation";
             String message =
@@ -124,7 +124,7 @@ public class SnapshotJobExecutionListener implements JobExecutionListener {
             sendEmail(subject, message,
                       config.getAllEmailAddresses());
 
-            changeSnapshotStatus(snapshot, SnapshotStatus.WAITING_FOR_DPN, "");
+            changeSnapshotStatus(snapshot, SnapshotStatus.REPLICATING_TO_STORAGE, "");
 
             // Add history event
             String history =

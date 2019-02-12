@@ -140,7 +140,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     @Test
     public void testRestorationComplete() throws SnapshotException {
         String restorationId = "restoration-id";
-        expect(restoration.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expect(restoration.getStatus()).andReturn(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE);
         expect(restoration.getStatusText()).andReturn(isA(String.class));
 
         expect(manager.restoreCompleted(restorationId))
@@ -153,7 +153,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     public void testCancelSnapshot() throws SnapshotException {
         String restorationId = "restoration-id";
         Restoration restore = createMock(Restoration.class);
-        expect(restore.getStatus()).andReturn(RestoreStatus.WAITING_FOR_DPN);
+        expect(restore.getStatus()).andReturn(RestoreStatus.RETRIEVING_FROM_STORAGE);
         expect(manager.get(restorationId)).andReturn(restore);
         manager.cancelRestore(restorationId);
         expectLastCall();
@@ -190,7 +190,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     private Restoration setupRestoration() {
         Restoration r = createMock(Restoration.class);
         expect(r.getRestorationId()).andReturn("restore-id");
-        expect(r.getStatus()).andReturn(RestoreStatus.DPN_TRANSFER_COMPLETE);
+        expect(r.getStatus()).andReturn(RestoreStatus.STORAGE_RETRIEVAL_COMPLETE);
         Snapshot snapshot = createMock(Snapshot.class);
         expect(r.getSnapshot()).andReturn(snapshot);
         expect(snapshot.getName()).andReturn("snapshot-id");

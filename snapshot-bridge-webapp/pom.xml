@@ -6,7 +6,7 @@
   <groupId>org.duracloud.snapshot</groupId>
   <artifactId>bridge</artifactId>
   <packaging>war</packaging>
-  <name>DuraCloud to DPN Node Bridge Web Application</name>
+  <name>DuraCloud to Bridge Web Application</name>
 
   <parent>
     <groupId>org.duracloud.snapshot</groupId>
@@ -22,7 +22,7 @@
     <snapshot.database.url>jdbc:mysql://localhost/snapshot</snapshot.database.url>
     <snapshot.originatorEmailAddress>test@duracloud.org</snapshot.originatorEmailAddress>
     <snapshot.duracloudEmailAddress>duracloud-test@duracloud.org</snapshot.duracloudEmailAddress>
-    <snapshot.dpnEmailAddress>dpn-test@duracloud.org</snapshot.dpnEmailAddress>
+    <snapshot.targetStoreEmailAddress>target-test@duracloud.org</snapshot.targetStoreEmailAddress>
     <snapshot.clean>true</snapshot.clean>
     <snapshot.workDir>${project.build.directory}/test-snapshot-work</snapshot.workDir>
     <snapshot.contentDirRoot>${project.build.directory}/test-snapshot-content</snapshot.contentDirRoot>

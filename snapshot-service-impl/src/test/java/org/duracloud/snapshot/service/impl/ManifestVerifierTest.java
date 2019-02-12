@@ -132,7 +132,6 @@ public class ManifestVerifierTest extends EasyMockSupport {
     }
 
     /**
-     * @param manifestFile2
      * @return
      */
     private List<ManifestEntry> setupManifestFileAndContentDir() throws IOException {
@@ -168,7 +167,7 @@ public class ManifestVerifierTest extends EasyMockSupport {
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
 
         expect(restoreManager.transitionRestoreStatus(eq(restoreId),
-                                                      eq(RestoreStatus.VERIFYING_DPN_TO_BRIDGE_TRANSFER),
+                                                      eq(RestoreStatus.VERIFYING_RETRIEVED_CONTENT),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));
 
         ExecutionContext context = createMock(ExecutionContext.class);

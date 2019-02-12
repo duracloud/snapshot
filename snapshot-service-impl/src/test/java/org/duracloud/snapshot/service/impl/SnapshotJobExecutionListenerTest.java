@@ -118,7 +118,7 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
     public void testAfterJobSuccess() {
         setupCommon();
 
-        String dpnEmail = "dpn-email";
+        String targetStoreEmail = "target-email";
         String duracloudEmail = "duracloud-email";
 
         expect(jobExecution.getStatus())
@@ -129,14 +129,14 @@ public class SnapshotJobExecutionListenerTest extends SnapshotTestBase {
             EasyMock.eq(NotificationType.EMAIL),
             EasyMock.<String>anyObject(),
             EasyMock.capture(messageCapture),
-            EasyMock.eq(dpnEmail),
+            EasyMock.eq(targetStoreEmail),
             EasyMock.eq(duracloudEmail));
         expectLastCall();
 
         expect(executionConfig.getAllEmailAddresses())
-            .andReturn(new String[] {dpnEmail, duracloudEmail});
+            .andReturn(new String[] {targetStoreEmail, duracloudEmail});
 
-        snapshot.setStatus(SnapshotStatus.WAITING_FOR_DPN);
+        snapshot.setStatus(SnapshotStatus.REPLICATING_TO_STORAGE);
         snapshot.setTotalSizeInBytes(0l);
         expectLastCall();
 

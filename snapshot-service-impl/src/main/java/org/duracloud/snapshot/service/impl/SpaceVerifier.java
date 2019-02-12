@@ -34,13 +34,13 @@ public class SpaceVerifier extends StepExecutionSupport
     private String spaceId;
     private RestoreManager restoreManager;
     private String restoreId;
-    private SpaceManifestDpnManifestVerifier verifier;
+    private SpaceManifestSnapshotManifestVerifier verifier;
 
     /**
      *
      */
     public SpaceVerifier(String restoreId,
-                         SpaceManifestDpnManifestVerifier verifier,
+                         SpaceManifestSnapshotManifestVerifier verifier,
                          String spaceId,
                          RestoreManager restoreManager) {
         this.restoreId = restoreId;

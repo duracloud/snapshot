@@ -11,14 +11,19 @@ import org.duracloud.snapshot.dto.RestoreStatus;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 30, 2014
+ * Date: Jul 30, 2014
  */
 public class RestorationStateTransitionValidator {
-    public static void validate(RestoreStatus from , RestoreStatus to)
-        throws InvalidStateTransitionException{
 
-        if(from.equals(to)) {
-//            throw new InvalidStateTransitionException(from.name(), to.name());
+    private RestorationStateTransitionValidator() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
+    public static void validate(RestoreStatus from, RestoreStatus to)
+        throws InvalidStateTransitionException {
+
+        if (from.equals(to)) {
+            // throw new InvalidStateTransitionException(from.name(), to.name());
         }
     }
 }

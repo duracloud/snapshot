@@ -7,25 +7,22 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import org.duracloud.client.ContentStore;
-import org.duracloud.error.ContentStoreException;
 import org.duracloud.snapshot.db.model.Restoration;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.RestoreManager;
-import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.easymock.EasyMockRunner;
 import org.easymock.EasyMockSupport;
-import org.easymock.IExpectationSetters;
 import org.easymock.Mock;
 import org.junit.After;
 import org.junit.Before;
@@ -53,7 +50,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
     private RestoreManager restoreManager;
 
     @Mock
-    private SpaceManifestDpnManifestVerifier spaceManifestVerifier;
+    private SpaceManifestSnapshotManifestVerifier spaceManifestVerifier;
 
     private String restoreId = "restore-id";
 
@@ -65,7 +62,7 @@ public class SpaceVerifierTest extends EasyMockSupport {
     }
 
     /**
-     * 
+     *
      */
     private void setupTestSubject() {
         this.verifier = new SpaceVerifier(restoreId, spaceManifestVerifier, spaceId, restoreManager);
@@ -120,7 +117,6 @@ public class SpaceVerifierTest extends EasyMockSupport {
         assertEquals(expectedStatus.getExitCode(), verifier.afterStep(stepExecution).getExitCode());
     }
 
-
     private void setupStepExecution() throws Exception {
         setupStepExecution(0);
     }
@@ -142,7 +138,6 @@ public class SpaceVerifierTest extends EasyMockSupport {
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
 
-        
         expect(restoreManager.transitionRestoreStatus(eq(restoreId),
                                                       eq(RestoreStatus.VERIFYING_TRANSFERRED_CONTENT),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));

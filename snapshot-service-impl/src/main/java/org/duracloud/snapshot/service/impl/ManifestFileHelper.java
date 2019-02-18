@@ -22,92 +22,88 @@ import org.duracloud.snapshot.common.SnapshotServiceConstants;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 29, 2015
+ * Date: Jul 29, 2015
  */
 public class ManifestFileHelper {
 
-    public static final String MANIFEST_MD5_TEXT_FILE_NAME = 
+    public static final String MANIFEST_MD5_TEXT_FILE_NAME =
         SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME;
     private static final Pattern MANIFEST_LINE_PATTERN =
         Pattern.compile("(\\w*)[\\s^\\r^\\n]+data/(.*)");
-   
+
+    private ManifestFileHelper() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
     /**
      * @param writer
      * @param contentId
      * @param checksum
      * @throws IOException
      */
-    public static void writeManifestEntry(Writer writer, 
-                                   String contentId, 
-                                   String checksum) throws IOException {
+    public static void writeManifestEntry(Writer writer,
+                                          String contentId,
+                                          String checksum) throws IOException {
         writer.write(checksum + "  data/" + contentId + "\n");
         writer.flush();
     }
-    
-    public static ManifestEntry parseManifestEntry(String line)
-        throws ParseException{
-        try{
+
+    public static ManifestEntry parseManifestEntry(String line) throws ParseException {
+        try {
             Matcher matcher = MANIFEST_LINE_PATTERN.matcher(line);
             matcher.find();
             String checksum = matcher.group(1);
             String contentId = matcher.group(2);
-            return new ManifestEntry(checksum,contentId);
-            
-        }catch(Exception ex){
+            return new ManifestEntry(checksum, contentId);
+
+        } catch (Exception ex) {
             throw new ParseException(
                 MessageFormat.format("failed to parse \"{0}\": " +
                                      "does not match regex (\"{1}\")",
                                      line,
                                      MANIFEST_LINE_PATTERN.pattern()),
-                                     0);
+                0);
         }
     }
-    
+
     /**
      * @param manifestFile a manifest file
      * @return a set based on the combined content id and checksum.
      */
-    public static WriteOnlyStringSet loadManifestSetFromFile(File manifestFile) throws Exception{
+    public static WriteOnlyStringSet loadManifestSetFromFile(File manifestFile) throws Exception {
         int count = 0;
         WriteOnlyStringSet manifestSet;
-        try(
-            BufferedReader breader =
-                new BufferedReader(new FileReader(manifestFile))){
-            while(breader.readLine() != null){
+        try (
+            BufferedReader breader = new BufferedReader(new FileReader(manifestFile))) {
+            while (breader.readLine() != null) {
                 count++;
             }
-        }catch(Exception ex){
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
 
         manifestSet = new WriteOnlyStringSet(count);
 
-        
-        try(
-            BufferedReader breader =
-                new BufferedReader(new FileReader(manifestFile))){
+        try (
+            BufferedReader breader = new BufferedReader(new FileReader(manifestFile))) {
 
             String line = null;
-            while((line = breader.readLine()) != null){
-                ManifestEntry entry =  ManifestFileHelper.parseManifestEntry(line);
-                manifestSet.add(formatManifestSetString(entry.getContentId(), 
-                                                             entry.getChecksum()));
+            while ((line = breader.readLine()) != null) {
+                ManifestEntry entry = ManifestFileHelper.parseManifestEntry(line);
+                manifestSet.add(formatManifestSetString(entry.getContentId(),
+                                                        entry.getChecksum()));
             }
 
-        }catch(Exception ex){
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-        
-        
+
         return manifestSet;
 
     }
-    
+
     public static String formatManifestSetString(String contentId, String checksum) {
-        return new StringBuilder().append(contentId)
-                                  .append(":")
-                                  .append(checksum)
-                                  .toString();
+        return new StringBuilder().append(contentId).append(":").append(checksum).toString();
     }
-    
+
 }

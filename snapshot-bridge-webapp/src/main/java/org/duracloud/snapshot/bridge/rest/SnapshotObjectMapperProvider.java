@@ -15,7 +15,7 @@ import org.codehaus.jackson.map.SerializationConfig.Feature;
 
 /**
  * A simple object mapper provider to support jackson json serialization.
- * 
+ *
  * @author Daniel Bernstein Date: Feb 5, 2014
  */
 @Provider
@@ -29,7 +29,7 @@ public class SnapshotObjectMapperProvider implements ContextResolver<ObjectMappe
 
     @Override
     public ObjectMapper getContext(Class<?> type) {
-            return defaultObjectMapper;
+        return defaultObjectMapper;
     }
 
     private static ObjectMapper createDefaultMapper() {

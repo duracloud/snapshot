@@ -17,23 +17,27 @@ import org.springframework.batch.core.JobParameters;
 
 /**
  * @author Daniel Bernstein
- *         Date: Oct 28, 2014
+ * Date: Oct 28, 2014
  */
 public class RestoreJobParameterMarshaller {
 
+    private RestoreJobParameterMarshaller() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
     /**
-     * @param restoration 
+     * @param restoration
      * @return a map of job parameters to uniquely identify restoration job
      */
     public static Map<String, JobParameter> marshal(Restoration restoration) {
         Map<String, JobParameter> map = new HashMap<>();
         map.put(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID,
-                new JobParameter(restoration.getRestorationId(),true));
+                new JobParameter(restoration.getRestorationId(), true));
         return map;
     }
-    
-    public static String unmarshal(JobParameters parameters){
-       return parameters.getString(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID);
+
+    public static String unmarshal(JobParameters parameters) {
+        return parameters.getString(SnapshotServiceConstants.SPRING_BATCH_UNIQUE_ID);
     }
 
 }

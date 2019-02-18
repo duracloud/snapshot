@@ -10,10 +10,10 @@ package org.duracloud.snapshot.service.impl;
 import java.util.Map;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
 /**
- * 
  * @author Daniel Bernstein
- *         Date: Aug 26, 2014
+ * Date: Aug 26, 2014
  */
 public class ContentProperties {
     private String contentId;
@@ -43,7 +43,7 @@ public class ContentProperties {
     public Map<String, String> getProperties() {
         return properties;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

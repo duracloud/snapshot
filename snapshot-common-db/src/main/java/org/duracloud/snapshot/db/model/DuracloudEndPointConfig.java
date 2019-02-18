@@ -13,7 +13,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
 @Embeddable
 public class DuracloudEndPointConfig {
@@ -28,42 +28,49 @@ public class DuracloudEndPointConfig {
     public String getHost() {
         return host;
     }
+
     /**
      * @param host the host to set
      */
     public void setHost(String host) {
         this.host = host;
     }
+
     /**
      * @return the port
      */
     public int getPort() {
         return port;
     }
+
     /**
      * @param port the port to set
      */
     public void setPort(int port) {
         this.port = port;
     }
+
     /**
      * @return the storeId
      */
     public String getStoreId() {
         return storeId;
     }
+
     /**
      * @param storeId the storeId to set
      */
     public void setStoreId(String storeId) {
         this.storeId = storeId;
     }
+
     /**
      * @return the spaceId
      */
     public String getSpaceId() {
         return spaceId;
     }
+
     /**
      * @param spaceId the spaceId to set
      */

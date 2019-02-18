@@ -8,7 +8,6 @@
 package org.duracloud.snapshot.db.model;
 
 import java.util.Date;
-
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -20,16 +19,15 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
 @MappedSuperclass
 public abstract class BaseEntity implements Identifiable {
 
     @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    @Column(columnDefinition="bigint(20) AUTO_INCREMENT")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "bigint(20) AUTO_INCREMENT")
     protected Long id;
-
 
     @Version
     private Date modified;
@@ -54,12 +52,18 @@ public abstract class BaseEntity implements Identifiable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         BaseEntity that = (BaseEntity) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
 
         return true;
     }
@@ -68,7 +72,7 @@ public abstract class BaseEntity implements Identifiable {
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

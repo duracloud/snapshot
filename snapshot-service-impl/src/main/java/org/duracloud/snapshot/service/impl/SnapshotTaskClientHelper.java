@@ -16,17 +16,17 @@ import org.springframework.stereotype.Component;
 
 /**
  * @author Daniel Bernstein
- *         Date: Aug 18, 2014
+ * Date: Aug 18, 2014
  */
 @Component
 public class SnapshotTaskClientHelper {
     private StoreClientHelper storeClientHelper;
 
     @Autowired
-    public SnapshotTaskClientHelper(StoreClientHelper storeClientHelper){
-        this.storeClientHelper= storeClientHelper;
+    public SnapshotTaskClientHelper(StoreClientHelper storeClientHelper) {
+        this.storeClientHelper = storeClientHelper;
     }
-    
+
     public SnapshotTaskClient create(DuracloudEndPointConfig config,
                                      String username,
                                      String password) {

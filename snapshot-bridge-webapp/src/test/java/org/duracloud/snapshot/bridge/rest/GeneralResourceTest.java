@@ -7,15 +7,21 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-
 import javax.ws.rs.core.Response;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.duracloud.common.notification.NotificationConfig;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.util.WaitUtil;
@@ -38,19 +44,13 @@ import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * @author Daniel Bernstein
- *         Date: Feb 4, 2014
+ * Date: Feb 4, 2014
  */
 
 public class GeneralResourceTest extends SnapshotTestBase {
-    
+
     private String databaseUser = "db-user";
     private String databasePassword = "db-pass";
     private String databaseURL = "db-url";
@@ -58,16 +58,15 @@ public class GeneralResourceTest extends SnapshotTestBase {
     private String awsSecretKey = "aws-secret-key";
     private String originatorEmailAddress = "orig-email";
     private String[] duracloudEmailAddresses = {"duracloud-email"};
-    private String[] dpnEmailAddresses = {"dpn-email"};
+    private String[] targetStoreEmailAddresses = {"target-email"};
     private String duracloudUsername = "duracloud-username";
     private String duracloudPassword = "duracloud-password";
     private Integer finalizerPeriodMs = 1000;
     private int daysToExpire = 42;
-    private File workDir = new File(System.getProperty("java.io.tmpdir"),
-        "snapshot-work");
-    
+    private File workDir = new File(System.getProperty("java.io.tmpdir"), "snapshot-work");
+
     private boolean clean = true;
-    
+
     @Mock
     private PurgeObsoleteDataTask purgeTask;
 
@@ -94,12 +93,12 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
     @Mock
     private BridgeConfiguration bridgeConfiguration;
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
-    public void setup() throws Exception{
+    public void setup() throws Exception {
         super.setup();
         resource =
             new GeneralResource(manager,
@@ -111,19 +110,19 @@ public class GeneralResourceTest extends SnapshotTestBase {
                                 finalizer,
                                 bridgeConfiguration,
                                 purgeTask);
-        
+
         System.setProperty(BridgeConfiguration.DURACLOUD_BRIDGE_ROOT_SYSTEM_PROPERTY,
                            this.workDir.getAbsolutePath());
     }
-    
+
     @Test
     public void testInit() throws Exception {
-        
+
         File file = resource.getStoreInitFile();
-        if(file.exists()){
+        if (file.exists()) {
             file.delete();
         }
-        
+
         System.setProperty("root.password", "test");
         Capture<DatabaseConfig> dbConfigCapture = new Capture<>();
         initializer.init(EasyMock.capture(dbConfigCapture));
@@ -146,7 +145,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
         manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
-        
+
         Capture<RestoreManagerConfig> restorationConfigCapture = new Capture<>();
         restorationManager.init(EasyMock.capture(restorationConfigCapture),
                                 EasyMock.isA(SnapshotJobManager.class));
@@ -155,7 +154,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         Collection<NotificationConfig> collection = new ArrayList<>();
         this.notificationManager.initializeNotifiers(EasyMock.isA(collection.getClass()));
         EasyMock.expectLastCall();
-        
+
         bridgeConfiguration.setDuracloudUsername(duracloudUsername);
         EasyMock.expectLastCall();
         bridgeConfiguration.setDuracloudPassword(duracloudPassword);
@@ -166,11 +165,11 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         this.purgeTask.run();
         EasyMock.expectLastCall();
-        
+
         replayAll();
 
         InitParams initParams = createInitParams();
-        
+
         Response response = resource.init(initParams);
         WaitUtil.wait(2);
         assertEquals(202, response.getStatus());
@@ -188,8 +187,8 @@ public class GeneralResourceTest extends SnapshotTestBase {
                      snapshotNotifyConfig.getOriginatorEmailAddress());
         assertEquals(duracloudEmailAddresses[0],
                      snapshotNotifyConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     snapshotNotifyConfig.getDpnEmailAddresses()[0]);
+        assertEquals(targetStoreEmailAddresses[0],
+                     snapshotNotifyConfig.getTargetStoreEmailAddresses()[0]);
 
         ExecutionListenerConfig restoreNotifyConfig =
             restoreListenerConfigCapture.getValue();
@@ -199,52 +198,52 @@ public class GeneralResourceTest extends SnapshotTestBase {
                      restoreNotifyConfig.getOriginatorEmailAddress());
         assertEquals(duracloudEmailAddresses[0],
                      restoreNotifyConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     restoreNotifyConfig.getDpnEmailAddresses()[0]);
+        assertEquals(targetStoreEmailAddresses[0],
+                     restoreNotifyConfig.getTargetStoreEmailAddresses()[0]);
 
         SnapshotJobManagerConfig jobManagerConfig = duracloudConfigCapture.getValue();
 
         assertEquals(duracloudUsername, jobManagerConfig.getDuracloudUsername());
         assertEquals(duracloudPassword, jobManagerConfig.getDuracloudPassword());
         assertEquals(BridgeConfiguration.getBridgeWorkDir(), jobManagerConfig.getWorkDir());
-        assertEquals(new File(this.workDir,"content"), jobManagerConfig.getContentRootDir());
-        
+        assertEquals(new File(this.workDir, "content"), jobManagerConfig.getContentRootDir());
+
         RestoreManagerConfig restorationConfig = restorationConfigCapture.getValue();
         assertEquals(duracloudEmailAddresses[0],
                      restorationConfig.getDuracloudEmailAddresses()[0]);
-        assertEquals(dpnEmailAddresses[0],
-                     restorationConfig.getDpnEmailAddresses()[0]);
-        
+        assertEquals(targetStoreEmailAddresses[0],
+                     restorationConfig.getTargetStoreEmailAddresses()[0]);
+
         InitParams params = resource.getStoredInitParams();
-        
-        //verify that the state was saved successfully 
+
+        //verify that the state was saved successfully
         //and that the database clean flag was flipped to false.
         assertNotNull(params);
         assertEquals(false, params.isClean());
     }
 
     @Test
-    public void testAlreadyInitialized(){
+    public void testAlreadyInitialized() {
         EasyMock.expect(manager.isInitialized()).andReturn(true);
         replayAll();
         InitParams initParams = createInitParams();
         Response response = resource.init(initParams);
         assertEquals(500, response.getStatus());
-        assertTrue(((ResponseDetails) 
+        assertTrue(((ResponseDetails)
                         response.getEntity()).getMessage()
                                              .contains("already"));
     }
-    
+
     @Test
     public void testVersion() throws JsonParseException, IOException {
         replayAll();
 
         Response response = resource.version();
 
-        String message = (String)response.getEntity();
-        
+        String message = (String) response.getEntity();
+
         ObjectMapper mapper = new ObjectMapper();
-        JsonFactory factory = mapper.getFactory(); 
+        JsonFactory factory = mapper.getFactory();
         JsonParser jp = factory.createJsonParser(message);
         JsonNode obj = mapper.readTree(jp);
         Assert.assertNotNull(obj);
@@ -265,7 +264,7 @@ public class GeneralResourceTest extends SnapshotTestBase {
         initParams.setAwsSecretKey(awsSecretKey);
         initParams.setOriginatorEmailAddress(originatorEmailAddress);
         initParams.setDuracloudEmailAddresses(duracloudEmailAddresses);
-        initParams.setDpnEmailAddresses(dpnEmailAddresses);
+        initParams.setTargetStoreEmailAddresses(targetStoreEmailAddresses);
         initParams.setDuracloudUsername(duracloudUsername);
         initParams.setDuracloudPassword(duracloudPassword);
         initParams.setFinalizerPeriodMs(finalizerPeriodMs);

@@ -11,7 +11,7 @@ import org.duracloud.common.model.Credential;
 
 /**
  * @author Bill Branan
- *         Date: July 14, 2016
+ * Date: July 14, 2016
  */
 public class RootUserCredential extends Credential {
 

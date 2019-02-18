@@ -9,7 +9,7 @@ package org.duracloud.snapshot.common;
 
 /**
  * @author Erik Paulsson
- *         Date: 2/14/14
+ * Date: 2/14/14
  */
 public class SnapshotServiceConstants {
     public static final String SPRING_BATCH_UNIQUE_ID = "spring-batch-unique-id";
@@ -18,9 +18,9 @@ public class SnapshotServiceConstants {
     public static final String DURASTORE_CONTEXT = "durastore";
     public static final String CONTENT_PROPERTIES_JSON_FILENAME =
         "content-properties.json";
-    public static final String MANIFEST_SHA256_TXT_FILE_NAME = 
+    public static final String MANIFEST_SHA256_TXT_FILE_NAME =
         "manifest-sha256.txt";
-    public static final String MANIFEST_MD5_TXT_FILE_NAME = 
+    public static final String MANIFEST_MD5_TXT_FILE_NAME =
         "manifest-md5.txt";
 
     // Snapshot history values
@@ -41,4 +41,9 @@ public class SnapshotServiceConstants {
     public static final String RESTORE_USER_TITLE = "initiating-user";
     public static final String RESTORE_ID_TITLE = "restore-id";
     public static final String RESTORE_EXPIRES_TITLE = "expiration-date";
+
+    private SnapshotServiceConstants() {
+        // Ensures no instances are made of this class, as there are only static members.
+    }
+
 }

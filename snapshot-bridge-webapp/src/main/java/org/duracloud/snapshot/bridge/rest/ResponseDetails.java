@@ -8,21 +8,21 @@
 package org.duracloud.snapshot.bridge.rest;
 
 /**
- * A simple entity class for holding generic response data returned 
+ * A simple entity class for holding generic response data returned
  * from rest calls.
- * 
+ *
  * @author Daniel Bernstein
- *         Date: Feb 11, 2014
+ * Date: Feb 11, 2014
  */
 public class ResponseDetails {
     private String message;
-    
+
     /**
-     * 
+     *
      */
     public ResponseDetails() {
     }
-    
+
     /**
      * @param string
      */
@@ -36,7 +36,7 @@ public class ResponseDetails {
     public String getMessage() {
         return message;
     }
-    
+
     /**
      * @param message the message to set
      */

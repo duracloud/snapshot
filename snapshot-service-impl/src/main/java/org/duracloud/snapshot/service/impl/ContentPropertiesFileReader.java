@@ -7,6 +7,11 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -17,14 +22,9 @@ import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * @author Daniel Bernstein     
- *         Date: Jul 16, 2014
+ * @author Daniel Bernstein
+ * Date: Jul 16, 2014
  */
 public class ContentPropertiesFileReader extends StepExecutionSupport implements ItemReader<ContentProperties> {
     private final Logger log =
@@ -40,28 +40,25 @@ public class ContentPropertiesFileReader extends StepExecutionSupport implements
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.item.ItemReader#read()
      */
     @Override
     public synchronized ContentProperties read()
-        throws Exception,
-            UnexpectedInputException,
-            ParseException,
-            NonTransientResourceException {
+        throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 
         if (jParser == null) {
             JsonFactory jfactory = new JsonFactory();
             jParser = jfactory.createJsonParser(this.propertiesFile);
             jParser.nextToken(); //skips the first [
-            
+
             //skip properties already read.
-            int itemsRead = (int)getItemsRead();
-            for(int i = 0; i < itemsRead; i++){
+            int itemsRead = (int) getItemsRead();
+            for (int i = 0; i < itemsRead; i++) {
                 doRead();
             }
         }
-        
+
         return doRead();
     }
 
@@ -71,7 +68,7 @@ public class ContentPropertiesFileReader extends StepExecutionSupport implements
      */
     private ContentProperties doRead() throws IOException {
         //once parser is closed, always return null.
-       if(jParser.isClosed()){
+        if (jParser.isClosed()) {
             return null;
         }
 
@@ -80,11 +77,10 @@ public class ContentPropertiesFileReader extends StepExecutionSupport implements
                    jParser.getText() != null) {
                 return parseNext(jParser);
             }
-        } catch(Exception e) {
-            String message = "Error parsing content properties file: " +
-                e.getMessage();
+        } catch (Exception e) {
+            String message = "Error parsing content properties file: " + e.getMessage();
             log.error(message, e);
-            throw new ParseException(message,e);
+            throw new ParseException(message, e);
         }
 
         jParser.close();
@@ -98,11 +94,11 @@ public class ContentPropertiesFileReader extends StepExecutionSupport implements
     private synchronized ContentProperties parseNext(JsonParser jParser)
         throws Exception {
         String contentId = null;
-        Map<String,String> properties = new HashMap<>();
+        Map<String, String> properties = new HashMap<>();
         while (jParser.nextToken() != JsonToken.END_OBJECT &&
                jParser.getText() != null) {
 
-            contentId =jParser.getCurrentName();
+            contentId = jParser.getCurrentName();
             jParser.nextToken();  // :
             jParser.nextToken();  // {
 
@@ -113,7 +109,7 @@ public class ContentPropertiesFileReader extends StepExecutionSupport implements
                 properties.put(key, value);
             }
         }
-        
+
         return new ContentProperties(contentId, properties);
     }
 

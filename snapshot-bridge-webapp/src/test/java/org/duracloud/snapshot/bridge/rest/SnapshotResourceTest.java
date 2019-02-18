@@ -7,15 +7,20 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -24,7 +29,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
-import org.duracloud.snapshot.EmptySpaceException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -61,8 +65,8 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
 
 /**
- * @author Daniel Bernstein 
- *         Date: Feb 4, 2014
+ * @author Daniel Bernstein
+ * Date: Feb 4, 2014
  */
 
 public class SnapshotResourceTest extends SnapshotTestBase {
@@ -72,10 +76,10 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
     @Mock
     private SnapshotManager snapshotManager;
-    
+
     @Mock
     private SnapshotRepo snapshotRepo;
-    
+
     @Mock
     private SnapshotContentItemRepo snapshotContentItemRepo;
 
@@ -102,7 +106,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.duracloud.snapshot.common.test.EasyMockTestBase#setup()
      */
     @Override
@@ -121,17 +125,17 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     public void testGetSnapshot() throws SnapshotException {
 
         expect(snapshotRepo.findByName("snapshotId"))
-                .andReturn(snapshot);
+            .andReturn(snapshot);
         expect(snapshotContentItemRepo
-                            .countBySnapshotName("snapshotId"))
-                .andReturn(300l);
+                   .countBySnapshotName("snapshotId"))
+            .andReturn(300l);
         expect(snapshot.getSnapshotAlternateIds())
-                .andReturn(new ArrayList<String>());
+            .andReturn(new ArrayList<String>());
         expect(snapshot.getStatus())
-                .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
+            .andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
 
         expect(snapshot.getSource()).andReturn(source);
-        
+
         expect(source.getHost()).andReturn("host");
         expect(source.getSpaceId()).andReturn("spaceId");
         expect(source.getStoreId()).andReturn("storeId");
@@ -141,7 +145,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshot.getMemberId()).andReturn("memberId");
 
         expect(snapshot.getTotalSizeInBytes()).andReturn(1000l);
-        
+
         replayAll();
         resource.getSnapshot("snapshotId");
     }
@@ -164,7 +168,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                                    System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
-        String dpnMemberUUID = "uuid";
+        String memberID = "uuid";
 
         SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
         expect(jobManager.getConfig())
@@ -181,36 +185,30 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME,
                                                                                "first-item").iterator());
         expect(jobManager.executeSnapshot(snapshotId))
-                .andReturn(BatchStatus.UNKNOWN);
+            .andReturn(BatchStatus.UNKNOWN);
 
         expect(snapshotRepo.findByName(snapshotId)).andReturn(null);
 
         expect(snapshotRepo.saveAndFlush(isA(Snapshot.class)))
-                .andReturn(snapshot);
+            .andReturn(snapshot);
         eventLog.logSnapshotUpdate(snapshot);
         expectLastCall();
 
         expect(snapshot.getStatus())
-                .andReturn(SnapshotStatus.INITIALIZED);
+            .andReturn(SnapshotStatus.INITIALIZED);
 
         expect(this.snapshotManager.updateHistory(snapshot,
-                "[{'snapshot-action':'SNAPSHOT_INITIATED'}," +
-                 "{'initiating-user':'"+email+"'}," +
-                 "{'snapshot-id':'"+snapshotId+"'}]"))
+                                                  "[{'snapshot-action':'SNAPSHOT_INITIATED'}," +
+                                                  "{'initiating-user':'" + email + "'}," +
+                                                  "{'snapshot-id':'" + snapshotId + "'}]"))
             .andReturn(snapshot);
 
         replayAll();
 
-        CreateSnapshotBridgeResult result =
-            (CreateSnapshotBridgeResult) resource.create(snapshotId,
-                                                         new CreateSnapshotBridgeParameters(host,
-                                                                                            port,
-                                                                                            storeId,
-                                                                                            spaceId,
-                                                                                            description,
-                                                                                            email,
-                                                                                            dpnMemberUUID))
-                                                 .getEntity();
+        CreateSnapshotBridgeParameters params =
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, memberID);
+        CreateSnapshotBridgeResult result = (CreateSnapshotBridgeResult) resource.create(snapshotId, params)
+                                                                                 .getEntity();
 
         assertNotNull(result);
         assertEquals(snapshotId, result.getSnapshotId());
@@ -226,10 +224,10 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String spaceId = "spaceId";
         String snapshotId =
             new SnapshotIdentifier("account-name", storeId, spaceId,
-                System.currentTimeMillis()).getSnapshotId();
+                                   System.currentTimeMillis()).getSnapshotId();
         String description = "description";
         String email = "email";
-        String dpnMemberUUID = "uuid";
+        String memberID = "uuid";
 
         SnapshotJobManagerConfig config = createMock(SnapshotJobManagerConfig.class);
         expect(jobManager.getConfig())
@@ -242,34 +240,30 @@ public class SnapshotResourceTest extends SnapshotTestBase {
 
         ContentStore contentStore = createMock(ContentStore.class);
         expect(helper.create(isA(DuracloudEndPointConfig.class),
-            isA(String.class),
-            isA(String.class))).andReturn(contentStore);
+                             isA(String.class),
+                             isA(String.class))).andReturn(contentStore);
 
         expect(contentStore.getSpaceContents(spaceId)).andReturn(Arrays.asList(Constants.SNAPSHOT_PROPS_FILENAME)
                                                                        .iterator());
         replayAll();
 
-        Response response = resource.create(snapshotId,
-                                    new CreateSnapshotBridgeParameters(host,
-                                        port,
-                                        storeId,
-                                        spaceId,
-                                        description,
-                                        email,
-                                        dpnMemberUUID));
+        CreateSnapshotBridgeParameters params =
+            new CreateSnapshotBridgeParameters(host, port, storeId, spaceId, description, email, memberID);
+        Response response = resource.create(snapshotId, params);
         assertEquals(Status.CONFLICT.getStatusCode(), response.getStatus());
-        assertTrue(((ResponseDetails)response.getEntity()).getMessage().contains("empty space"));
+        assertTrue(((ResponseDetails) response.getEntity()).getMessage().contains("empty space"));
 
     }
+
     @Test
     public void testRestartSuccess() throws SnapshotException {
         String snapshotId = "snapshot-id";
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.INITIALIZED);
-        
+
         expect(jobManager.executeSnapshot(snapshotId))
-                .andReturn(BatchStatus.STARTING);
+            .andReturn(BatchStatus.STARTING);
         snapshot.setEndDate(null);
         expectLastCall();
         snapshot.setStatusText(isA(String.class));
@@ -277,11 +271,11 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         snapshot.setStatus(SnapshotStatus.INITIALIZED);
         expectLastCall();
         expect(snapshotRepo.saveAndFlush(snapshot))
-                .andReturn(snapshot);
+            .andReturn(snapshot);
         eventLog.logSnapshotUpdate(snapshot);
         expectLastCall();
         replayAll();
-        
+
         Response response = resource.restart(snapshotId);
         assertEquals(Status.ACCEPTED.getStatusCode(), response.getStatus());
         RestartSnapshotBridgeResult result =
@@ -292,15 +286,15 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         assertEquals(SnapshotStatus.INITIALIZED, result.getStatus());
 
     }
-    
+
     @Test
     public void testRestartFailure() throws SnapshotException {
         String snapshotId = "snapshot-id";
         expect(snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.SNAPSHOT_COMPLETE);
-        
+
         replayAll();
-        
+
         Response response = resource.restart(snapshotId);
         assertEquals(Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         ResponseDetails result =
@@ -316,7 +310,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         List<String> snapshotAlternateIds = new ArrayList<String>();
         String altId1 = "alternate-name-1";
         String altId2 = "alternate-name-2";
-        
+
         snapshotAlternateIds.add(altId1);
         snapshotAlternateIds.add(altId2);
 
@@ -327,12 +321,12 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(this.snapshotManager.addAlternateSnapshotIds(snapshot, snapshotAlternateIds))
             .andReturn(snapshot);
         expect(this.snapshotManager.updateHistory(snapshot,
-                "[{'snapshot-action':'SNAPSHOT_COMPLETED'}," +
-                 "{'snapshot-id':'"+snapshotId+"'}," +
-                 "{'alternate-ids':['"+altId1+"','"+altId2+"']}]"))
+                                                  "[{'snapshot-action':'SNAPSHOT_COMPLETED'}," +
+                                                  "{'snapshot-id':'" + snapshotId + "'}," +
+                                                  "{'alternate-ids':['" + altId1 + "','" + altId2 + "']}]"))
             .andReturn(snapshot);
 
-        expect(this.snapshotManager.transferToDpnNodeComplete(snapshotId)).andReturn(snapshot);
+        expect(this.snapshotManager.transferToStorageComplete(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
         expect(snapshot.getStatusText()).andReturn("ok");
         replayAll();
@@ -368,7 +362,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Test
     public void testCancel() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-name";
-        
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.FAILED_TO_TRANSFER_FROM_DURACLOUD);
@@ -385,7 +378,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Test
     public void testCancelFailure() throws SnapshotException, JSONException {
         String snapshotId = "snapshot-name";
-        
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
         expect(snapshot.getStatus()).andReturn(SnapshotStatus.CLEANING_UP);
@@ -394,7 +386,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         Response response = resource.cancel(snapshotId);
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
         assertTrue(response.getEntity() instanceof ResponseDetails);
-        assertNotNull(((ResponseDetails)response.getEntity()).getMessage());
+        assertNotNull(((ResponseDetails) response.getEntity()).getMessage());
 
     }
 
@@ -417,7 +409,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshot.getSource()).andReturn(source);
         snapshotList.add(snapshot);
         expect(this.snapshotRepo.findBySourceHost(sourceHost))
-                .andReturn(snapshotList);
+            .andReturn(snapshotList);
         replayAll();
 
         Response response = this.resource.list(sourceHost, null, null);
@@ -518,7 +510,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetSnapshotContent(){
+    public void testGetSnapshotContent() {
         String snapshotId = "snapshot-id";
         String prefix = "prefix";
         int page = 1;
@@ -526,32 +518,31 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String metaName = "metadata-name";
         String metaValue = "metadata-value";
         Long count = 1000l;
-        
+
         Capture<PageRequest> pageRequestCapture = new Capture<>();
-        
+
         SnapshotContentItem item = new SnapshotContentItem();
         item.setContentId("test");
-        item.setMetadata("{\""+metaName+"\" : \""+metaValue+"\"}");
+        item.setMetadata("{\"" + metaName + "\" : \"" + metaValue + "\"}");
 
         List<SnapshotContentItem> contentIds =
-            Arrays.asList(new SnapshotContentItem[]{item});
+            Arrays.asList(new SnapshotContentItem[] {item});
         expect(snapshotContentItemRepo
-            .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(eq(snapshotId),
-                                                        eq(prefix),
-                                                        capture(
-                                                            pageRequestCapture)))
-                .andReturn(contentIds);
+                   .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(eq(snapshotId),
+                                                                                  eq(prefix),
+                                                                                  capture(pageRequestCapture)))
+            .andReturn(contentIds);
 
         expect(snapshotContentItemRepo
-                        .countBySnapshotName(eq(snapshotId)))
-                            .andReturn(count);
+                   .countBySnapshotName(eq(snapshotId)))
+            .andReturn(count);
 
         replayAll();
-        
+
         Response response =
             resource.getContent(snapshotId, page, pageSize, prefix);
         GetSnapshotContentBridgeResult result =
-            (GetSnapshotContentBridgeResult)response.getEntity();
+            (GetSnapshotContentBridgeResult) response.getEntity();
 
         PageRequest pageRequest = pageRequestCapture.getValue();
         assertEquals(page, pageRequest.getPageNumber());
@@ -561,7 +552,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             result.getContentItems().get(0);
         assertEquals("test", resultItem.getContentId());
         assertEquals(metaValue,
-                            resultItem.getContentProperties().get(metaName));
+                     resultItem.getContentProperties().get(metaName));
         assertEquals(count, result.getTotalCount());
 
     }
@@ -600,7 +591,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         Response response = resource.updateHistory(snapshotId, params);
 
         assertTrue(response.getEntity() instanceof UpdateSnapshotHistoryBridgeResult);
-        assertEquals(history, ((UpdateSnapshotHistoryBridgeResult)response.getEntity()).getHistory());
+        assertEquals(history, ((UpdateSnapshotHistoryBridgeResult) response.getEntity()).getHistory());
     }
 
 }

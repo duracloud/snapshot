@@ -7,7 +7,7 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.util.List;
@@ -21,12 +21,11 @@ import org.junit.runner.RunWith;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 29, 2015
+ * Date: Jul 29, 2015
  */
 @RunWith(EasyMockRunner.class)
-public class DpnManifestReaderTest extends EasyMockSupport{
+public class SnapshotManifestReaderTest extends EasyMockSupport {
 
-    
     /**
      * @throws java.lang.Exception
      */
@@ -43,25 +42,25 @@ public class DpnManifestReaderTest extends EasyMockSupport{
     }
 
     /**
-     * Test method for {@link org.duracloud.snapshot.service.impl.DpnManifestReader#read()}.
+     * Test method for {@link SnapshotManifestReader#read()}.
      */
     @Test
     public void testRead() throws Exception {
         File manifestFile = File.createTempFile("test", "txt");
-        
+
         List<ManifestEntry> list = ManifestTestHelper.setupManifestFile(manifestFile, 100, "checksum", "contentid");
-        
+
         replayAll();
-        DpnManifestReader reader = new DpnManifestReader(manifestFile){
+        SnapshotManifestReader reader = new SnapshotManifestReader(manifestFile) {
             protected long getItemsRead() {
                 return 0;
-            };
+            }
         };
-        
+
         ManifestEntry entry = null;
         int index = 0;
 
-        while((entry = reader.read()) != null){
+        while ((entry = reader.read()) != null) {
             assertEquals(list.get(index), entry);
             index++;
         }

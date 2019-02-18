@@ -7,6 +7,11 @@
  */
 package org.duracloud.snapshot.service.impl;
 
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_COMPLETED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_EXPIRES_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ID_TITLE;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,11 +45,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
-
 /**
  * @author Erik Paulsson
- *         Date: 2/10/14
+ * Date: 2/10/14
  */
 @Component("restoreJobListener")
 public class RestoreJobExecutionListener implements JobExecutionListener {
@@ -54,7 +57,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private NotificationManager notificationManager;
-    
+
     @Autowired
     private RestoreRepo restoreRepo;
 
@@ -69,11 +72,11 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
     @Autowired
     private EventLog eventLog;
-    
+
     private ExecutionListenerConfig config;
 
     private Integer daysToExpire;
-    
+
     /**
      * @param notificationManager the notificationManager to set
      */
@@ -129,14 +132,14 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
         Date currentDate = new Date();
 
-        if(ExitStatus.COMPLETED.getExitCode().equals(status.getExitCode())) {
+        if (ExitStatus.COMPLETED.getExitCode().equals(status.getExitCode())) {
             try {
                 // Job success, set completion state
                 Date expirationDate =
                     changeRestoreStatus(restoration,
                                         RestoreStatus.RESTORATION_COMPLETE,
                                         "Completed transfer to duracloud on: " +
-                                        currentDate, 
+                                        currentDate,
                                         currentDate);
 
                 DuracloudEndPointConfig destination = restoration.getDestination();
@@ -144,7 +147,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                 // Tell DuraCloud to set expiration policy
                 SnapshotTaskClient taskClient = getSnapshotTaskClient(destination);
                 taskClient.completeRestore(destination.getSpaceId(), daysToExpire);
-                
+
                 // Email duracloud team as well as restoration requestor
                 String subject =
                     "DuraCloud snapshot " + snapshotId + " has been restored!";
@@ -166,9 +169,9 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
                 // Add history event
                 String history =
-                    "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_COMPLETED+"'}," +
-                    "{'"+RESTORE_ID_TITLE+"':'"+restoreId+"'}," +
-                    "{'"+RESTORE_EXPIRES_TITLE+"':'"+formattedExpDate+"'}]";
+                    "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_COMPLETED + "'}," +
+                    "{'" + RESTORE_ID_TITLE + "':'" + restoreId + "'}," +
+                    "{'" + RESTORE_EXPIRES_TITLE + "':'" + formattedExpDate + "'}]";
                 snapshotManager.updateHistory(snapshot, history);
 
                 log.info("deleting restoration path " + restorationPath);
@@ -184,7 +187,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                     new ArrayList<>(Arrays.asList(config.getDuracloudEmailAddresses()));
                 emailAddresses.add(restoration.getUserEmail());
                 sendEmail(subject, message, emailAddresses.toArray(new String[0]));
-            } catch(Exception e) {
+            } catch (Exception e) {
                 handleError(restoration, currentDate, snapshotId, restoreId,
                             restorationPath, e.getMessage(), status);
             }
@@ -202,7 +205,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                              String snapshotId,
                              String restoreId,
                              String restorationPath,
-                             String errorMessage, 
+                             String errorMessage,
                              ExitStatus status) {
         changeRestoreStatus(restoration,
                             RestoreStatus.ERROR,
@@ -211,14 +214,14 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
 
         // Job failed.  Email DuraSpace team about failed snapshot attempt.
         String subject =
-            "DuraCloud snapshot "+ snapshotId + " restoration failed to complete";
+            "DuraCloud snapshot " + snapshotId + " restoration failed to complete";
         String message =
             "A DuraCloud snapshot restoration has failed to complete.\n" +
             "\nrestore-id=" + restoreId +
             "\nsnapshot-id=" + snapshotId +
             "\nrestore-path=" + restorationPath +
-            "\nspring-batch-exit-status-code=" + status.getExitCode() + 
-            "\nspring-batch-exit-status-description=" + status.getExitDescription() + 
+            "\nspring-batch-exit-status-code=" + status.getExitCode() +
+            "\nspring-batch-exit-status-description=" + status.getExitDescription() +
             "\nerror-message=" + errorMessage;
         sendEmail(subject, message,
                   config.getDuracloudEmailAddresses());
@@ -228,8 +231,8 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
      * Updates the restore details in the database
      *
      * @param restoration the restoration being worked
-     * @param status the new status of the restoration
-     * @param msg status text
+     * @param status      the new status of the restoration
+     * @param msg         status text
      */
     private Date changeRestoreStatus(Restoration restoration,
                                      RestoreStatus status,
@@ -239,7 +242,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
         restoration.setStatus(status);
         restoration.setStatusText(msg);
         Date expirationDate = getExpirationDate(currentDate, daysToExpire);
-        if(status.equals(RestoreStatus.RESTORATION_COMPLETE)) {
+        if (status.equals(RestoreStatus.RESTORATION_COMPLETE)) {
             restoration.setEndDate(currentDate);
             restoration.setExpirationDate(expirationDate);
         }
@@ -253,7 +256,7 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
      * Calculates the restore expiration date based on the restoration
      * end date and the number of days before retirement
      *
-     * @param endDate date on which the restoration completed
+     * @param endDate      date on which the restoration completed
      * @param daysToExpire number of days the restored content should stay in place
      *                     before it is retired
      * @return expiration date of restored content
@@ -270,9 +273,9 @@ public class RestoreJobExecutionListener implements JobExecutionListener {
                                              subject,
                                              msg.toString(),
                                              destinations);
-        
+
         log.info("sent email with subject=\""
-            + subject + "\" to " + StringUtils.join(destinations, ","));
+                 + subject + "\" to " + StringUtils.join(destinations, ","));
     }
 
     /**

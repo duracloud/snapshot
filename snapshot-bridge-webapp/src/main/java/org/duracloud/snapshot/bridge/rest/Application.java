@@ -14,25 +14,23 @@ import org.glassfish.jersey.server.spring.scope.RequestContextFilter;
 /**
  * The entry point for the jax-rs application.
  * This class is referenced in the web.xml.
+ *
  * @author Daniel Bernstein
- *         Date: Feb 4, 2014
+ * Date: Feb 4, 2014
  */
-public class Application extends ResourceConfig{
+public class Application extends ResourceConfig {
 
-        /**
-         * Register JAX-RS application components.
-         */
-        public Application () {
-            super(
-                RequestContextFilter.class,
-                GeneralResource.class,
-                SnapshotResource.class,
-                RestoreResource.class,
-                SnapshotObjectMapperProvider.class,
-                JacksonFeature.class, 
-                MissingJsonBodyInterceptor.class);
-            
-        }
-        
-        
+    /**
+     * Register JAX-RS application components.
+     */
+    public Application() {
+        super(RequestContextFilter.class,
+              GeneralResource.class,
+              SnapshotResource.class,
+              RestoreResource.class,
+              SnapshotObjectMapperProvider.class,
+              JacksonFeature.class,
+              MissingJsonBodyInterceptor.class);
     }
+
+}

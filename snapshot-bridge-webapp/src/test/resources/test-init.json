@@ -1,7 +1,7 @@
 {
      "originatorEmailAddress" : "${snapshot.originatorEmailAddress}",
      "duracloudEmailAddresses" : ["${snapshot.duracloudEmailAddress}"],
-     "dpnEmailAddresses" : ["${snapshot.dpnEmailAddress}"],
+     "targetStoreEmailAddresses": ["${snapshot.targetStoreEmailAddress}"],
      "duracloudUsername" : "${snapshot.duracloudUsername}",
      "duracloudPassword" : "${snapshot.duracloudPassword}",
      "awsAccessKey" : "${aws.accessKey}",

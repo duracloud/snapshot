@@ -13,7 +13,6 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.duracloud.client.ContentStore;
 import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.constant.ManifestFormat;
@@ -25,45 +24,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class verifies that the space manifest and the DPN manifests match. It
+ * This class verifies that the space manifest and the snapshot manifests match. It
  * will ignore the .collection-snapshot.properties file on the space manifest
- * side. Additionally, since the DPN manifest is a stitched view of what should
+ * side. Additionally, since the snapshot manifest is a stitched view of what should
  * be in the space, the stitched, rather than the unstitched, view of the space
- * is used for comparison. and it will only compare
- * 
+ * is used for comparison.
+ *
  * @author Daniel Bernstien
  */
-public class SpaceManifestDpnManifestVerifier {
+public class SpaceManifestSnapshotManifestVerifier {
 
-    private static final Logger log = LoggerFactory.getLogger(SpaceManifestDpnManifestVerifier.class);
+    private static final Logger log = LoggerFactory.getLogger(SpaceManifestSnapshotManifestVerifier.class);
 
     private File md5Manifest;
     private StitchedManifestGenerator generator;
     private String spaceId;
     private List<String> errors;
 
-    public SpaceManifestDpnManifestVerifier(File md5Manifest, StitchedManifestGenerator generator, String spaceId) {
+    public SpaceManifestSnapshotManifestVerifier(File md5Manifest, StitchedManifestGenerator generator, String spaceId) {
         this.md5Manifest = md5Manifest;
         this.generator = generator;
         this.spaceId = spaceId;
     }
 
-    public String getSpaceId(){
+    public String getSpaceId() {
         return this.spaceId;
     }
+
     /**
      * Performs the verification.
+     *
      * @return true if verification was a success. Otherwise false. Errors can
-     *         be obtained by calling getErrors() after execution completes.
+     * be obtained by calling getErrors() after execution completes.
      */
     public boolean verify() {
 
         this.errors = new LinkedList<>();
         try (BufferedReader reader =
-                new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)))){
-            WriteOnlyStringSet dpnManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
+                 new BufferedReader(new InputStreamReader(generator.generate(spaceId, ManifestFormat.TSV)))) {
+            WriteOnlyStringSet snapshotManifest = ManifestFileHelper.loadManifestSetFromFile(this.md5Manifest);
             log.info("loaded manifest set into memory.");
-            
+
             ManifestFormatter formatter = new TsvManifestFormatter();
             // skip header
             if (formatter.getHeader() != null) {
@@ -76,26 +77,26 @@ public class SpaceManifestDpnManifestVerifier {
                 ManifestItem item = formatter.parseLine(line);
                 String contentId = item.getContentId();
                 if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
-                    if (!dpnManifest.contains(ManifestFileHelper.formatManifestSetString(contentId,
+                    if (!snapshotManifest.contains(ManifestFileHelper.formatManifestSetString(contentId,
                                                                                          item.getContentChecksum()))) {
-                        String message = "DPN manifest does not contain content id/checksum combination ("
-                            + contentId + ", " + item.getContentChecksum();
+                        String message = "Snapshot manifest does not contain content id/checksum combination ("
+                                         + contentId + ", " + item.getContentChecksum();
                         errors.add(message);
                     }
                     stitchedManifestCount++;
                 }
             }
 
-            int dpnCount = dpnManifest.size();
-            if (stitchedManifestCount != dpnCount) {
-                String message = "DPN Manifest size ("
-                    + dpnCount + ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")";
+            int snapshotCount = snapshotManifest.size();
+            if (stitchedManifestCount != snapshotCount) {
+                String message = "Snapshot Manifest size (" + snapshotCount +
+                                 ") does not equal DuraCloud Manifest (" + stitchedManifestCount + ")";
                 errors.add(message);
                 log.error(message);
             }
 
         } catch (Exception e) {
-            String message = "Failed to verify space manifest against dpn manifest:" + e.getMessage();
+            String message = "Failed to verify space manifest against snapshot manifest:" + e.getMessage();
             errors.add(message);
             log.error(message, e);
         }

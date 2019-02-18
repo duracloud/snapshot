@@ -7,8 +7,12 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.anyLong;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,25 +42,26 @@ import org.springframework.batch.item.ExecutionContext;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 29, 2015
+ * Date: Jul 29, 2015
  */
 @RunWith(EasyMockRunner.class)
-public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
+public class SnapshotContentItemVerifierTest extends EasyMockSupport {
 
     private SnapshotContentItemVerifier verifier;
     @Mock
     private StepExecution stepExecution;
-    
+
     @Mock
     private RestoreManager restoreManager;
-    
+
     private String snapshotName = "snapshot-name";
 
     private File manifestFile;
-    
+
     private String restoreId = "restore-id";
-    
+
     private int itemCount = 100;
+
     /**
      * @throws java.lang.Exception
      */
@@ -64,7 +69,6 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     public void setUp() throws Exception {
         this.manifestFile = File.createTempFile("manifest", "txt");
     }
-    
 
     /**
      * @throws java.lang.Exception
@@ -84,15 +88,12 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         simulateStepExecution(ExitStatus.COMPLETED, snapshotContentItems);
     }
 
-
     /**
-     * 
+     *
      */
     private void createVerifier() {
         this.verifier = new SnapshotContentItemVerifier(this.restoreId, manifestFile, snapshotName, restoreManager);
     }
-    
-    
 
     @Test
     public void testFailureMissingManifestItem() throws Exception {
@@ -105,14 +106,13 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
     }
-    
+
     private void setupStepExecutionFailure() {
         stepExecution.setTerminateOnly();
         expectLastCall();
         stepExecution.upgradeStatus(BatchStatus.FAILED);
         expectLastCall();
-     }
-
+    }
 
     @Test
     public void testFailureChecksumMismatch() throws Exception {
@@ -122,7 +122,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
         //replace the checksum of last item with bad checksum.
-        snapshotContentItems.get(snapshotContentItems.size()-1).setMetadata(getMetadata("badchecksum"));
+        snapshotContentItems.get(snapshotContentItems.size() - 1).setMetadata(getMetadata("badchecksum"));
         replayAll();
         createVerifier();
         simulateStepExecution(ExitStatus.FAILED, snapshotContentItems);
@@ -130,12 +130,12 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
 
     @Test
     public void testFailureMissingSnapshotItem() throws Exception {
-        setupStepExecution(1, itemCount-1);
+        setupStepExecution(1, itemCount - 1);
         setupStepExecutionFailure();
 
         List<ManifestEntry> list = setupManifestFile();
         List<SnapshotContentItem> snapshotContentItems = setupSnapshotContentItems(list);
-        //remove a snapshot item 
+        //remove a snapshot item
         snapshotContentItems.remove(0);
         replayAll();
         createVerifier();
@@ -148,7 +148,7 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
      */
     private List<SnapshotContentItem> setupSnapshotContentItems(List<ManifestEntry> list) {
         List<SnapshotContentItem> snapshotContentItems = new ArrayList<>();
-        for(ManifestEntry e : list){
+        for (ManifestEntry e : list) {
             String contentId = e.getContentId();
             String checksum = e.getChecksum();
             SnapshotContentItem c = createSnapshotContentItem(contentId, checksum);
@@ -156,7 +156,6 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         }
         return snapshotContentItems;
     }
-
 
     /**
      * @param contentId
@@ -170,17 +169,15 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         return c;
     }
 
-
     /**
      * @param checksum
      * @return
      */
     private String getMetadata(String checksum) {
-        Map<String,String> props = new HashMap<>();
+        Map<String, String> props = new HashMap<>();
         props.put(ContentStore.CONTENT_CHECKSUM, checksum);
         return PropertiesSerializer.serialize(props);
     }
-
 
     /**
      * @param manifestFile
@@ -190,23 +187,22 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
     private List<ManifestEntry> setupManifestFile() throws IOException {
         return ManifestTestHelper.setupManifestFile(this.manifestFile, itemCount, "checksum", "contentid");
     }
-    
-    private void setupStepExecution() throws Exception{
+
+    private void setupStepExecution() throws Exception {
         setupStepExecution(0, itemCount);
     }
-    
+
     private void setupStepExecution(int errorCount, int itemCount) throws Exception {
         expect(stepExecution.getExitStatus()).andReturn(ExitStatus.COMPLETED);
         expect(stepExecution.getId()).andReturn(1000l).atLeastOnce();
         expect(stepExecution.getJobExecutionId()).andReturn(1001l).atLeastOnce();
-        
+
         expect(restoreManager.transitionRestoreStatus(eq(restoreId),
                                                       eq(RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST),
                                                       eq(""))).andReturn(EasyMock.createMock(Restoration.class));
 
-    
         ExecutionContext context = createMock(ExecutionContext.class);
-        expect(context.getLong(isA(String.class), anyLong())).andReturn((long)itemCount).anyTimes();
+        expect(context.getLong(isA(String.class), anyLong())).andReturn((long) itemCount).anyTimes();
 
         context.putLong(isA(String.class), anyLong());
         expectLastCall().atLeastOnce();
@@ -216,15 +212,15 @@ public class SnapshotContentItemVerifierTest extends EasyMockSupport  {
         context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
         expectLastCall();
         expect(stepExecution.getExecutionContext()).andReturn(context).atLeastOnce();
-        
-        if(errorCount > 0){
+
+        if (errorCount > 0) {
             context.put(isA(String.class), eq(errors));
             expectLastCall().times(errorCount);
             context.put(eq(StepExecutionSupport.ERRORS_KEY), eq(new LinkedList<>()));
             expectLastCall();
         }
     }
-    
+
     /**
      * @param expectedStatus
      * @throws Exception

@@ -7,8 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
-import static org.junit.Assert.*;
+import static org.easymock.EasyMock.expect;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,7 +34,7 @@ import org.junit.Test;
 /**
  * @author Daniel Bernstein Date: Sep 11, 2015
  */
-public class SpaceManifestDpnManifestVerifierTest extends SnapshotTestBase {
+public class SpaceManifestSnapshotManifestVerifierTest extends SnapshotTestBase {
 
     private String spaceId = "space-id";
     private String correctChecksum = "correct";
@@ -69,7 +70,7 @@ public class SpaceManifestDpnManifestVerifierTest extends SnapshotTestBase {
         expect(generator.generate(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items));
         ManifestTestHelper.setupManifestFile(md5Manifest, items.size(), correctChecksum, contentIdPrefix);
         replayAll();
-        SpaceManifestDpnManifestVerifier verifier = setupVerifier();
+        SpaceManifestSnapshotManifestVerifier verifier = setupVerifier();
 
         assertTrue(verifier.verify());
         assertTrue(verifier.getErrors().isEmpty());
@@ -103,7 +104,7 @@ public class SpaceManifestDpnManifestVerifierTest extends SnapshotTestBase {
         expect(generator.generate(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items));
         ManifestTestHelper.setupManifestFile(md5Manifest, items.size(), incorrectChecksum, contentIdPrefix);
         replayAll();
-        SpaceManifestDpnManifestVerifier verifier = setupVerifier();
+        SpaceManifestSnapshotManifestVerifier verifier = setupVerifier();
         assertFalse(verifier.verify());
         assertTrue(!verifier.getErrors().isEmpty());
     }
@@ -114,7 +115,7 @@ public class SpaceManifestDpnManifestVerifierTest extends SnapshotTestBase {
         expect(generator.generate(spaceId, ManifestFormat.TSV)).andReturn(createManifestInputStream(items));
         ManifestTestHelper.setupManifestFile(md5Manifest, items.size() + 1, correctChecksum, contentIdPrefix);
         replayAll();
-        SpaceManifestDpnManifestVerifier verifier = setupVerifier();
+        SpaceManifestSnapshotManifestVerifier verifier = setupVerifier();
 
         assertFalse(verifier.verify());
         assertTrue(!verifier.getErrors().isEmpty());
@@ -124,9 +125,9 @@ public class SpaceManifestDpnManifestVerifierTest extends SnapshotTestBase {
     /**
      * @return
      */
-    private SpaceManifestDpnManifestVerifier setupVerifier() {
-        SpaceManifestDpnManifestVerifier verifier =
-            new SpaceManifestDpnManifestVerifier(md5Manifest, generator, spaceId);
+    private SpaceManifestSnapshotManifestVerifier setupVerifier() {
+        SpaceManifestSnapshotManifestVerifier verifier =
+            new SpaceManifestSnapshotManifestVerifier(md5Manifest, generator, spaceId);
         return verifier;
     }
 

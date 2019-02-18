@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * @author Bill Branan
- *         Date: 2/13/14
+ * Date: 2/13/14
  */
 public class ExecutionListenerConfig {
 
@@ -22,9 +22,9 @@ public class ExecutionListenerConfig {
     private String sesPassword;
     private String originatorEmailAddress;
     private String[] duracloudEmailAddresses;
-    private String[] dpnEmailAddresses;
+    private String[] targetStoreEmailAddresses;
     private File contentRoot;
-    
+
     public String getSesUsername() {
         return sesUsername;
     }
@@ -57,28 +57,28 @@ public class ExecutionListenerConfig {
         this.duracloudEmailAddresses = duracloudEmailAddresses;
     }
 
-    public String[] getDpnEmailAddresses() {
-        return dpnEmailAddresses;
+    public String[] getTargetStoreEmailAddresses() {
+        return targetStoreEmailAddresses;
     }
 
-    public void setDpnEmailAddresses(String[] dpnEmailAddresses) {
-        this.dpnEmailAddresses = dpnEmailAddresses;
+    public void setTargetStoreEmailAddresses(String[] targetStoreEmailAddresses) {
+        this.targetStoreEmailAddresses = targetStoreEmailAddresses;
     }
 
     public String[] getAllEmailAddresses() {
         List<String> allAddresses = new ArrayList<String>();
         allAddresses.addAll(Arrays.asList(duracloudEmailAddresses));
-        allAddresses.addAll(Arrays.asList(dpnEmailAddresses));
+        allAddresses.addAll(Arrays.asList(targetStoreEmailAddresses));
         return allAddresses.toArray(new String[allAddresses.size()]);
     }
-    
+
     /**
      * @param contentRoot the contentRoot to set
      */
     public void setContentRoot(File contentRoot) {
         this.contentRoot = contentRoot;
     }
-    
+
     /**
      * @return the content root directory
      */

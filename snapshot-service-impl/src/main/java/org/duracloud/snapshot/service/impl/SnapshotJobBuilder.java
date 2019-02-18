@@ -7,12 +7,7 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +51,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBuilder<Snapshot> {
     private static Logger log = LoggerFactory.getLogger(SnapshotJobBuilder.class);
 
-    private static final String MANIFEST_SHA256_TXT_FILE_NAME = 
+    private static final String MANIFEST_SHA256_TXT_FILE_NAME =
         SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME;
-    private static final String MANIFEST_MD5_TXT_FILE_NAME = 
+    private static final String MANIFEST_MD5_TXT_FILE_NAME =
         SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME;
     private SnapshotJobExecutionListener jobListener;
     private JobRepository jobRepository;
@@ -66,11 +61,11 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
     private TaskExecutor taskExecutor;
     private SnapshotManager snapshotManager;
     private StoreClientHelper storeClientHelper;
-    
+
     @Autowired
-    public SnapshotJobBuilder(SnapshotJobExecutionListener jobListener, 
+    public SnapshotJobBuilder(SnapshotJobExecutionListener jobListener,
                               JobRepository jobRepository,
-                              PlatformTransactionManager transactionManager, 
+                              PlatformTransactionManager transactionManager,
                               @Qualifier("itemTaskExecutor") TaskExecutor taskExecutor,
                               SnapshotManager snapshotManager,
                               StoreClientHelper storeClientHelper) {
@@ -84,7 +79,8 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java.lang.Object, org.duracloud.snapshot.manager.config.SnapshotJobManagerConfig)
+     * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJob(java.lang.Object, org.duracloud
+     * .snapshot.manager.config.SnapshotJobManagerConfig)
      */
     @Override
     public Job buildJob(Snapshot snapshot, SnapshotJobManagerConfig config)
@@ -92,12 +88,12 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
 
         Job job;
         try {
-            
+
             DuracloudEndPointConfig source = snapshot.getSource();
 
             ContentStore contentStore =
-                storeClientHelper.create(source,config.getDuracloudUsername(),
-                                              config.getDuracloudPassword());
+                storeClientHelper.create(source, config.getDuracloudUsername(),
+                                         config.getDuracloudPassword());
 
             List<String> spaces = new ArrayList<>();
             spaces.add(source.getSpaceId());
@@ -113,7 +109,7 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
             File contentDir =
                 new File(ContentDirUtils.getDestinationPath(snapshot.getName(),
                                                             config.getContentRootDir()));
-            if(!contentDir.exists()){
+            if (!contentDir.exists()) {
                 contentDir.mkdirs();
             }
 
@@ -121,10 +117,10 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
             File md5File = new File(contentDir, MANIFEST_MD5_TXT_FILE_NAME);
             File sha256File = new File(contentDir, MANIFEST_SHA256_TXT_FILE_NAME);
 
-            SpaceManifestDpnManifestVerifier verifier =
-                new SpaceManifestDpnManifestVerifier(md5File,
-                                                     new StitchedManifestGenerator(contentStore),
-                                                     source.getSpaceId());
+            SpaceManifestSnapshotManifestVerifier verifier =
+                new SpaceManifestSnapshotManifestVerifier(md5File,
+                                                          new StitchedManifestGenerator(contentStore),
+                                                          source.getSpaceId());
             ItemWriter itemWriter =
                 new SpaceItemWriter(snapshot,
                                     retrievalSource,
@@ -174,7 +170,7 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
         JobParameters params = new JobParameters(map);
         return params;
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.manager.spring.batch.BatchJobBuilder#buildJobParameters(java.lang.Object)
      */
@@ -183,10 +179,9 @@ public class SnapshotJobBuilder extends AbstractJobBuilder implements BatchJobBu
         return buildIdentifyingJobParameters(snapshot);
     }
 
-    private Map<String,JobParameter> createIdentifyingJobParameters(Snapshot snapshot) {
+    private Map<String, JobParameter> createIdentifyingJobParameters(Snapshot snapshot) {
         return SnapshotJobParameterMarshaller.marshal(snapshot);
     }
-
 
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.impl.BatchJobBuilder#getJobName()

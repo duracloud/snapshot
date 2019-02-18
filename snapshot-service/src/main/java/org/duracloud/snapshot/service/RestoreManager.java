@@ -17,19 +17,19 @@ import org.duracloud.snapshot.dto.RestoreStatus;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 15, 2014
+ * Date: Jul 15, 2014
  */
 public interface RestoreManager {
-    
+
     /**
-     * 
      * @param config
      * @param jobManager
      */
     void init(RestoreManagerConfig config, SnapshotJobManager jobManager);
-    
+
     /**
      * Initiates the restoration of a snapshot.
+     *
      * @param snapshotId
      * @param destination
      * @param userEmail
@@ -41,27 +41,26 @@ public interface RestoreManager {
     Restoration restoreSnapshot(String snapshotId,
                                 DuracloudEndPointConfig destination,
                                 String userEmail)
-        throws SnapshotNotFoundException,
-            SnapshotInProcessException,
-            SnapshotException;
+        throws SnapshotNotFoundException, SnapshotInProcessException, SnapshotException;
 
     /**
      * Sends an email request to duracloud admin to restore a space.
+     *
      * @param snapshotId
      * @param destination The destination where the restore should occur.
-     * @param userEmail email to notify when restore starts and ends.
+     * @param userEmail   email to notify when restore starts and ends.
      * @return snapshot to be restored
      * @throws SnapshotNotFoundException
      */
     Snapshot requestRestoreSnapshot(String snapshotId,
-                                DuracloudEndPointConfig destination,
-                                String userEmail)
+                                    DuracloudEndPointConfig destination,
+                                    String userEmail)
         throws SnapshotException;
-    
+
     /**
-     * Called by the process responsible for performing the restoration from 
-     * DPN to Bridge Storage upon completion of the transfer.
-     * 
+     * Called by the process responsible for performing the restoration from
+     * preservation storage to Bridge Storage upon completion of the transfer.
+     *
      * @param restorationId
      * @return
      * @throws SnapshotNotFoundException
@@ -70,10 +69,8 @@ public interface RestoreManager {
      * @throws SnapshotException
      */
     Restoration restoreCompleted(String restorationId)
-        throws SnapshotNotFoundException,
-            SnapshotInProcessException,
-            NoRestorationInProcessException,
-            SnapshotException;
+        throws SnapshotNotFoundException, SnapshotInProcessException,
+        NoRestorationInProcessException, SnapshotException;
 
     /**
      * @param restorationId
@@ -107,16 +104,19 @@ public interface RestoreManager {
      * Look for restorations which have expired, and perform final cleanup actions
      */
     public void finalizeRestores();
-    
+
     /**
      * Cancels a restore.
+     *
      * @param restoreId
-     * @throws SnapshotException 
+     * @throws SnapshotException
      */
     public void cancelRestore(String restoreId) throws SnapshotException;
-    
+
     /**
-     * Restarts a restore.  Assumes that the DPN transfer was successful.
+     * Restarts a restore.  Assumes that the transfer from preservation storage
+     * was successful.
+     *
      * @param restoreId
      * @throws SnapshotException
      */

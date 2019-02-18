@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -60,14 +59,14 @@ import org.springframework.stereotype.Component;
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
  * engine.
- * 
+ *
  * @author Daniel Bernstein Date: Feb 4, 2014
  */
 @Component
 @Path("/")
-@Lazy(value=false)
+@Lazy(value = false)
 public class GeneralResource {
-    
+
     private static Logger log = LoggerFactory.getLogger(GeneralResource.class);
 
     @Context
@@ -78,9 +77,9 @@ public class GeneralResource {
 
     @Context
     UriInfo uriInfo;
-    
+
     private static Timer Timer = new Timer();
-   
+
     private SnapshotJobManager jobManager;
     private DatabaseInitializer databaseInitializer;
     private SnapshotJobExecutionListener snapshotJobListener;
@@ -92,15 +91,15 @@ public class GeneralResource {
     private PurgeObsoleteDataTask purgeObsoleteDataTask;
 
     @Autowired
-    public GeneralResource(SnapshotJobManager jobManager, 
-                            RestoreManager restorationManager,
-                            DatabaseInitializer databaseInitializer,
-                            SnapshotJobExecutionListener snapshotJobListener,
-                            RestoreJobExecutionListener restoreListener,
-                            NotificationManager notificationManager, 
-                            Finalizer finalizer,
-                            BridgeConfiguration bridgeConfiguration,
-                            PurgeObsoleteDataTask purgeObsoleteDataTask) {
+    public GeneralResource(SnapshotJobManager jobManager,
+                           RestoreManager restorationManager,
+                           DatabaseInitializer databaseInitializer,
+                           SnapshotJobExecutionListener snapshotJobListener,
+                           RestoreJobExecutionListener restoreListener,
+                           NotificationManager notificationManager,
+                           Finalizer finalizer,
+                           BridgeConfiguration bridgeConfiguration,
+                           PurgeObsoleteDataTask purgeObsoleteDataTask) {
         this.jobManager = jobManager;
         this.restorationManager = restorationManager;
         this.databaseInitializer = databaseInitializer;
@@ -110,14 +109,13 @@ public class GeneralResource {
         this.finalizer = finalizer;
         this.bridgeConfiguration = bridgeConfiguration;
         this.purgeObsoleteDataTask = purgeObsoleteDataTask;
-        
-    }    
+
+    }
 
     @PostConstruct()
-    public void init(){
+    public void init() {
         initFromStoreInitConfig();
     }
-    
 
     @Path("init")
     @POST
@@ -125,7 +123,7 @@ public class GeneralResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response init(InitParams initParams) {
         try {
-            
+
             checkIfAlreadyInitialized();
 
             initBridgeConfiguration(initParams);
@@ -145,15 +143,15 @@ public class GeneralResource {
 
             return Response.accepted().entity(new ResponseDetails("success!")).build();
         } catch (Exception e) {
-            log.error("failed to initialize: "+ e.getMessage(), e);
+            log.error("failed to initialize: " + e.getMessage(), e);
             return Response.serverError()
-                           .entity(new ResponseDetails("failure!"+e.getMessage()))
+                           .entity(new ResponseDetails("failure!" + e.getMessage()))
                            .build();
         }
     }
 
-    private void checkIfAlreadyInitialized() throws AlreadyInitializedException{
-        if(this.jobManager.isInitialized()){
+    private void checkIfAlreadyInitialized() throws AlreadyInitializedException {
+        if (this.jobManager.isInitialized()) {
             throw new AlreadyInitializedException("The bridge has already been initialized.");
         }
     }
@@ -171,10 +169,10 @@ public class GeneralResource {
             log.error("failed to write init config: " + e.getMessage(), e);
         }
     }
-    
+
     private void initFromStoreInitConfig() {
         File storedInitFile = getStoreInitFile();
-        if(!storedInitFile.exists()){
+        if (!storedInitFile.exists()) {
             log.info("The encrypted stored init file ({}) does not exist. Ignoring...",
                      storedInitFile.getAbsolutePath());
             return;
@@ -186,9 +184,9 @@ public class GeneralResource {
             init(getStoredInitParams());
         } catch (IOException e) {
             log.error("failed to initialize from stored config: " + e.getMessage(), e);
-        } 
+        }
     }
-    
+
     protected InitParams getStoredInitParams() throws IOException {
         File storedInitFile = getStoreInitFile();
         try (InputStream is = new FileInputStream(storedInitFile)) {
@@ -210,7 +208,7 @@ public class GeneralResource {
      * @return
      */
     protected File getStoreInitFile() {
-       return  new File(BridgeConfiguration.getBridgeRootDir(), "duracloud-bridge-init.dat");
+        return new File(BridgeConfiguration.getBridgeRootDir(), "duracloud-bridge-init.dat");
     }
 
     /**
@@ -229,7 +227,7 @@ public class GeneralResource {
         this.bridgeConfiguration.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         this.bridgeConfiguration.setDuracloudUsername(initParams.getDuracloudUsername());
         this.bridgeConfiguration.setDuracloudPassword(initParams.getDuracloudPassword());
-        assert(BridgeConfiguration.getBridgeRootDir().exists());
+        assert (BridgeConfiguration.getBridgeRootDir().exists());
     }
 
     /**
@@ -247,7 +245,7 @@ public class GeneralResource {
         List<NotificationConfig> notifyConfigs = new ArrayList<>();
         notifyConfigs.add(notifyConfig);
         notificationManager.initializeNotifiers(notifyConfigs);
-        
+
     }
 
     /**
@@ -256,7 +254,7 @@ public class GeneralResource {
     private void initRestorationResource(InitParams initParams) {
         RestoreManagerConfig config = new RestoreManagerConfig();
         config.setRestorationRootDir(BridgeConfiguration.getContentRootDir().getAbsolutePath());
-        config.setDpnEmailAddresses(initParams.getDpnEmailAddresses());
+        config.setTargetStoreEmailAddresses(initParams.getTargetStoreEmailAddresses());
         config.setDuracloudEmailAddresses(initParams.getDuracloudEmailAddresses());
         config.setDuracloudUsername(initParams.getDuracloudUsername());
         config.setDuracloudPassword(initParams.getDuracloudPassword());
@@ -268,22 +266,21 @@ public class GeneralResource {
      * @param initParams
      */
     private void initDatabase(InitParams initParams) {
-        DatabaseConfig dbConfig  = new DatabaseConfig();
+        DatabaseConfig dbConfig = new DatabaseConfig();
         dbConfig.setUrl(initParams.getDatabaseURL());
         dbConfig.setUsername(initParams.getDatabaseUser());
         dbConfig.setPassword(initParams.getDatabasePassword());
         dbConfig.setClean(initParams.isClean());
         //initialize database
         databaseInitializer.init(dbConfig);
-        
+
         //create cleaner task;
         Timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 purgeObsoleteDataTask.run();
             }
-        }, 1000,  24*60*60*1000);
-        
+        }, 1000, 24 * 60 * 60 * 1000);
 
     }
 
@@ -296,8 +293,8 @@ public class GeneralResource {
         notifyConfig.setSesPassword(initParams.getAwsSecretKey());
         notifyConfig.setDuracloudEmailAddresses(
             initParams.getDuracloudEmailAddresses());
-        notifyConfig.setDpnEmailAddresses(
-            initParams.getDpnEmailAddresses());
+        notifyConfig.setTargetStoreEmailAddresses(
+            initParams.getTargetStoreEmailAddresses());
         notifyConfig.setOriginatorEmailAddress(
             initParams.getOriginatorEmailAddress());
         notifyConfig.setContentRoot(BridgeConfiguration.getContentRootDir());
@@ -305,26 +302,22 @@ public class GeneralResource {
         this.restoreJobListener.init(notifyConfig, initParams.getDaysToExpireRestore());
     }
 
-
     /**
      * @param initParams
      */
-    private void initJobManager(InitParams initParams) throws AlreadyInitializedException{
+    private void initJobManager(InitParams initParams) throws AlreadyInitializedException {
 
-
-        
         SnapshotJobManagerConfig jobManagerConfig = new SnapshotJobManagerConfig();
         jobManagerConfig.setDuracloudUsername(initParams.getDuracloudUsername());
         jobManagerConfig.setDuracloudPassword(initParams.getDuracloudPassword());
         jobManagerConfig.setContentRootDir(BridgeConfiguration.getContentRootDir());
         jobManagerConfig.setWorkDir(BridgeConfiguration.getBridgeWorkDir());
         this.jobManager.init(jobManagerConfig);
-    }   
-    
+    }
 
     /**
      * Returns a list of snapshots.
-     * 
+     *
      * @return
      */
     @Path("version")

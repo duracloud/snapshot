@@ -9,7 +9,6 @@ package org.duracloud.snapshot.db;
 
 import java.text.MessageFormat;
 import java.util.Properties;
-
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
@@ -29,13 +28,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
- * 
  * @author Daniel Bernstein
- * 
  */
 @Configuration
-@EnableJpaRepositories(basePackages = { "org.duracloud.snapshot.db" }, 
-                       entityManagerFactoryRef = SnapshotDatabaseConfig.ENTITY_MANAGER_FACTORY_BEAN, 
+@EnableJpaRepositories(basePackages = {"org.duracloud.snapshot.db"},
+                       entityManagerFactoryRef = SnapshotDatabaseConfig.ENTITY_MANAGER_FACTORY_BEAN,
                        transactionManagerRef = SnapshotDatabaseConfig.TRANSACTION_MANAGER_BEAN)
 @EnableTransactionManagement
 public class SnapshotDatabaseConfig {
@@ -52,13 +49,13 @@ public class SnapshotDatabaseConfig {
         BasicDataSource dataSource = new BasicDataSource();
         dataSource.setDriverClassName("com.mysql.jdbc.Driver");
         dataSource.setUrl(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}" +
-                    "?useLegacyDatetimeCode=false" +
-                    "&serverTimezone=GMT" +
-                    "&characterEncoding=utf8" +
-                    "&characterSetResults=utf8",
-                   env.getProperty("snapshot.db.host", "localhost"),
-                   env.getProperty("snapshot.db.port", "3306"),
-                   env.getProperty("snapshot.db.name", "snapshot")));
+                                               "?useLegacyDatetimeCode=false" +
+                                               "&serverTimezone=GMT" +
+                                               "&characterEncoding=utf8" +
+                                               "&characterSetResults=utf8",
+                                               env.getProperty("snapshot.db.host", "localhost"),
+                                               env.getProperty("snapshot.db.port", "3306"),
+                                               env.getProperty("snapshot.db.name", "snapshot")));
         dataSource.setUsername(env.getProperty("snapshot.db.user", "user"));
         dataSource.setPassword(env.getProperty("snapshot.db.pass", "pass"));
         //ensure connection pool does not limit database connection creation
@@ -70,10 +67,11 @@ public class SnapshotDatabaseConfig {
         return dataSource;
     }
 
-    @Bean(name=TRANSACTION_MANAGER_BEAN)
+    @Bean(name = TRANSACTION_MANAGER_BEAN)
     @Primary
-    public PlatformTransactionManager
-        snapshotTransactionManager(@Qualifier(ENTITY_MANAGER_FACTORY_BEAN) EntityManagerFactory entityManagerFactory) {
+    public PlatformTransactionManager snapshotTransactionManager(
+        @Qualifier(ENTITY_MANAGER_FACTORY_BEAN) EntityManagerFactory entityManagerFactory) {
+
         JpaTransactionManager tm =
             new JpaTransactionManager(entityManagerFactory);
         tm.setJpaDialect(new HibernateJpaDialect());
@@ -81,17 +79,18 @@ public class SnapshotDatabaseConfig {
     }
 
     @Bean(name = ENTITY_MANAGER_FACTORY_BEAN)
-    public LocalContainerEntityManagerFactoryBean
-        snapshotRepoEntityManagerFactory(@Qualifier(SNAPSHOT_REPO_DATA_SOURCE_BEAN) DataSource dataSource) {
+    public LocalContainerEntityManagerFactoryBean snapshotRepoEntityManagerFactory(
+        @Qualifier(SNAPSHOT_REPO_DATA_SOURCE_BEAN) DataSource dataSource) {
+
         LocalContainerEntityManagerFactoryBean emf =
             new LocalContainerEntityManagerFactoryBean();
         emf.setDataSource(dataSource);
         emf.setPersistenceUnitName("snapshot-repo-pu");
         emf.setPackagesToScan("org.duracloud.snapshot");
 
-        JpaConfigurationUtil.configureEntityManagerFactory(env,emf);
+        JpaConfigurationUtil.configureEntityManagerFactory(env, emf);
 
-        if(Boolean.parseBoolean(env.getProperty("generate.database", "false"))){
+        if (Boolean.parseBoolean(env.getProperty("generate.database", "false"))) {
             Properties properties = new Properties();
             properties.setProperty("javax.persistence.schema-generation.database.action", "create");
             emf.setJpaProperties(properties);
@@ -100,5 +99,4 @@ public class SnapshotDatabaseConfig {
         return emf;
     }
 
-  
 }

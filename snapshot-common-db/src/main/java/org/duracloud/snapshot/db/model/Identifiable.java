@@ -9,9 +9,10 @@ package org.duracloud.snapshot.db.model;
 
 /**
  * @author Daniel Bernstein
- *         Date: Jul 21, 2014
+ * Date: Jul 21, 2014
  */
 public interface Identifiable {
     public Long getId();
+
     public void setId(Long id);
 }

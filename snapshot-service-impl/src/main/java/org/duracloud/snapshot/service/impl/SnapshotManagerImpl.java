@@ -29,8 +29,8 @@ import org.duracloud.client.task.SnapshotTaskClient;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
 import org.duracloud.common.notification.NotificationType;
-import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.retry.Retriable;
+import org.duracloud.common.retry.Retrier;
 import org.duracloud.common.util.ChecksumUtil;
 import org.duracloud.common.util.ChecksumUtil.Algorithm;
 import org.duracloud.common.util.IOUtil;
@@ -59,7 +59,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * @author Daniel Bernstein Date: Jul 31, 2014
  */
@@ -69,16 +68,15 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     private static Logger log = LoggerFactory.getLogger(SnapshotManagerImpl.class);
 
-    protected static String[] METADATA_FILENAMES = {Constants.SNAPSHOT_PROPS_FILENAME, 
-        SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME, 
-        SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME,
-        SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME};
-    
-    private Map<String,Date> lastCleanupFailureNotificationBySnapshot = new HashMap<String,Date>();
-    
+    protected static String[] METADATA_FILENAMES = {Constants.SNAPSHOT_PROPS_FILENAME,
+                                                    SnapshotServiceConstants.CONTENT_PROPERTIES_JSON_FILENAME,
+                                                    SnapshotServiceConstants.MANIFEST_MD5_TXT_FILE_NAME,
+                                                    SnapshotServiceConstants.MANIFEST_SHA256_TXT_FILE_NAME};
+
+    private Map<String, Date> lastCleanupFailureNotificationBySnapshot = new HashMap<String, Date>();
+
     //by default 1 day
-    private long secondsBetweenCleanupFailureNotifications = 86400; 
-    
+    private long secondsBetweenCleanupFailureNotifications = 86400;
 
     //NOTE: auto wiring at the field level rather than in the constructor seems to be necessary
     //      when annotating methods with @Transactional.
@@ -93,17 +91,18 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     @Autowired
     private SnapshotTaskClientHelper snapshotTaskClientHelper;
-    
-    @Autowired 
+
+    @Autowired
     private StoreClientHelper storeClientHelper;
-    
+
     @Autowired
     private BridgeConfiguration bridgeConfig;
 
     @Autowired
     private EventLog eventLog;
 
-    public SnapshotManagerImpl() {}
+    public SnapshotManagerImpl() {
+    }
 
     /**
      * @param snapshotContentItemRepo the snapshotContentItemRepo to set
@@ -142,7 +141,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.duracloud.snapshot.service.SnapshotManager#addContentItem(
      *  org.duracloud.snapshot.db.model.Snapshot, java.lang.String, java.util.Map)
      */
@@ -152,14 +151,13 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                String contentId,
                                Map<String, String> props)
         throws SnapshotException {
-        
+
         String contentIdHash = createChecksumGenerator().generateChecksum(contentId);
-        try{
-            
-            if(this.snapshotContentItemRepo.findBySnapshotAndContentIdHash(snapshot, contentIdHash) != null){
+        try {
+            if (this.snapshotContentItemRepo.findBySnapshotAndContentIdHash(snapshot, contentIdHash) != null) {
                 return;
             }
-            
+
             SnapshotContentItem item = new SnapshotContentItem();
             item.setContentId(contentId);
             item.setSnapshot(snapshot);
@@ -167,20 +165,22 @@ public class SnapshotManagerImpl implements SnapshotManager {
             String propString = PropertiesSerializer.serialize(props);
             item.setMetadata(propString);
             this.snapshotContentItemRepo.save(item);
-        } catch(Exception ex){
+        } catch (Exception ex) {
             throw new SnapshotException("failed to add content item: " + ex.getMessage(), ex);
         }
     }
 
     @Override
     @Transactional
-    public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds) throws AlternateIdAlreadyExistsException {
+    public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
+        throws AlternateIdAlreadyExistsException {
         snapshot = this.snapshotRepo.findOne(snapshot.getId());
-        for(String altId : alternateIds){
+        for (String altId : alternateIds) {
             Snapshot altSnapshot = this.snapshotRepo.findBySnapshotAlternateIds(altId);
             if (altSnapshot != null && !altSnapshot.getName().equals(snapshot.getName())) {
                 throw new AlternateIdAlreadyExistsException("The alternate snapshot id ("
-                    + altId + ") already exists in another snapshot (" + altSnapshot.getName()+")");
+                                                            + altId + ") already exists in another snapshot (" +
+                                                            altSnapshot.getName() + ")");
             }
         }
         snapshot.addSnapshotAlternateIds(alternateIds);
@@ -188,11 +188,11 @@ public class SnapshotManagerImpl implements SnapshotManager {
     }
 
     /* (non-Javadoc)
-     * @see org.duracloud.snapshot.service.SnapshotManager#transferToDpnNodeComplete(java.lang.String)
+     * @see org.duracloud.snapshot.service.SnapshotManager#transferToStorageComplete(java.lang.String)
      */
     @Override
     @Transactional
-    public Snapshot transferToDpnNodeComplete(String snapshotId)
+    public Snapshot transferToStorageComplete(String snapshotId)
         throws SnapshotException {
         try {
             Snapshot snapshot = getSnapshot(snapshotId);
@@ -203,32 +203,32 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                                    BridgeConfiguration.getContentRootDir()));
 
             File zipFile = zipMetadata(snapshotId, snapshotDir);
-            
+
             DuracloudEndPointConfig source = snapshot.getSource();
 
             ContentStore store = getContentStore(source);
-            
-            ensureMetadataSpaceExists(store); 
-            
+
+            ensureMetadataSpaceExists(store);
+
             String zipChecksum = createChecksumGenerator().generateChecksum(zipFile);
 
             try {
-                new Retrier(4, 1000, 2).execute(new Retriable(){
+                new Retrier(4, 1000, 2).execute(new Retriable() {
                     public Object retry() throws Exception {
-                        try(FileInputStream zipStream = new FileInputStream(zipFile)) {
+                        try (FileInputStream zipStream = new FileInputStream(zipFile)) {
                             return store.addContent(Constants.SNAPSHOT_METADATA_SPACE,
-                                             zipFile.getName(),
-                                             zipStream,
-                                             zipFile.length(),
-                                             "application/zip",
-                                             zipChecksum,
-                                             null);
+                                                    zipFile.getName(),
+                                                    zipStream,
+                                                    zipFile.length(),
+                                                    "application/zip",
+                                                    zipChecksum,
+                                                    null);
                         }
                     }
-              });
-            }catch(Exception ex){
+                });
+            } catch (Exception ex) {
                 log.error("failed to upload snapshot zip ("
-                    + zipFile.getAbsolutePath() + ") to duracloud: " + ex.getMessage(), ex);
+                          + zipFile.getAbsolutePath() + ") to duracloud: " + ex.getMessage(), ex);
                 throw new Exception(ex);
             } finally {
                 zipFile.delete();
@@ -240,8 +240,8 @@ public class SnapshotManagerImpl implements SnapshotManager {
             // Call DuraCloud to clean up snapshot
             getSnapshotTaskClient(source).cleanupSnapshot(spaceId);
             log.info("successfully initiated snapshot cleanup on DuraCloud for snapshotId = "
-                + snapshotId + "; spaceId = " + spaceId);
-            
+                     + snapshotId + "; spaceId = " + spaceId);
+
             return snapshot;
         } catch (Exception e) {
             String message = "failed to initiate snapshot clean up: " + e.getMessage();
@@ -314,15 +314,14 @@ public class SnapshotManagerImpl implements SnapshotManager {
      * @throws IOException
      */
     private File zipMetadata(String snapshotId, File snapshotDir)
-        throws FileNotFoundException,
-            IOException {
+        throws FileNotFoundException, IOException {
 
-        File zipFile = new File(snapshotDir, snapshotId+".zip");
-        
+        File zipFile = new File(snapshotDir, snapshotId + ".zip");
+
         FileOutputStream fileOutputStream = new FileOutputStream(zipFile);
         ZipOutputStream zipOs = new ZipOutputStream(fileOutputStream);
-        
-        for(String file : METADATA_FILENAMES) {
+
+        for (String file : METADATA_FILENAMES) {
             IOUtil.addFileToZipOutputStream(new File(snapshotDir, file), zipOs);
         }
 
@@ -341,7 +340,6 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                      bridgeConfig.getDuracloudPassword());
         return store;
     }
-
 
     /**
      * Build the snapshot task client - for communicating with the DuraCloud snapshot
@@ -364,7 +362,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
         Snapshot snapshot = this.snapshotRepo.findByName(snapshotId);
         if (snapshot == null) {
             throw new SnapshotNotFoundException("A snapshot with id "
-                + snapshotId + " does not exist.");
+                                                + snapshotId + " does not exist.");
         }
         return snapshot;
     }
@@ -388,30 +386,30 @@ public class SnapshotManagerImpl implements SnapshotManager {
                                                       message,
                                                       recipients.toArray(new String[0]));
         }
-        
+
         return snapshot;
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.SnapshotManager#finalizeSnapshots()
      */
     @Override
     @Transactional
     public void finalizeSnapshots() {
-         log.debug("Running finalize snapshots...");
+        log.debug("Running finalize snapshots...");
         List<Snapshot> snapshots =
             this.snapshotRepo.findByStatusOrderBySnapshotDateAsc(SnapshotStatus.CLEANING_UP);
-        for(Snapshot snapshot : snapshots){
+        for (Snapshot snapshot : snapshots) {
             DuracloudEndPointConfig source = snapshot.getSource();
             ContentStore store = getContentStore(source);
             String snapshotId = snapshot.getName();
             try {
                 String spaceId = source.getSpaceId();
-                Iterator<String> it  = store.getSpaceContents(spaceId);
-                if(!it.hasNext()) {
+                Iterator<String> it = store.getSpaceContents(spaceId);
+                if (!it.hasNext()) {
                     // Call DuraCloud to complete snapshot
                     log.debug("notifying task provider that snapshot " +
-                              "is complete for space " + spaceId );
+                              "is complete for space " + spaceId);
                     CompleteSnapshotTaskResult result =
                         getSnapshotTaskClient(source).completeSnapshot(spaceId);
                     log.info("snapshot complete call to task provider performed " +
@@ -420,27 +418,27 @@ public class SnapshotManagerImpl implements SnapshotManager {
                     //update snapshot status and notify users
                     cleanupComplete(snapshot);
                 } else {
-                    
+
                     //if snapshot has not been in the CLEANING_UP state
                     //for more than three days, send a warning.
                     Calendar c = Calendar.getInstance();
                     int maxDays = MAX_DAYS_IN_CLEANUP;
-                    c.add(Calendar.DATE, -1*maxDays);
-                    if(snapshot.getModified().before(c.getTime())){
+                    c.add(Calendar.DATE, -1 * maxDays);
+                    if (snapshot.getModified().before(c.getTime())) {
                         //only send a warning if a notification has not already been sent
-                        //within secondsBetweenCleanupFailureNotifications 
+                        //within secondsBetweenCleanupFailureNotifications
                         Date lastNotification = this.lastCleanupFailureNotificationBySnapshot.get(snapshotId);
                         Date nextNotification = new Date();
-                        if(lastNotification != null){
-                            nextNotification = new Date(lastNotification.getTime()+(secondsBetweenCleanupFailureNotifications*1000));
+                        if (lastNotification != null) {
+                            nextNotification = new Date(
+                                lastNotification.getTime() + (secondsBetweenCleanupFailureNotifications * 1000));
                         }
-                        
-                        if(nextNotification.getTime() <= System.currentTimeMillis()){
-                            String subject =
-                                MessageFormat.format("Snapshot cleanup has not completed in over {0} days for snapshot: {1}",
-                                                     maxDays,
-                                                     snapshotId);
-                            
+
+                        if (nextNotification.getTime() <= System.currentTimeMillis()) {
+                            String subject = MessageFormat.format(
+                                "Snapshot cleanup has not completed in over {0} days for snapshot: {1}",
+                                maxDays, snapshotId);
+
                             String body = subject + "\n\nSnapshot object=>" + snapshot;
 
                             String[] recipients = this.bridgeConfig.getDuracloudEmailAddresses();
@@ -483,7 +481,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
     public void setStoreClientHelper(StoreClientHelper storeClientHelper) {
         this.storeClientHelper = storeClientHelper;
     }
-    
+
     /* (non-Javadoc)
      * @see org.duracloud.snapshot.service.SnapshotManager#deleteSnapshot(java.lang.String)
      */
@@ -495,7 +493,7 @@ public class SnapshotManagerImpl implements SnapshotManager {
         snapshotRepo.deleteByName(snapshotId);
         log.info("successfully deleted snapshot: {}", snapshotId);
     }
-    
+
     /**
      * @param secondsBetweenCleanupFailureNotifications the secondsBetweenCleanupFailureNotifications to set
      */

@@ -7,7 +7,9 @@
  */
 package org.duracloud.snapshot.service.impl;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +49,6 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
-
 
 /**
  * @author Daniel Bernstein Date: Feb 19, 2014
@@ -112,7 +113,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
     @Mock
     private EventLog eventLog;
-    
+
     @Before
     @Override
     public void setup() throws Exception {
@@ -178,14 +179,14 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         String restorationId = "restoration-id";
         expect(restoreRepo.findByRestorationId(restorationId)).andReturn(restoration);
 
-
         replayAll();
 
         manager.executeRestoration(restorationId);
 
     }
+
     /**
-     * 
+     *
      */
     private void setupSnapshotRepo() {
         EasyMock.expect(snapshotRepo.findByName(snapshotName))
@@ -208,8 +209,8 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         EasyMock.expect(snapshotJobBuilder.buildIdentifyingJobParameters(snapshot))
                 .andReturn(new JobParameters());
         EasyMock.expect(snapshotJobBuilder.getJobName())
-        .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
-        
+                .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
+
         setupBuilderManager();
 
         EasyMock.expect(jobRepository.getLastJobExecution(EasyMock.isA(String.class),
@@ -229,13 +230,13 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
     public void testCancelSnapshot() throws Exception {
         setupBuilderManager();
         EasyMock.expect(snapshotJobBuilder.buildIdentifyingJobParameters(snapshot))
-        .andReturn(new JobParameters());
+                .andReturn(new JobParameters());
         EasyMock.expect(snapshotJobBuilder.getJobName())
-        .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
+                .andReturn(SnapshotServiceConstants.SNAPSHOT_JOB_NAME);
 
         Job job = createMock(Job.class);
         EasyMock.expect(snapshotJobBuilder.buildJob(snapshot, config))
-        .andReturn(job);
+                .andReturn(job);
 
         expect(this.snapshotRepo.findByName(isA(String.class))).andReturn(snapshot).atLeastOnce();
         setupStop();
@@ -262,10 +263,10 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         replayAll();
 
         this.manager.cancelSnapshot(snapshotName);
-        
+
         Thread.sleep(1000);
     }
-    
+
     @Test
     public void testCancelRestore() throws Exception {
         setupRestoreBuilderManager();
@@ -302,8 +303,6 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         Thread.sleep(1000);
     }
 
-
-       
     /**
      * @throws IOException
      */
@@ -322,7 +321,7 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
         expect(jobExecution.getStepExecutions()).andReturn(new ArrayList<StepExecution>());
         jobExecution.setStatus(BatchStatus.STOPPING);
         expectLastCall();
-        
+
         jobRepository.update(jobExecution);
         expectLastCall();
     }

@@ -7,11 +7,14 @@
  */
 package org.duracloud.snapshot.bridge.rest;
 
-import static org.duracloud.snapshot.common.SnapshotServiceConstants.*;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_INITIATED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_REQUESTED;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ACTION_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_ID_TITLE;
+import static org.duracloud.snapshot.common.SnapshotServiceConstants.RESTORE_USER_TITLE;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -51,7 +54,7 @@ import org.springframework.stereotype.Component;
 /**
  * Defines the REST resource layer for interacting with the Snapshot processing
  * engine.
- * 
+ *
  * @author Daniel Bernstein Date: Feb 4, 2014
  */
 @Component
@@ -83,7 +86,7 @@ public class RestoreResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response restoreSnapshot(CreateRestoreBridgeParameters  params) {
+    public Response restoreSnapshot(CreateRestoreBridgeParameters params) {
         try {
             DuracloudEndPointConfig destination = new DuracloudEndPointConfig();
             destination.setHost(params.getHost());
@@ -93,14 +96,14 @@ public class RestoreResource {
             Restoration result =
                 this.restorationManager.restoreSnapshot(params.getSnapshotId(),
                                                         destination, params.getUserEmail());
-            
+
             log.info("executed restore snapshot:  params=" + params + ", result = " + result);
 
             // Add history event
             String history =
-                "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_INITIATED+"'}," +
-                "{'"+RESTORE_ID_TITLE+"':'"+result.getRestorationId()+"'}," +
-                "{'"+RESTORE_USER_TITLE+"':'"+params.getUserEmail()+"'}]";
+                "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_INITIATED + "'}," +
+                "{'" + RESTORE_ID_TITLE + "':'" + result.getRestorationId() + "'}," +
+                "{'" + RESTORE_USER_TITLE + "':'" + params.getUserEmail() + "'}]";
             snapshotManager.updateHistory(result.getSnapshot(), history);
 
             return Response.created(null)
@@ -114,23 +117,23 @@ public class RestoreResource {
                            .build();
         }
     }
-    
+
     @Path("{restoreId}/restart")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Response restart(@PathParam("restoreId") String restoreId) {
         log.info("attempting restart of restore " + restoreId);
-        
+
         try {
             Restoration restore = this.restorationManager.get(restoreId);
-            
+
             log.debug("restore {} found.", restore);
             RestoreStatus status = restore.getStatus();
-            
-            if(!status.equals(RestoreStatus.ERROR)){
-                String message= "Restore can only be restarted when it has reached " + 
-                                "a failure state. ( restore=" + restore + ")";
-                throw new SnapshotException(message,null);
+
+            if (!status.equals(RestoreStatus.ERROR)) {
+                String message = "Restore can only be restarted when it has reached " +
+                                 "a failure state. ( restore=" + restore + ")";
+                throw new SnapshotException(message, null);
             }
 
             restore = restorationManager.restartRestore(restore.getRestorationId());
@@ -148,18 +151,18 @@ public class RestoreResource {
         }
 
     }
-    
+
     @Path("{restoreId}/cancel")
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Response cancel(@PathParam("restoreId") final String restoreId) throws SnapshotException{
+    public Response cancel(@PathParam("restoreId") final String restoreId) throws SnapshotException {
         log.debug("attempting cancellation of resotre " + restoreId);
-        try{
+        try {
 
             Restoration restore = this.restorationManager.get(restoreId);
             log.debug("restore {} found.", restore);
             RestoreStatus status = restore.getStatus();
-            if (Arrays.asList(new RestoreStatus[] { RestoreStatus.CLEANING_UP, RestoreStatus.RESTORATION_COMPLETE })
+            if (Arrays.asList(new RestoreStatus[] {RestoreStatus.CLEANING_UP, RestoreStatus.RESTORATION_COMPLETE})
                       .contains(status)) {
                 String message = "Restore cannot be cancelled in the cleaning up phase ( restoreId=" + restoreId + ")";
                 throw new RuntimeException(message);
@@ -167,12 +170,12 @@ public class RestoreResource {
 
             restorationManager.cancelRestore(restoreId);
             CancelRestoreBridgeResult result =
-                new CancelRestoreBridgeResult("Cancellation succeeded.  "+
-                                              "The restore process has been stopped and all related metadata has been deleted.",
+                new CancelRestoreBridgeResult("Cancellation succeeded. The restore process has " +
+                                              "been stopped and all related metadata has been deleted.",
                                               RestoreStatus.CANCELLED);
             return Response.ok().entity(result).build();
 
-        }catch(Exception ex){
+        } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
             return Response.serverError()
                            .entity(new ResponseDetails(ex.getMessage()))
@@ -184,7 +187,7 @@ public class RestoreResource {
     @PUT
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response requestRestoreSnapshot(RequestRestoreBridgeParameters  params) {
+    public Response requestRestoreSnapshot(RequestRestoreBridgeParameters params) {
         try {
             DuracloudEndPointConfig destination = new DuracloudEndPointConfig();
             destination.setHost(params.getHost());
@@ -194,13 +197,13 @@ public class RestoreResource {
                 this.restorationManager.requestRestoreSnapshot(params.getSnapshotId(),
                                                                destination,
                                                                params.getUserEmail());
-            
+
             log.info("executed request restore snapshot:  params=" + params);
 
             // Add history event
             String history =
-                "[{'"+RESTORE_ACTION_TITLE+"':'"+RESTORE_ACTION_REQUESTED+"'}," +
-                 "{'"+RESTORE_USER_TITLE+"':'"+params.getUserEmail()+"'}]";
+                "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_REQUESTED + "'}," +
+                "{'" + RESTORE_USER_TITLE + "':'" + params.getUserEmail() + "'}]";
             snapshotManager.updateHistory(snapshot, history);
 
             return Response.created(null)
@@ -226,7 +229,7 @@ public class RestoreResource {
         try {
             Restoration restoration =
                 this.restorationManager.get(restorationId);
-            
+
             return Response.ok()
                            .entity(toGetRestoreBridgeResult(restoration))
                            .build();
@@ -242,7 +245,7 @@ public class RestoreResource {
                            .build();
         }
     }
-    
+
     @Path("by-snapshot/{snapshotId}")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -255,7 +258,7 @@ public class RestoreResource {
         try {
             Restoration restoration =
                 this.restorationManager.getBySnapshotId(snapshotId);
-            
+
             return Response.ok()
                            .entity(toGetRestoreBridgeResult(restoration))
                            .build();
@@ -276,8 +279,7 @@ public class RestoreResource {
      * @param restoration
      * @return
      */
-    private GetRestoreBridgeResult
-        toGetRestoreBridgeResult(Restoration restoration) {
+    private GetRestoreBridgeResult toGetRestoreBridgeResult(Restoration restoration) {
         DuracloudEndPointConfig destination = restoration.getDestination();
         GetRestoreBridgeResult result = new GetRestoreBridgeResult();
         result.setRestoreId(restoration.getRestorationId());
@@ -302,7 +304,7 @@ public class RestoreResource {
         try {
             Restoration restoration =
                 this.restorationManager.restoreCompleted(restorationId);
-            
+
             log.info("executed restoreComplete for {}", restoration);
             return Response.ok()
                            .entity(new CompleteRestoreBridgeResult(restoration.getStatus(),

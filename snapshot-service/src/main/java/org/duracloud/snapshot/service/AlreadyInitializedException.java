@@ -11,10 +11,10 @@ import org.duracloud.snapshot.SnapshotException;
 
 /**
  * @author Daniel Bernstein
- *         Date: Sep 24, 2015
+ * Date: Sep 24, 2015
  */
 public class AlreadyInitializedException extends SnapshotException {
-    public AlreadyInitializedException(String message){
-        super(message,null);
+    public AlreadyInitializedException(String message) {
+        super(message, null);
     }
 }

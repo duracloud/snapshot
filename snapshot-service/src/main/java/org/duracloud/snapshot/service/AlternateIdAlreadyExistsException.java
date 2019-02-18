@@ -11,11 +11,11 @@ import org.duracloud.snapshot.SnapshotException;
 
 /**
  * @author Daniel Bernstein
- *         Date: Aug 24, 2015
+ * Date: Aug 24, 2015
  */
 public class AlternateIdAlreadyExistsException extends SnapshotException {
     /**
-     * 
+     *
      */
     public AlternateIdAlreadyExistsException(String message) {
         super(message, null);

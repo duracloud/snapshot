@@ -17,7 +17,6 @@ import org.duracloud.common.collection.WriteOnlyStringSet;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.retry.Retriable;
 import org.duracloud.common.retry.Retrier;
-import org.duracloud.snapshot.SnapshotConstants;
 import org.duracloud.snapshot.db.model.SnapshotContentItem;
 import org.duracloud.snapshot.dto.RestoreStatus;
 import org.duracloud.snapshot.service.RestoreManager;
@@ -35,7 +34,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
     implements ItemWriter<SnapshotContentItem>, ItemWriteListener<SnapshotContentItem> {
 
     /**
-     * 
+     *
      */
     private Logger log = LoggerFactory.getLogger(SpaceVerifier.class);
     private File manifestFile;
@@ -43,6 +42,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
     private String snapshotName;
     private RestoreManager restoreManager;
     private WriteOnlyStringSet manifestSet;
+
     /**
      * @param restoreId
      * @param manifestFile
@@ -59,7 +59,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#beforeWrite(java.util.
      * List)
@@ -71,7 +71,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#afterWrite(java.util.
      * List)
@@ -80,8 +80,8 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
     public void afterWrite(List<? extends SnapshotContentItem> items) {
         //be sure not to count snapshot prop file.
         int size = items.size();
-        for(SnapshotContentItem item : items){
-            if(item.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)){
+        for (SnapshotContentItem item : items) {
+            if (item.getContentId().equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                 size -= 1;
             }
         }
@@ -90,7 +90,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.springframework.batch.core.ItemWriteListener#onWriteError(java.lang.
      * Exception, java.util.List)
@@ -102,7 +102,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#beforeStep(org.
      * springframework.batch.core.StepExecution)
      */
@@ -117,7 +117,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
             new Retrier().execute(new Retriable() {
                 /*
                  * (non-Javadoc)
-                 * 
+                 *
                  * @see org.duracloud.common.retry.Retriable#retry()
                  */
                 @Override
@@ -130,66 +130,66 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
 
         } catch (Exception ex) {
             addError("failed to transition status to "
-                + RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST + ": " + ex.getMessage());
+                     + RestoreStatus.VERIFYING_SNAPSHOT_REPO_AGAINST_MANIFEST + ": " + ex.getMessage());
             stepExecution.addFailureException(ex);
         }
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.core.StepExecutionListener#afterStep(org.
      * springframework.batch.core.StepExecution)
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-            // compare counts (which should not include SNAPSHOT_PROPS_FILENAME
-            // on the snapshot repo side since it does not get written to the
-            // manifest.
-            long snapshotItemCount = getItemsRead();
-            if (snapshotItemCount == this.manifestSet.size()) {
-                log.debug("snapshot repo count matches manifest count: "
-                    + "step_execution_id={} job_execution_id={} snapshot_name={}",
-                          stepExecution.getId(),
-                          stepExecution.getJobExecutionId(),
-                          this.snapshotName);
-            } else {
-                addError("snapshot ("
-                    + snapshotName + ") content item count (" + snapshotItemCount
-                    + ") does not match manifest count (" + manifestSet.size() + ")");
+        // compare counts (which should not include SNAPSHOT_PROPS_FILENAME
+        // on the snapshot repo side since it does not get written to the
+        // manifest.
+        long snapshotItemCount = getItemsRead();
+        if (snapshotItemCount == this.manifestSet.size()) {
+            log.debug("snapshot repo count matches manifest count: "
+                      + "step_execution_id={} job_execution_id={} snapshot_name={}",
+                      stepExecution.getId(),
+                      stepExecution.getJobExecutionId(),
+                      this.snapshotName);
+        } else {
+            addError("snapshot ("
+                     + snapshotName + ") content item count (" + snapshotItemCount
+                     + ") does not match manifest count (" + manifestSet.size() + ")");
+        }
+
+        ExitStatus status = stepExecution.getExitStatus();
+
+        List<String> errors = getErrors();
+        if (errors.size() > 0) {
+            status = status.and(ExitStatus.FAILED);
+
+            for (String error : errors) {
+                status = status.addExitDescription(error);
             }
 
-            ExitStatus status = stepExecution.getExitStatus();
+            log.error("snapshot repo verification finished: step_execution_id={} "
+                      + "job_execution_id={} snapshot_name={} status=\"{}\"",
+                      stepExecution.getId(),
+                      stepExecution.getJobExecutionId(),
+                      snapshotName,
+                      status);
 
-            List<String> errors = getErrors();
-            if (errors.size() > 0) {
-                status = status.and(ExitStatus.FAILED);
+            failExecution();
 
-                for (String error : errors) {
-                    status = status.addExitDescription(error);
-                }
+            resetContextState();
 
-                log.error("snapshot repo verification finished: step_execution_id={} "
-                    + "job_execution_id={} snapshot_name={} status=\"{}\"",
-                          stepExecution.getId(),
-                          stepExecution.getJobExecutionId(),
-                          snapshotName,
-                          status);
-                
-                failExecution();
+        } else {
+            status = status.and(ExitStatus.COMPLETED);
+        }
 
-                resetContextState();
-
-            } else {
-                status = status.and(ExitStatus.COMPLETED);
-            }
-
-            return status;
+        return status;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.batch.item.ItemWriter#write(java.util.List)
      */
     @Override
@@ -204,7 +204,7 @@ public class SnapshotContentItemVerifier extends StepExecutionSupport
             if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
                 if (!this.manifestSet.contains(ManifestFileHelper.formatManifestSetString(contentId, checksum))) {
                     addError(MessageFormat.format("Content item {0} with checksum {1} not found in manifest "
-                        + "for snapshot {2}", contentId, checksum, this.snapshotName));
+                                                  + "for snapshot {2}", contentId, checksum, this.snapshotName));
                 }
             }
         }

@@ -7,11 +7,9 @@
  */
 package org.duracloud.snapshot;
 
-import org.duracloud.snapshot.SnapshotException;
-
 /**
  * @author Daniel Bernstein
- *         Date: Feb 22, 2018
+ * Date: Feb 22, 2018
  */
 public class EmptySpaceException extends SnapshotException {
     public EmptySpaceException(final String message) {

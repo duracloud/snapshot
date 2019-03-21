@@ -24,6 +24,10 @@ import org.springframework.stereotype.Repository;
 @Repository(value = "snapshotContentItemRepo")
 public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentItem, Long> {
 
+    public List<SnapshotContentItem> findBySnapshotNameOrderByContentIdAsc(
+        @Param("snapshotName") String snapshotName,
+        Pageable pageable);
+
     public List<SnapshotContentItem> findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(
         @Param("snapshotName") String snapshotName,
         @Param("contentId") String contentId,

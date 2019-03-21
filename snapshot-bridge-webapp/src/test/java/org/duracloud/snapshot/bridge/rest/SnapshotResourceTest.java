@@ -558,6 +558,52 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
+    public void testGetSnapshotContentNoPrefix() {
+        String snapshotId = "snapshot-id";
+        int page = 1;
+        int pageSize = 5;
+        String metaName = "metadata-name";
+        String metaValue = "metadata-value";
+        Long count = 1000l;
+
+        Capture<PageRequest> pageRequestCapture = new Capture<>();
+
+        SnapshotContentItem item = new SnapshotContentItem();
+        item.setContentId("test");
+        item.setMetadata("{\"" + metaName + "\" : \"" + metaValue + "\"}");
+
+        List<SnapshotContentItem> contentIds =
+            Arrays.asList(new SnapshotContentItem[] {item});
+        expect(snapshotContentItemRepo
+                   .findBySnapshotNameOrderByContentIdAsc(eq(snapshotId),
+                                                          capture(pageRequestCapture)))
+            .andReturn(contentIds);
+
+        expect(snapshotContentItemRepo
+                   .countBySnapshotName(eq(snapshotId)))
+            .andReturn(count);
+
+        replayAll();
+
+        Response response =
+            resource.getContent(snapshotId, page, pageSize, null);
+        GetSnapshotContentBridgeResult result =
+            (GetSnapshotContentBridgeResult) response.getEntity();
+
+        PageRequest pageRequest = pageRequestCapture.getValue();
+        assertEquals(page, pageRequest.getPageNumber());
+        assertEquals(pageSize, pageRequest.getPageSize());
+
+        org.duracloud.snapshot.dto.SnapshotContentItem resultItem =
+            result.getContentItems().get(0);
+        assertEquals("test", resultItem.getContentId());
+        assertEquals(metaValue,
+                     resultItem.getContentProperties().get(metaName));
+        assertEquals(count, result.getTotalCount());
+
+    }
+
+    @Test
     public void testUpdateHistory() {
         String snapshotId = "snapshot-id";
         String history = "this is some history";

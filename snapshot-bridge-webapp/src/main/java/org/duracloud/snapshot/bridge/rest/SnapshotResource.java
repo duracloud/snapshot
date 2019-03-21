@@ -543,10 +543,19 @@ public class SnapshotResource {
             }
 
             PageRequest pageable = new PageRequest(page, pageSize);
-            List<SnapshotContentItem> items = this.snapshotContentItemRepo
-                .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(snapshotId,
-                                                                               prefix,
-                                                                               pageable);
+
+            List<SnapshotContentItem> items;
+            if (null == prefix || prefix.equals("")) {
+                items = this.snapshotContentItemRepo
+                    .findBySnapshotNameOrderByContentIdAsc(snapshotId,
+                                                           pageable);
+
+            } else {
+                items = this.snapshotContentItemRepo
+                    .findBySnapshotNameAndContentIdStartingWithOrderByContentIdAsc(snapshotId,
+                                                                                   prefix,
+                                                                                   pageable);
+            }
 
             List<org.duracloud.snapshot.dto.SnapshotContentItem> snapshotItems =
                 new ArrayList<>();

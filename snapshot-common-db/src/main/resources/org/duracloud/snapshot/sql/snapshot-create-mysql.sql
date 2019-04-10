@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `snapshot` (
   `modified` datetime NOT NULL,
   `description` longtext,
   `end_date` datetime DEFAULT NULL,
-  `name` longtext NOT NULL,
+  `name` varchar(2000) NOT NULL,
   `snapshot_date` datetime NOT NULL,
   `host` varchar(255) NOT  NULL,
   `port` int(11) NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS `restoration` (
 CREATE TABLE IF NOT EXISTS `snapshot_content_item` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `modified` datetime NOT NULL,
-  `content_id` longtext COLLATE utf8_bin NOT NULL,
+  `content_id` varchar(2000) COLLATE utf8_bin NOT NULL,
   `content_id_hash` varchar(50) COLLATE utf8_bin NOT NULL,
   `metadata` longtext COLLATE utf8_bin,
   `snapshot_id` bigint(20) NOT NULL,

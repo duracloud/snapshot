@@ -41,7 +41,9 @@ public class SpaceManifestSnapshotManifestVerifier {
     private String spaceId;
     private List<String> errors;
 
-    public SpaceManifestSnapshotManifestVerifier(File md5Manifest, StitchedManifestGenerator generator, String spaceId) {
+    public SpaceManifestSnapshotManifestVerifier(File md5Manifest,
+                                                 StitchedManifestGenerator generator,
+                                                 String spaceId) {
         this.md5Manifest = md5Manifest;
         this.generator = generator;
         this.spaceId = spaceId;
@@ -77,8 +79,8 @@ public class SpaceManifestSnapshotManifestVerifier {
                 ManifestItem item = formatter.parseLine(line);
                 String contentId = item.getContentId();
                 if (!contentId.equals(Constants.SNAPSHOT_PROPS_FILENAME)) {
-                    if (!snapshotManifest.contains(ManifestFileHelper.formatManifestSetString(contentId,
-                                                                                         item.getContentChecksum()))) {
+                    if (!snapshotManifest.contains(
+                        ManifestFileHelper.formatManifestSetString(contentId, item.getContentChecksum()))) {
                         String message = "Snapshot manifest does not contain content id/checksum combination ("
                                          + contentId + ", " + item.getContentChecksum();
                         errors.add(message);

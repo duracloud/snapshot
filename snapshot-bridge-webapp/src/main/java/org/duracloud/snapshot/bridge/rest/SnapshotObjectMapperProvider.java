@@ -10,8 +10,9 @@ package org.duracloud.snapshot.bridge.rest;
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig.Feature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 
 /**
  * A simple object mapper provider to support jackson json serialization.
@@ -35,7 +36,7 @@ public class SnapshotObjectMapperProvider implements ContextResolver<ObjectMappe
     private static ObjectMapper createDefaultMapper() {
 
         ObjectMapper result = new ObjectMapper();
-        result.configure(Feature.INDENT_OUTPUT, true);
+        result.configure(SerializationFeature.INDENT_OUTPUT, true);
 
         return result;
     }

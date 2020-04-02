@@ -16,7 +16,7 @@
   </parent>
 
   <properties>
-    <jersey.version>2.5.1</jersey.version>
+    <jersey.version>2.25.1</jersey.version>
     <snapshot.database.username>snapshot</snapshot.database.username>
     <snapshot.database.password>snapshot</snapshot.database.password>
     <snapshot.database.url>jdbc:mysql://localhost/snapshot</snapshot.database.url>
@@ -167,20 +167,8 @@
       <version>${jersey.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-core-asl</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-mapper-asl</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-jaxrs</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.codehaus.jackson</groupId>
-          <artifactId>jackson-xc</artifactId>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-jaxb-annotations</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -198,6 +186,11 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.module</groupId>
+      <artifactId>jackson-module-jaxb-annotations</artifactId>
     </dependency>
 
     <dependency>
@@ -273,6 +266,12 @@
       <type>pom</type>
       <scope>test</scope>
       <version>${jersey.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 </project>

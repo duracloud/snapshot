@@ -59,8 +59,8 @@ import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManagerException;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,7 +69,6 @@ import org.junit.Test;
  */
 public class SnapshotManagerImplTest extends SnapshotTestBase {
 
-    @TestSubject
     private SnapshotManagerImpl manager;
 
     @Mock
@@ -116,6 +115,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         manager.setSnapshotRepo(snapshotRepo);
         manager.setSnapshotTaskClientHelper(snapshotTaskClientHelper);
         manager.setStoreClientHelper(storeClientHelper);
+        manager.setEventLog(eventLog);
     }
 
     /**
@@ -126,7 +126,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         Map<String, String> props = new HashMap<>();
         props.put("key", "value");
         String contentId = "content-id";
-        Capture<SnapshotContentItem> contentItemCapture = new Capture<>();
+        Capture<SnapshotContentItem> contentItemCapture = Capture.newInstance(CaptureType.FIRST);
         expect(this.snapshotContentItemRepo
                    .findBySnapshotAndContentIdHash(isA(Snapshot.class),
                                                    isA(String.class))).andReturn(null);

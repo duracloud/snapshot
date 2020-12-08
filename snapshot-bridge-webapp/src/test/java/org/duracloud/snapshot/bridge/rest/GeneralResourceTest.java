@@ -38,9 +38,9 @@ import org.duracloud.snapshot.service.impl.ExecutionListenerConfig;
 import org.duracloud.snapshot.service.impl.RestoreJobExecutionListener;
 import org.duracloud.snapshot.service.impl.SnapshotJobExecutionListener;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -76,7 +76,6 @@ public class GeneralResourceTest extends SnapshotTestBase {
     @Mock
     private RestoreManager restorationManager;
 
-    @TestSubject
     private GeneralResource resource;
     @Mock
     private DatabaseInitializer initializer;
@@ -124,15 +123,15 @@ public class GeneralResourceTest extends SnapshotTestBase {
         }
 
         System.setProperty("root.password", "test");
-        Capture<DatabaseConfig> dbConfigCapture = new Capture<>();
+        Capture<DatabaseConfig> dbConfigCapture = Capture.newInstance(CaptureType.FIRST);
         initializer.init(EasyMock.capture(dbConfigCapture));
         EasyMock.expectLastCall();
 
-        Capture<ExecutionListenerConfig> snapshotListenerConfigCapture = new Capture<>();
+        Capture<ExecutionListenerConfig> snapshotListenerConfigCapture = Capture.newInstance(CaptureType.FIRST);
         snapshotJobListener.init(EasyMock.capture(snapshotListenerConfigCapture));
         EasyMock.expectLastCall();
 
-        Capture<ExecutionListenerConfig> restoreListenerConfigCapture = new Capture<>();
+        Capture<ExecutionListenerConfig> restoreListenerConfigCapture = Capture.newInstance(CaptureType.FIRST);
         restoreJobListener.init(EasyMock.capture(restoreListenerConfigCapture),
                                 EasyMock.eq(daysToExpire));
         EasyMock.expectLastCall();
@@ -142,11 +141,11 @@ public class GeneralResourceTest extends SnapshotTestBase {
 
         EasyMock.expect(manager.isInitialized()).andReturn(false);
 
-        Capture<SnapshotJobManagerConfig> duracloudConfigCapture = new Capture<>();
+        Capture<SnapshotJobManagerConfig> duracloudConfigCapture = Capture.newInstance(CaptureType.FIRST);
         manager.init(EasyMock.capture(duracloudConfigCapture));
         EasyMock.expectLastCall();
 
-        Capture<RestoreManagerConfig> restorationConfigCapture = new Capture<>();
+        Capture<RestoreManagerConfig> restorationConfigCapture = Capture.newInstance(CaptureType.FIRST);
         restorationManager.init(EasyMock.capture(restorationConfigCapture),
                                 EasyMock.isA(SnapshotJobManager.class));
         EasyMock.expectLastCall();

@@ -33,7 +33,6 @@ import org.duracloud.sync.endpoint.MonitoredFile;
 import org.duracloud.sync.endpoint.SyncEndpoint;
 import org.duracloud.sync.endpoint.SyncResultType;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Test;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
@@ -45,7 +44,6 @@ import org.springframework.batch.item.ExecutionContext;
  */
 public class SyncWriterTest extends SnapshotTestBase {
 
-    @TestSubject
     private SyncWriter writer;
 
     @Mock
@@ -77,6 +75,7 @@ public class SyncWriterTest extends SnapshotTestBase {
         watchDir.mkdirs();
         watchDir.deleteOnExit();
         writer = new SyncWriter(restorationId, watchDir, endpoint, contentStore, "spaceId", restoreManager);
+
     }
 
     /* (non-Javadoc)

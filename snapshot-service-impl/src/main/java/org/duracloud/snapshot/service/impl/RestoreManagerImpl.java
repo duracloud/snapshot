@@ -115,6 +115,14 @@ public class RestoreManagerImpl implements RestoreManager {
     }
 
     /**
+     *
+     * @param eventLog the event log to set
+     */
+    public void setEventLog(EventLog eventLog) {
+        this.eventLog = eventLog;
+    }
+
+    /**
      * @param bridgeConfig the bridgeConfig to set
      */
     public void setBridgeConfig(BridgeConfiguration bridgeConfig) {
@@ -522,4 +530,7 @@ public class RestoreManagerImpl implements RestoreManager {
         return this.restoreCompleted(restoration);
     }
 
+    public void setSnapshotManager(final  SnapshotManager snapshotManager) {
+        this.snapshotManager = snapshotManager;
+    }
 }

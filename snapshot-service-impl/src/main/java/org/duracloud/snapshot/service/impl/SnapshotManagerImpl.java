@@ -512,4 +512,11 @@ public class SnapshotManagerImpl implements SnapshotManager {
         return savedSnapshot;
     }
 
+    /**
+     *
+     * @param eventLog the event log
+     */
+    public void setEventLog(final EventLog eventLog) {
+        this.eventLog = eventLog;
+    }
 }

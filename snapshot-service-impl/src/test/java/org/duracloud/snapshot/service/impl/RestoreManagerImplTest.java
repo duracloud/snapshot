@@ -39,9 +39,9 @@ import org.duracloud.snapshot.service.RestoreManagerConfig;
 import org.duracloud.snapshot.service.SnapshotJobManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -64,7 +64,6 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
     @Mock
     private SnapshotRepo snapshotRepo;
 
-    @TestSubject
     private RestoreManagerImpl manager;
 
     @Mock
@@ -129,7 +128,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         eventLog.logRestoreUpdate(isA(Restoration.class));
         expectLastCall();
 
-        Capture<String> emailBodyCapture = new Capture<>();
+        Capture<String> emailBodyCapture = Capture.newInstance(CaptureType.FIRST);
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
                                              capture(emailBodyCapture),
@@ -160,7 +159,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         expect(destination.getPort()).andReturn(port);
         expect(destination.getStoreId()).andReturn(storeId);
 
-        Capture<String> emailBodyCapture = new Capture<>();
+        Capture<String> emailBodyCapture = Capture.newInstance(CaptureType.FIRST);
         notificationManager.sendNotification(isA(NotificationType.class),
                                              isA(String.class),
                                              capture(emailBodyCapture),
@@ -223,6 +222,13 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         config.setDuracloudEmailAddresses(new String[] {duracloudEmail});
         config.setRestorationRootDir(System.getProperty("java.io.tmpdir")
                                      + File.separator + System.currentTimeMillis());
+        manager.setStoreClientHelper(storeClientHelper);
+        manager.setSnapshotRepo(snapshotRepo);
+        manager.setRestoreRepo(restoreRepo);
+        manager.setNotificationManager(notificationManager);
+        manager.setBridgeConfig(bridgeConfig);
+        manager.setSnapshotManager(snapshotManager);
+        manager.setEventLog(eventLog);
         manager.init(config, jobManager);
     }
 
@@ -318,10 +324,9 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
         expect(restoreRepo.saveAndFlush(restoration)).andReturn(restoration);
         eventLog.logRestoreUpdate(restoration);
         expectLastCall();
-
         expect(restoration.getSnapshot()).andReturn(snapshot);
 
-        Capture<String> historyCapture = new Capture<>();
+        Capture<String> historyCapture = Capture.newInstance(CaptureType.FIRST);
         expect(snapshotManager.updateHistory(EasyMock.eq(snapshot),
                                              EasyMock.capture(historyCapture)))
             .andReturn(snapshot);

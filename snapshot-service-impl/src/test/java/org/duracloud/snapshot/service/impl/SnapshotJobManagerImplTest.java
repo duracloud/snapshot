@@ -33,7 +33,6 @@ import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -57,7 +56,6 @@ public class SnapshotJobManagerImplTest extends SnapshotTestBase {
 
     private String snapshotName = "test-id";
 
-    @TestSubject
     private SnapshotJobManagerImpl manager;
 
     @Mock

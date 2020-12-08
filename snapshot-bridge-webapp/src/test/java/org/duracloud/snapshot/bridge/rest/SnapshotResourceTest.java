@@ -58,8 +58,8 @@ import org.duracloud.snapshot.service.SnapshotJobManagerConfig;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.StoreClientHelper;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.data.domain.PageRequest;
@@ -89,7 +89,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     @Mock
     private BridgeConfiguration bridgeConfiguration;
 
-    @TestSubject
     private SnapshotResource resource;
 
     @Mock
@@ -519,7 +518,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String metaValue = "metadata-value";
         Long count = 1000l;
 
-        Capture<PageRequest> pageRequestCapture = new Capture<>();
+        Capture<PageRequest> pageRequestCapture = Capture.newInstance(CaptureType.FIRST);
 
         SnapshotContentItem item = new SnapshotContentItem();
         item.setContentId("test");
@@ -566,7 +565,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         String metaValue = "metadata-value";
         Long count = 1000l;
 
-        Capture<PageRequest> pageRequestCapture = new Capture<>();
+        Capture<PageRequest> pageRequestCapture = Capture.newInstance(CaptureType.FIRST);
 
         SnapshotContentItem item = new SnapshotContentItem();
         item.setContentId("test");

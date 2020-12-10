@@ -355,7 +355,12 @@ public class SpaceItemWriter extends StepExecutionSupport implements ItemWriter<
         StringBuffer sb = new StringBuffer(100);
         sb.append("{\n  \"" + contentId + "\": {\n");
         for (String propKey : propKeys) {
-            sb.append("    \"" + propKey + "\": \"" + props.get(propKey) + "\",\n");
+            String propValue = props.get(propKey);
+            // Escape special characters
+            propValue = propValue.replace("\\", "\\\\");
+            propValue = propValue.replace("\"", "\\\"");
+
+            sb.append("    \"" + propKey + "\": \"" + propValue + "\",\n");
         }
         sb.deleteCharAt(sb.length() - 2); // delete comma after last key/value pair
 

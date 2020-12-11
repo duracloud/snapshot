@@ -77,7 +77,7 @@ public class SyncWriter extends StepExecutionSupport implements ItemWriter<File>
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        ExitStatus status = stepExecution.getExitStatus();
+        ExitStatus status = super.afterStep(stepExecution);
 
         List<String> errors = getErrors();
         if (errors.isEmpty()) {

@@ -34,6 +34,7 @@ import org.duracloud.snapshot.service.BridgeConfiguration;
 import org.duracloud.snapshot.service.EventLog;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
@@ -117,7 +118,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(jobExecution.getExitStatus())
             .andReturn(ExitStatus.COMPLETED);
 
-        Capture<String> messageCapture = new Capture<>();
+        Capture<String> messageCapture = Capture.newInstance(CaptureType.FIRST);
         notificationManager.sendNotification(
             EasyMock.eq(NotificationType.EMAIL),
             EasyMock.<String>anyObject(),
@@ -151,7 +152,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         EasyMock.expect(bridgeConfig.getDuracloudPassword())
                 .andReturn(dcPassword);
 
-        Capture<String> historyCapture = new Capture<>();
+        Capture<String> historyCapture = Capture.newInstance(CaptureType.FIRST);
         EasyMock.expect(snapshotManager.updateHistory(EasyMock.eq(snapshot),
                                                       EasyMock.capture(historyCapture)))
                 .andReturn(snapshot);
@@ -201,7 +202,7 @@ public class RestoreJobExecutionListenerTest extends SnapshotTestBase {
         expect(jobExecution.getExitStatus())
             .andReturn(ExitStatus.FAILED);
 
-        Capture<String> messageCapture = new Capture<>();
+        Capture<String> messageCapture = Capture.newInstance(CaptureType.FIRST);
         notificationManager.sendNotification(
             EasyMock.eq(NotificationType.EMAIL),
             EasyMock.<String>anyObject(),

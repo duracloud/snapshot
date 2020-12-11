@@ -128,6 +128,7 @@ public abstract class StepExecutionSupport implements StepExecutionListener {
      */
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        this.stepExecution = stepExecution;
         ExitStatus status = stepExecution.getExitStatus();
         return status;
     }

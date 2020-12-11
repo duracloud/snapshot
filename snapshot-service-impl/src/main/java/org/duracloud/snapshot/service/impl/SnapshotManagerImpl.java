@@ -105,38 +105,50 @@ public class SnapshotManagerImpl implements SnapshotManager {
     }
 
     /**
+     * For testing purposes only
      * @param snapshotContentItemRepo the snapshotContentItemRepo to set
      */
-    public void setSnapshotContentItemRepo(SnapshotContentItemRepo snapshotContentItemRepo) {
+    protected void setSnapshotContentItemRepo(SnapshotContentItemRepo snapshotContentItemRepo) {
         this.snapshotContentItemRepo = snapshotContentItemRepo;
     }
 
     /**
+     * For testing purposes only
      * @param snapshotRepo the snapshotRepo to set
      */
-    public void setSnapshotRepo(SnapshotRepo snapshotRepo) {
+    protected void setSnapshotRepo(SnapshotRepo snapshotRepo) {
         this.snapshotRepo = snapshotRepo;
     }
 
     /**
+     * For testing purposes only
      * @param notificationManager the notificationManager to set
      */
-    public void setNotificationManager(NotificationManager notificationManager) {
+    protected void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
 
     /**
+     * For testing purposes only
      * @param snapshotTaskClientHelper the snapshotTaskClientHelper to set
      */
-    public void setSnapshotTaskClientHelper(SnapshotTaskClientHelper snapshotTaskClientHelper) {
+    protected void setSnapshotTaskClientHelper(SnapshotTaskClientHelper snapshotTaskClientHelper) {
         this.snapshotTaskClientHelper = snapshotTaskClientHelper;
     }
 
     /**
      * @param bridgeConfig the bridgeConfig to set
      */
-    public void setBridgeConfig(BridgeConfiguration bridgeConfig) {
+    protected void setBridgeConfig(BridgeConfiguration bridgeConfig) {
         this.bridgeConfig = bridgeConfig;
+    }
+
+    /**
+     * For testing purposes only
+     * @param eventLog the event log
+     */
+    protected void setEventLog(final EventLog eventLog) {
+        this.eventLog = eventLog;
     }
 
     /*

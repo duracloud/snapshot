@@ -87,38 +87,59 @@ public class RestoreManagerImpl implements RestoreManager {
     }
 
     /**
+     * For testing purposes only
      * @param snapshotRepo the snapshotRepo to set
      */
-    public void setSnapshotRepo(SnapshotRepo snapshotRepo) {
+    protected void setSnapshotRepo(SnapshotRepo snapshotRepo) {
         this.snapshotRepo = snapshotRepo;
     }
 
     /**
+     * For testing purposes only
      * @param notificationManager the notificationManager to set
      */
-    public void setNotificationManager(NotificationManager notificationManager) {
+    protected void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
 
     /**
+     * For testing purposes only
      * @param restoreRepo the restoreRepo to set
      */
-    public void setRestoreRepo(RestoreRepo restoreRepo) {
+    protected void setRestoreRepo(RestoreRepo restoreRepo) {
         this.restoreRepo = restoreRepo;
     }
 
     /**
+     * For testing purposes only
      * @param storeClientHelper the storeClientHelper to set
      */
-    public void setStoreClientHelper(StoreClientHelper storeClientHelper) {
+    protected void setStoreClientHelper(StoreClientHelper storeClientHelper) {
         this.storeClientHelper = storeClientHelper;
     }
 
     /**
+     * For testing purposes only
+     * @param eventLog the event log to set
+     */
+    protected void setEventLog(EventLog eventLog) {
+        this.eventLog = eventLog;
+    }
+
+    /**
+     * For testing purposes only
      * @param bridgeConfig the bridgeConfig to set
      */
-    public void setBridgeConfig(BridgeConfiguration bridgeConfig) {
+    protected void setBridgeConfig(BridgeConfiguration bridgeConfig) {
         this.bridgeConfig = bridgeConfig;
+    }
+
+    /**
+     * For testing purposes only
+     * @param snapshotManager The snapshot manager
+     */
+    protected void setSnapshotManager(final  SnapshotManager snapshotManager) {
+        this.snapshotManager = snapshotManager;
     }
 
     /* (non-Javadoc)
@@ -521,5 +542,4 @@ public class RestoreManagerImpl implements RestoreManager {
         eventLog.logRestoreUpdate(restoration);
         return this.restoreCompleted(restoration);
     }
-
 }

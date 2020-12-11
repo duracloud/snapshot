@@ -27,9 +27,9 @@ import org.duracloud.snapshot.dto.bridge.RequestRestoreBridgeParameters;
 import org.duracloud.snapshot.service.RestoreManager;
 import org.duracloud.snapshot.service.SnapshotManager;
 import org.easymock.Capture;
+import org.easymock.CaptureType;
 import org.easymock.EasyMock;
 import org.easymock.Mock;
-import org.easymock.TestSubject;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -52,7 +52,6 @@ public class RestoreResourceTest extends SnapshotTestBase {
     @Mock
     private Snapshot snapshot;
 
-    @TestSubject
     private RestoreResource resource;
 
     /* (non-Javadoc)
@@ -81,7 +80,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
         EasyMock.expect(restoration.getStatus())
                 .andReturn(RestoreStatus.INITIALIZED);
 
-        Capture<String> historyCapture = new Capture<>();
+        Capture<String> historyCapture = Capture.newInstance(CaptureType.FIRST);
         EasyMock.expect(snapshotManager.updateHistory(EasyMock.isA(Snapshot.class),
                                                       EasyMock.capture(historyCapture)))
                 .andReturn(snapshot);
@@ -115,7 +114,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
                                            EasyMock.isA(String.class)))
                 .andReturn(snapshot);
 
-        Capture<String> historyCapture = new Capture<>();
+        Capture<String> historyCapture = Capture.newInstance(CaptureType.FIRST);
         EasyMock.expect(snapshotManager.updateHistory(EasyMock.isA(Snapshot.class),
                                                       EasyMock.capture(historyCapture)))
                 .andReturn(snapshot);

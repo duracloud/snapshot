@@ -180,7 +180,7 @@
     <springframework.security.version>4.0.4.RELEASE</springframework.security.version>
     <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
     <hibernate.version>5.1.0.Final</hibernate.version>
-    <mysql.connector.version>5.1.38</mysql.connector.version>
+    <mysql.connector.version>5.1.49</mysql.connector.version>
     <duracloud.version>6.3.0-SNAPSHOT</duracloud.version>
     <duracloud.db.version>6.3.0-SNAPSHOT</duracloud.db.version>
     <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>

@@ -34,6 +34,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.model.ContentItem;
@@ -102,6 +103,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     private String spaceId = "space-id";
     private String contentId = "content-id";
 
+    private String propertyFilePath = "C:\\test\\file.txt";
+
     /*
      * (non-Javadoc)
      *
@@ -129,11 +132,13 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
     public void tearDown() {
         super.tearDown();
         try {
+            contentDir.deleteOnExit();
             FileUtils.deleteDirectory(contentDir);
         } catch (IOException e) {
             e.printStackTrace();
         }
         try {
+            workDir.deleteOnExit();
             FileUtils.deleteDirectory(workDir);
         } catch (IOException e) {
             e.printStackTrace();
@@ -212,6 +217,8 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
 
         //verifyMd5Manifest(items, sourceFiles);
         verifySha256Manifest(items, sourceFiles);
+
+        verifyPropsFile(propsFile);
 
         if (manifestVerificationSuccessful) {
             assertEquals(ExitStatus.COMPLETED.getExitCode(), status.getExitCode());
@@ -442,6 +449,18 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         }
     }
 
+    private void verifyPropsFile(File propsFile) throws IOException {
+        ObjectMapper jsonMapper = new ObjectMapper();
+        List<Map> propsContent = Arrays.asList(jsonMapper.readValue(propsFile, Map[].class));
+        for (Map contentItem : propsContent) {
+            String contentItemPropsJson = contentItem.toString();
+            assertTrue("Properties JSON file is missing expected file path " +
+                       propertyFilePath + ". Full JSON file contents: " + contentItemPropsJson,
+                       contentItemPropsJson.contains(StorageProvider.PROPERTIES_CONTENT_FILE_PATH +
+                                                     "=" + propertyFilePath));
+        }
+    }
+
     /**
      * @param filename
      * @return
@@ -581,6 +600,7 @@ public class SpaceItemWriterTest extends SnapshotTestBase {
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_CREATED, date);
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_LAST_ACCESSED, date);
         map.put(StorageProvider.PROPERTIES_CONTENT_FILE_MODIFIED, date);
+        map.put(StorageProvider.PROPERTIES_CONTENT_FILE_PATH, propertyFilePath);
         return map;
     }
 

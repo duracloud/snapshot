@@ -138,6 +138,9 @@
                   <goal>jar</goal>
                 </goals>
                 <configuration>
+                  <sourceFileIncludes>
+                    <sourceFileInclude>**/*.java</sourceFileInclude>
+                  </sourceFileIncludes>
                   <additionalOptions>${javadoc.opts}</additionalOptions>
                 </configuration>
               </execution>

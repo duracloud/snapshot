@@ -24,7 +24,7 @@ public class ResponseDetails {
     }
 
     /**
-     * @param string
+     * @param message
      */
     public ResponseDetails(String message) {
         setMessage(message);

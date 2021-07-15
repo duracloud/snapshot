@@ -58,6 +58,7 @@ import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.CreateSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotCountBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
@@ -199,6 +200,66 @@ public class SnapshotResource {
             return snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
         } else { // No filters
             return snapshotRepo.findAll();
+        }
+    }
+
+    /**
+     * Returns a count of snapshots.
+     *
+     * @return
+     */
+    @Path("count")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response count(@QueryParam("host") String host,
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
+        try {
+            long count = countSnapshots(host, storeId, status);
+
+            log.debug("returning {} count of snapshots", count);
+            return Response.ok()
+                           .entity(new GetSnapshotCountBridgeResult(count))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /*
+     * Returns a snapshot count. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected long countSnapshots(String host,
+                                           String storeId,
+                                           SnapshotStatus status) {
+        if (null != host) {
+            if (null != storeId) {
+                if (null != status) { // Host & Store ID & Status
+                    return snapshotRepo.
+                        countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    return snapshotRepo.countBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if (null != status) { // Host & Status
+                return snapshotRepo.countBySourceHostAndStatus(host, status);
+            } else { // Host
+                return snapshotRepo.countBySourceHost(host);
+            }
+        } else if (null != storeId) {
+            if (null != status) { // Store ID & Status
+                return snapshotRepo.countBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                return snapshotRepo.countBySourceStoreId(storeId);
+            }
+        } else if (null != status) { // Status
+            return snapshotRepo.countByStatusOrderBySnapshotDateAsc(status);
+        } else { // No filters
+            return snapshotRepo.count();
         }
     }
 

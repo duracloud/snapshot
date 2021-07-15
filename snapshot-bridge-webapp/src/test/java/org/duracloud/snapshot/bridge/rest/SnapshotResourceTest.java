@@ -59,6 +59,7 @@ import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.StoreClientHelper;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
+import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -506,6 +507,83 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             .andReturn(new ArrayList<Snapshot>());
         replayAll();
         resource.listSnapshots(null, storeId, status);
+    }
+
+    @Test
+    public void testCountSnapshotsNoParams() {
+        expect(snapshotRepo.count())
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(null, null, null);
+    }
+
+    @Test
+    public void testCountSnapshotsHost() {
+        String host = "host";
+        expect(snapshotRepo.countBySourceHost(host))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(host, null, null);
+    }
+
+    @Test
+    public void testCountSnapshotsHostStoreId() {
+        String host = "host";
+        String storeId = "store-id";
+        expect(snapshotRepo.countBySourceHostAndSourceStoreId(host, storeId))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(host, storeId, null);
+    }
+
+    @Test
+    public void testCountSnapshotsHostStoreIdStatus() {
+        String host = "host";
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo
+                   .countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(host, storeId, status);
+    }
+
+    @Test
+    public void testCountSnapshotStoreId() {
+        String storeId = "store-id";
+        expect(snapshotRepo.countBySourceStoreId(storeId))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(null, storeId, null);
+    }
+
+    @Test
+    public void testCountSnapshotsStatus() {
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.countByStatusOrderBySnapshotDateAsc(status))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(null, null, status);
+    }
+
+    @Test
+    public void testCountSnapshotsHostStatus() {
+        String host = "host";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.countBySourceHostAndStatus(host, status))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(host, null, status);
+    }
+
+    @Test
+    public void testCountSnapshotsStoreIdStatus() {
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.countBySourceStoreIdAndStatus(storeId, status))
+            .andReturn(Long.valueOf(1));
+        replayAll();
+        resource.countSnapshots(null, storeId, status);
     }
 
     @Test

@@ -59,7 +59,6 @@ import org.duracloud.snapshot.service.SnapshotManager;
 import org.duracloud.snapshot.service.impl.StoreClientHelper;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
-import org.easymock.EasyMock;
 import org.easymock.Mock;
 import org.junit.Test;
 import org.springframework.batch.core.BatchStatus;
@@ -514,7 +513,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.count())
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(null, null, null);
+        resource.getSnapshotsCount(null, null, null);
     }
 
     @Test
@@ -523,7 +522,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countBySourceHost(host))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(host, null, null);
+        resource.getSnapshotsCount(host, null, null);
     }
 
     @Test
@@ -533,7 +532,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countBySourceHostAndSourceStoreId(host, storeId))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(host, storeId, null);
+        resource.getSnapshotsCount(host, storeId, null);
     }
 
     @Test
@@ -545,7 +544,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
                    .countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(host, storeId, status);
+        resource.getSnapshotsCount(host, storeId, status);
     }
 
     @Test
@@ -554,7 +553,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countBySourceStoreId(storeId))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(null, storeId, null);
+        resource.getSnapshotsCount(null, storeId, null);
     }
 
     @Test
@@ -563,7 +562,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countByStatusOrderBySnapshotDateAsc(status))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(null, null, status);
+        resource.getSnapshotsCount(null, null, status);
     }
 
     @Test
@@ -573,7 +572,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countBySourceHostAndStatus(host, status))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(host, null, status);
+        resource.getSnapshotsCount(host, null, status);
     }
 
     @Test
@@ -583,7 +582,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         expect(snapshotRepo.countBySourceStoreIdAndStatus(storeId, status))
             .andReturn(Long.valueOf(1));
         replayAll();
-        resource.countSnapshots(null, storeId, status);
+        resource.getSnapshotsCount(null, storeId, status);
     }
 
     @Test

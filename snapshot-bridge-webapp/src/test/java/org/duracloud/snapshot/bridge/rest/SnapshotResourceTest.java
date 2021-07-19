@@ -548,7 +548,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testCountSnapshotStoreId() {
+    public void testCountSnapshotsStoreId() {
         String storeId = "store-id";
         expect(snapshotRepo.countBySourceStoreId(storeId))
             .andReturn(Long.valueOf(1));
@@ -583,6 +583,83 @@ public class SnapshotResourceTest extends SnapshotTestBase {
             .andReturn(Long.valueOf(1));
         replayAll();
         resource.getSnapshotsCount(null, storeId, status);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesNoParams() {
+        expect(snapshotRepo.findAll())
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(null, null, null);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesHost() {
+        String host = "host";
+        expect(snapshotRepo.findBySourceHost(host))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(host, null, null);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesHostStoreId() {
+        String host = "host";
+        String storeId = "store-id";
+        expect(snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(host, storeId, null);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesHostStoreIdStatus() {
+        String host = "host";
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo
+                   .findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(host, storeId, status);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesStoreId() {
+        String storeId = "store-id";
+        expect(snapshotRepo.findBySourceStoreId(storeId))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(null, storeId, null);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesStatus() {
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findByStatusOrderBySnapshotDateAsc(status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(null, null, status);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesHostStatus() {
+        String host = "host";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findBySourceHostAndStatus(host, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(host, null, status);
+    }
+
+    @Test
+    public void testCountSnapshotsFilesStoreIdStatus() {
+        String storeId = "store-id";
+        SnapshotStatus status = SnapshotStatus.SNAPSHOT_COMPLETE;
+        expect(snapshotRepo.findBySourceStoreIdAndStatus(storeId, status))
+            .andReturn(new ArrayList<Snapshot>());
+        replayAll();
+        resource.getSnapshotsFiles(null, storeId, status);
     }
 
     @Test

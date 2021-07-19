@@ -61,6 +61,7 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalCountBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalFilesBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalSizeBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
@@ -278,7 +279,7 @@ public class SnapshotResource {
         try {
             long totalContent = getSnapshotsSize(host, storeId, status);
 
-            log.debug("returning {} total content of snapshots", totalContent);
+            log.debug("returning {} total size in bytes of snapshots", totalContent);
             return Response.ok()
                            .entity(new GetSnapshotTotalSizeBridgeResult(totalContent))
                            .build();
@@ -334,6 +335,78 @@ public class SnapshotResource {
         }
 
         return totalSizeInBytes;
+    }
+
+    /**
+     * Returns the total files of snapshot contents.
+     *
+     * @return
+     */
+    @Path("total/files")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response files(@QueryParam("host") String host,
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalContent = getSnapshotsFiles(host, storeId, status);
+
+            log.debug("returning {} total number of files in snapshots", totalContent);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalFilesBridgeResult(totalContent))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /*
+     * Returns a total files of snapshots. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected long getSnapshotsFiles(String host,
+                                    String storeId,
+                                    SnapshotStatus status) {
+        long totalFiles = 0L;
+        List<Snapshot> snapshots = null;
+
+        if (null != host) {
+            if (null != storeId) {
+                if (null != status) { // Host & Store ID & Status
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if (null != status) { // Host & Status
+                snapshots = snapshotRepo.findBySourceHostAndStatus(host, status);
+            } else { // Host
+                snapshots = snapshotRepo.findBySourceHost(host);
+            }
+        } else if (null != storeId) {
+            if (null != status) { // Store ID & Status
+                snapshots = snapshotRepo.findBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                snapshots = snapshotRepo.findBySourceStoreId(storeId);
+            }
+        } else if (null != status) { // Status
+            snapshots = snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
+        } else { // No filters
+            snapshots = snapshotRepo.findAll();
+        }
+
+        if (null != snapshots) {
+            Iterator<Snapshot> snapshotsItr = snapshots.iterator();
+            while (snapshotsItr.hasNext()) {
+                Snapshot snapshot = snapshotsItr.next();
+                totalFiles += snapshotContentItemRepo.countBySnapshotId(snapshot.getId());
+            }
+        }
+
+        return totalFiles;
     }
 
     @Path("{snapshotId}")

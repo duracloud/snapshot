@@ -60,6 +60,10 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotContentBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotHistoryBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalCountBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalFilesBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalSizeBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalsBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
@@ -199,6 +203,240 @@ public class SnapshotResource {
             return snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
         } else { // No filters
             return snapshotRepo.findAll();
+        }
+    }
+
+    /**
+     * Returns the total count of snapshots.
+     *
+     * @return
+     */
+    @Path("total/count")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response count(@QueryParam("host") String host,
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalCount = getSnapshotsCount(host, storeId, status);
+
+            log.debug("returning {} total count of snapshots", totalCount);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalCountBridgeResult(totalCount))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /*
+     * Returns a total count of snapshots. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected long getSnapshotsCount(String host,
+                                           String storeId,
+                                           SnapshotStatus status) {
+        if (null != host) {
+            if (null != storeId) {
+                if (null != status) { // Host & Store ID & Status
+                    return snapshotRepo.
+                        countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    return snapshotRepo.countBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if (null != status) { // Host & Status
+                return snapshotRepo.countBySourceHostAndStatus(host, status);
+            } else { // Host
+                return snapshotRepo.countBySourceHost(host);
+            }
+        } else if (null != storeId) {
+            if (null != status) { // Store ID & Status
+                return snapshotRepo.countBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                return snapshotRepo.countBySourceStoreId(storeId);
+            }
+        } else if (null != status) { // Status
+            return snapshotRepo.countByStatusOrderBySnapshotDateAsc(status);
+        } else { // No filters
+            return snapshotRepo.count();
+        }
+    }
+
+    /**
+     * Returns the total size of snapshot contents.
+     *
+     * @return
+     */
+    @Path("total/size")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response size(@QueryParam("host") String host,
+                          @QueryParam("storeId") String storeId,
+                          @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalSize = getSnapshotsSize(host, storeId, status);
+
+            log.debug("returning {} total size in bytes of snapshots", totalSize);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalSizeBridgeResult(totalSize))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /*
+     * Returns a total size of snapshots. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected long getSnapshotsSize(String host,
+                                  String storeId,
+                                  SnapshotStatus status) {
+        long totalSizeInBytes = 0L;
+        List<Snapshot> snapshots = null;
+
+        if (null != host) {
+            if (null != storeId) {
+                if (null != status) { // Host & Store ID & Status
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if (null != status) { // Host & Status
+                snapshots = snapshotRepo.findBySourceHostAndStatus(host, status);
+            } else { // Host
+                snapshots = snapshotRepo.findBySourceHost(host);
+            }
+        } else if (null != storeId) {
+            if (null != status) { // Store ID & Status
+                snapshots = snapshotRepo.findBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                snapshots = snapshotRepo.findBySourceStoreId(storeId);
+            }
+        } else if (null != status) { // Status
+            snapshots = snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
+        } else { // No filters
+            snapshots = snapshotRepo.findAll();
+        }
+
+        if (null != snapshots) {
+            Iterator<Snapshot> snapshotsItr = snapshots.iterator();
+            while (snapshotsItr.hasNext()) {
+                Snapshot snapshot = snapshotsItr.next();
+                totalSizeInBytes += snapshot.getTotalSizeInBytes();
+            }
+        }
+
+        return totalSizeInBytes;
+    }
+
+    /**
+     * Returns the total files of snapshot contents.
+     *
+     * @return
+     */
+    @Path("total/files")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response files(@QueryParam("host") String host,
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalFiles = getSnapshotsFiles(host, storeId, status);
+
+            log.debug("returning {} total number of files in snapshots", totalFiles);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalFilesBridgeResult(totalFiles))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
+    }
+
+    /*
+     * Returns a total files of snapshots. The parameters of host, store ID and status are all
+     * considered optional, so depending on which are provided (i.e. not null), the
+     * query used will vary.
+     */
+    protected long getSnapshotsFiles(String host,
+                                    String storeId,
+                                    SnapshotStatus status) {
+        long totalFiles = 0L;
+        List<Snapshot> snapshots = null;
+
+        if (null != host) {
+            if (null != storeId) {
+                if (null != status) { // Host & Store ID & Status
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                } else { // Host & Store ID
+                    snapshots = snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId);
+                }
+            } else if (null != status) { // Host & Status
+                snapshots = snapshotRepo.findBySourceHostAndStatus(host, status);
+            } else { // Host
+                snapshots = snapshotRepo.findBySourceHost(host);
+            }
+        } else if (null != storeId) {
+            if (null != status) { // Store ID & Status
+                snapshots = snapshotRepo.findBySourceStoreIdAndStatus(storeId, status);
+            } else { // Store ID
+                snapshots = snapshotRepo.findBySourceStoreId(storeId);
+            }
+        } else if (null != status) { // Status
+            snapshots = snapshotRepo.findByStatusOrderBySnapshotDateAsc(status);
+        } else { // No filters
+            snapshots = snapshotRepo.findAll();
+        }
+
+        if (null != snapshots) {
+            Iterator<Snapshot> snapshotsItr = snapshots.iterator();
+            while (snapshotsItr.hasNext()) {
+                Snapshot snapshot = snapshotsItr.next();
+                totalFiles += snapshotContentItemRepo.countBySnapshotId(snapshot.getId());
+            }
+        }
+
+        return totalFiles;
+    }
+
+    /**
+     * Returns the total count, size and files of snapshots
+     *
+     * @return
+     */
+    @Path("total")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response total(@QueryParam("host") String host,
+                          @QueryParam("storeId") String storeId,
+                          @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalCount = getSnapshotsCount(host, storeId, status);
+            long totalSize = getSnapshotsSize(host, storeId, status);
+            long totalFiles = getSnapshotsFiles(host, storeId, status);
+
+            log.debug("returning {} total count of snapshots", totalCount);
+            log.debug("returning {} total size in bytes of snapshots", totalSize);
+            log.debug("returning {} total number of files in snapshots", totalFiles);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalsBridgeResult(totalCount, totalSize, totalFiles))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
         }
     }
 

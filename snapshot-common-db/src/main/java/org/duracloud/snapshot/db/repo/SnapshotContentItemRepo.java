@@ -35,6 +35,8 @@ public interface SnapshotContentItemRepo extends JpaRepository<SnapshotContentIt
 
     public long countBySnapshotName(@Param("snapshotName") String snapshotName);
 
+    public long countBySnapshotId(@Param("snapshotId") Long snapshotId);
+
     /**
      * @param snapshotName
      * @param pageable

@@ -89,6 +89,61 @@ public interface SnapshotRepo extends JpaRepository<Snapshot, Long> {
     public Snapshot findBySnapshotAlternateIds(String alternateId);
 
     /**
+     * @return count of snapshots
+     */
+    public long count();
+
+    /**
+     * @param host where snapshot originated
+     * @return count of snapshots with the given host
+     */
+    public long countBySourceHost(String host);
+
+    /**
+     * @param storeId storage provider ID
+     * @return count of snapshots with the given store ID
+     */
+    public long countBySourceStoreId(String storeId);
+
+    /**
+     * @param host    where snapshot originated
+     * @param storeId storage provider ID
+     * @return count of snapshots with the given host and store ID
+     */
+    public long countBySourceHostAndSourceStoreId(String host, String storeId);
+
+    /**
+     * @param status current snapshot status
+     * @return count of snapshots with the given status
+     */
+    public long countByStatusOrderBySnapshotDateAsc(SnapshotStatus status);
+
+    /**
+     * @param host   where snapshot originated
+     * @param status current snapshot status
+     * @return count of snapshots with the given host and status
+     */
+    public long countBySourceHostAndStatus(String host, SnapshotStatus status);
+
+    /**
+     * @param storeId storage provider ID
+     * @param status  current snapshot status
+     * @return count of snapshots with the given store ID and status
+     */
+    public long countBySourceStoreIdAndStatus(String storeId,
+                                                       SnapshotStatus status);
+
+    /**
+     * @param host    where snapshot originated
+     * @param storeId storage provider ID
+     * @param status  current snapshot status
+     * @return count of snapshots with the given host, store ID, and status
+     */
+    public long countBySourceHostAndSourceStoreIdAndStatus(String host,
+                                                                    String storeId,
+                                                                    SnapshotStatus status);
+
+    /**
      * @param snapshotId ID of snapshot
      */
     public void deleteByName(String snapshotId);

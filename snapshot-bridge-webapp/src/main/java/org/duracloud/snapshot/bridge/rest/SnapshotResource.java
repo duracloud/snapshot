@@ -63,6 +63,7 @@ import org.duracloud.snapshot.dto.bridge.GetSnapshotListBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalCountBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalFilesBridgeResult;
 import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalSizeBridgeResult;
+import org.duracloud.snapshot.dto.bridge.GetSnapshotTotalsBridgeResult;
 import org.duracloud.snapshot.dto.bridge.RestartSnapshotBridgeResult;
 import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeParameters;
 import org.duracloud.snapshot.dto.bridge.SnapshotErrorBridgeResult;
@@ -217,11 +218,11 @@ public class SnapshotResource {
                          @QueryParam("storeId") String storeId,
                          @QueryParam("status") SnapshotStatus status) {
         try {
-            long count = getSnapshotsCount(host, storeId, status);
+            long totalCount = getSnapshotsCount(host, storeId, status);
 
-            log.debug("returning {} count of snapshots", count);
+            log.debug("returning {} total count of snapshots", totalCount);
             return Response.ok()
-                           .entity(new GetSnapshotTotalCountBridgeResult(count))
+                           .entity(new GetSnapshotTotalCountBridgeResult(totalCount))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -277,11 +278,11 @@ public class SnapshotResource {
                           @QueryParam("storeId") String storeId,
                           @QueryParam("status") SnapshotStatus status) {
         try {
-            long totalContent = getSnapshotsSize(host, storeId, status);
+            long totalSize = getSnapshotsSize(host, storeId, status);
 
-            log.debug("returning {} total size in bytes of snapshots", totalContent);
+            log.debug("returning {} total size in bytes of snapshots", totalSize);
             return Response.ok()
-                           .entity(new GetSnapshotTotalSizeBridgeResult(totalContent))
+                           .entity(new GetSnapshotTotalSizeBridgeResult(totalSize))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -349,11 +350,11 @@ public class SnapshotResource {
                          @QueryParam("storeId") String storeId,
                          @QueryParam("status") SnapshotStatus status) {
         try {
-            long totalContent = getSnapshotsFiles(host, storeId, status);
+            long totalFiles = getSnapshotsFiles(host, storeId, status);
 
-            log.debug("returning {} total number of files in snapshots", totalContent);
+            log.debug("returning {} total number of files in snapshots", totalFiles);
             return Response.ok()
-                           .entity(new GetSnapshotTotalFilesBridgeResult(totalContent))
+                           .entity(new GetSnapshotTotalFilesBridgeResult(totalFiles))
                            .build();
         } catch (Exception ex) {
             log.error(ex.getMessage(), ex);
@@ -407,6 +408,36 @@ public class SnapshotResource {
         }
 
         return totalFiles;
+    }
+
+    /**
+     * Returns the total count, size and files of snapshots
+     *
+     * @return
+     */
+    @Path("total")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response total(@QueryParam("host") String host,
+                          @QueryParam("storeId") String storeId,
+                          @QueryParam("status") SnapshotStatus status) {
+        try {
+            long totalCount = getSnapshotsCount(host, storeId, status);
+            long totalSize = getSnapshotsSize(host, storeId, status);
+            long totalFiles = getSnapshotsFiles(host, storeId, status);
+
+            log.debug("returning {} total count of snapshots", totalCount);
+            log.debug("returning {} total size in bytes of snapshots", totalSize);
+            log.debug("returning {} total number of files in snapshots", totalFiles);
+            return Response.ok()
+                           .entity(new GetSnapshotTotalsBridgeResult(totalCount, totalSize, totalFiles))
+                           .build();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            return Response.serverError()
+                           .entity(new ResponseDetails(ex.getMessage()))
+                           .build();
+        }
     }
 
     @Path("{snapshotId}")

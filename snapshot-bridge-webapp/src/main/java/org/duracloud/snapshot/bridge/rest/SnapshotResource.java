@@ -183,8 +183,7 @@ public class SnapshotResource {
         if (null != host) {
             if (null != storeId) {
                 if (null != status) { // Host & Store ID & Status
-                    return snapshotRepo
-                        .findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                    return snapshotRepo.findBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
                 } else { // Host & Store ID
                     return snapshotRepo.findBySourceHostAndSourceStoreId(host, storeId);
                 }
@@ -215,8 +214,8 @@ public class SnapshotResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response count(@QueryParam("host") String host,
-                         @QueryParam("storeId") String storeId,
-                         @QueryParam("status") SnapshotStatus status) {
+                          @QueryParam("storeId") String storeId,
+                          @QueryParam("status") SnapshotStatus status) {
         try {
             long totalCount = getSnapshotsCount(host, storeId, status);
 
@@ -238,13 +237,12 @@ public class SnapshotResource {
      * query used will vary.
      */
     protected long getSnapshotsCount(String host,
-                                           String storeId,
-                                           SnapshotStatus status) {
+                                     String storeId,
+                                     SnapshotStatus status) {
         if (null != host) {
             if (null != storeId) {
                 if (null != status) { // Host & Store ID & Status
-                    return snapshotRepo.
-                        countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
+                    return snapshotRepo.countBySourceHostAndSourceStoreIdAndStatus(host, storeId, status);
                 } else { // Host & Store ID
                     return snapshotRepo.countBySourceHostAndSourceStoreId(host, storeId);
                 }
@@ -275,8 +273,8 @@ public class SnapshotResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response size(@QueryParam("host") String host,
-                          @QueryParam("storeId") String storeId,
-                          @QueryParam("status") SnapshotStatus status) {
+                         @QueryParam("storeId") String storeId,
+                         @QueryParam("status") SnapshotStatus status) {
         try {
             long totalSize = getSnapshotsSize(host, storeId, status);
 
@@ -298,8 +296,8 @@ public class SnapshotResource {
      * query used will vary.
      */
     protected long getSnapshotsSize(String host,
-                                  String storeId,
-                                  SnapshotStatus status) {
+                                    String storeId,
+                                    SnapshotStatus status) {
         long totalSizeInBytes = 0L;
         List<Snapshot> snapshots = null;
 
@@ -347,8 +345,8 @@ public class SnapshotResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response files(@QueryParam("host") String host,
-                         @QueryParam("storeId") String storeId,
-                         @QueryParam("status") SnapshotStatus status) {
+                          @QueryParam("storeId") String storeId,
+                          @QueryParam("status") SnapshotStatus status) {
         try {
             long totalFiles = getSnapshotsFiles(host, storeId, status);
 
@@ -370,8 +368,8 @@ public class SnapshotResource {
      * query used will vary.
      */
     protected long getSnapshotsFiles(String host,
-                                    String storeId,
-                                    SnapshotStatus status) {
+                                     String storeId,
+                                     SnapshotStatus status) {
         long totalFiles = 0L;
         List<Snapshot> snapshots = null;
 

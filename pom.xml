@@ -184,11 +184,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <slf4j.version>1.7.6</slf4j.version>
-    <springframework.version>4.2.5.RELEASE</springframework.version>
-    <springframework.data.jpa.version>1.10.1.RELEASE</springframework.data.jpa.version>
-    <springframework.security.version>4.0.4.RELEASE</springframework.security.version>
+    <springframework.version>4.3.30.RELEASE</springframework.version>
+    <springframework.data.jpa.version>1.11.23.RELEASE</springframework.data.jpa.version>
+    <springframework.security.version>4.2.20.RELEASE</springframework.security.version>
     <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
-    <hibernate.version>5.1.0.Final</hibernate.version>
+    <hibernate.version>5.4.3.Final</hibernate.version>
     <mysql.connector.version>5.1.49</mysql.connector.version>
     <duracloud.version>7.1.0-SNAPSHOT</duracloud.version>
     <duracloud.db.version>7.1.0-SNAPSHOT</duracloud.db.version>
@@ -544,6 +544,20 @@
         <groupId>org.springframework.data</groupId>
         <artifactId>spring-data-jpa</artifactId>
         <version>${springframework.data.jpa.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-orm</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>

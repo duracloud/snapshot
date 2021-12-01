@@ -62,7 +62,7 @@ public class Snapshot extends BaseEntity implements Comparator<Snapshot> {
     @Column(name = "snapshot_alternate_id")
     private List<String> snapshotAlternateIds;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, mappedBy = "snapshot")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "snapshot")
     @OrderBy("historyDate DESC")
     private List<SnapshotHistory> snapshotHistory;
 

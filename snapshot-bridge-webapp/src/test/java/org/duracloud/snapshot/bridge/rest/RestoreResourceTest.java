@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import java.util.Date;
 import javax.ws.rs.core.Response;
 
-import org.codehaus.jettison.json.JSONException;
 import org.duracloud.snapshot.SnapshotException;
 import org.duracloud.snapshot.common.test.SnapshotTestBase;
 import org.duracloud.snapshot.db.model.DuracloudEndPointConfig;
@@ -162,7 +161,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetRestore() throws SnapshotException, JSONException {
+    public void testGetRestore() throws SnapshotException {
         String restorationId = "restoration-id";
         Restoration restoration = setupRestoration();
         expect(manager.get(restorationId)).andReturn(restoration);
@@ -173,7 +172,7 @@ public class RestoreResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testGetRestoreBySnapshot() throws SnapshotException, JSONException {
+    public void testGetRestoreBySnapshot() throws SnapshotException {
         String snapshotId = "snapshot-id";
         Restoration restoration = setupRestoration();
         expect(manager.getBySnapshotId(snapshotId)).andReturn(restoration);

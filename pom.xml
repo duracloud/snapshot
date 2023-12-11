@@ -186,10 +186,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <slf4j.version>1.7.6</slf4j.version>
-    <springframework.version>4.3.30.RELEASE</springframework.version>
-    <springframework.data.jpa.version>1.11.23.RELEASE</springframework.data.jpa.version>
-    <springframework.security.version>4.2.20.RELEASE</springframework.security.version>
-    <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
+    <springframework.version>5.3.29</springframework.version>
+    <springframework.data.jpa.version>2.7.15</springframework.data.jpa.version>
+    <springframework.security.version>5.8.5</springframework.security.version>
+    <spring.batch.version>4.3.10</spring.batch.version>
     <hibernate.version>5.4.3.Final</hibernate.version>
     <mysql.connector.version>5.1.49</mysql.connector.version>
     <duracloud.version>7.1.0</duracloud.version>

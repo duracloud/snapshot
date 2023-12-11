@@ -8,22 +8,14 @@
 
 package org.duracloud.snapshot.db;
 
-import static com.wix.mysql.EmbeddedMysql.anEmbeddedMysql;
-import static com.wix.mysql.config.Charset.UTF8;
-import static com.wix.mysql.config.MysqldConfig.aMysqldConfig;
-import static com.wix.mysql.distribution.Version.v5_7_latest;
-
-import java.util.concurrent.TimeUnit;
-
-import com.wix.mysql.EmbeddedMysql;
-import com.wix.mysql.ScriptResolver;
-import com.wix.mysql.config.MysqldConfig;
 import org.easymock.EasyMockRunner;
 import org.easymock.EasyMockSupport;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.testcontainers.containers.MySQLContainer;
 
 /**
  * @author Daniel Bernstein
@@ -32,31 +24,29 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 @RunWith(EasyMockRunner.class)
 public abstract class JpaIntegrationTestBase extends EasyMockSupport {
 
-    private EmbeddedMysql mysqld = null;
+    @ClassRule
+    public static MySQLContainer<?> mysql = new MySQLContainer<>()
+        .withUsername("user")
+        .withPassword("pass")
+        .withDatabaseName("snapshot")
+        .withInitScript("db_init.sql")
+        .withEnv("TZ", "GMT")
+        .withEnv("max_connect_errors", "666");
 
-    protected AnnotationConfigApplicationContext context;
+    protected static AnnotationConfigApplicationContext context;
 
-    @Before
-    public void setup() {
-        int port = 3310;
-        MysqldConfig config = aMysqldConfig(v5_7_latest).withCharset(UTF8).withPort(port).withUser("user", "pass")
-                                                        .withTimeZone("GMT").withTimeout(2, TimeUnit.MINUTES)
-                                                        .withServerVariable("max_connect_errors", 666)
-                                                        .withServerVariable("log_syslog", 0)
-                                                        .build();
-
-        mysqld = anEmbeddedMysql(config).addSchema("snapshot", ScriptResolver.classPathScript("db_init.sql")).start();
-
+    @BeforeClass
+    public static void setup() {
         System.setProperty("generate.database", "true");
-        System.setProperty("snapshot.db.port", port + "");
+        System.setProperty("snapshot.db.port", mysql.getFirstMappedPort().toString());
 
         context = new AnnotationConfigApplicationContext("org.duracloud.snapshot.db");
-
     }
 
-    @After
-    public void tearDown() {
-        mysqld.stop();
+    @AfterClass
+    public static void tearDown() {
+        context.close();
+        mysql.close();
     }
 
 }

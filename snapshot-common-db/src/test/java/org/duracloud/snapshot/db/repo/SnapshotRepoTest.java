@@ -23,6 +23,7 @@ import org.junit.Test;
  * @author Daniel Bernstein
  */
 public class SnapshotRepoTest extends JpaIntegrationTestBase {
+
     @Test
     public void testFindByStatusOrderBySnapshotDateAsc() {
         SnapshotRepo repo = context.getBean(SnapshotRepo.class);

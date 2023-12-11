@@ -74,8 +74,8 @@
     </dependency>
 
     <dependency>
-      <groupId>com.wix</groupId>
-      <artifactId>wix-embedded-mysql</artifactId>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>mysql</artifactId>
     </dependency>
 
   </dependencies>

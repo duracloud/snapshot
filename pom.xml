@@ -191,8 +191,9 @@
     <springframework.data.jpa.version>2.7.15</springframework.data.jpa.version>
     <springframework.security.version>5.8.5</springframework.security.version>
     <spring.batch.version>4.3.10</spring.batch.version>
-    <hibernate.version>5.4.3.Final</hibernate.version>
-    <mysql.connector.version>5.1.49</mysql.connector.version>
+    <hibernate.version>5.4.33.Final</hibernate.version>
+    <hibernate.validator.version>5.4.3.Final</hibernate.validator.version>
+    <mysql.connector.version>8.2.0</mysql.connector.version>
     <duracloud.version>8.0.0</duracloud.version>
     <duracloud.db.version>8.0.0</duracloud.db.version>
     <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
@@ -674,9 +675,16 @@
       </dependency>
 
       <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
         <version>${mysql.connector.version}</version>
+      </dependency>
+
+      <!-- Needed for convergence issue w/ Hibernate -->
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>3.4.1.Final</version>
       </dependency>
 
       <dependency>
@@ -688,12 +696,8 @@
       <dependency>
         <groupId>org.hibernate</groupId>
         <artifactId>hibernate-validator</artifactId>
-        <version>${hibernate.version}</version>
+        <version>${hibernate.validator.version}</version>
         <exclusions>
-          <exclusion>
-            <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging</artifactId>
-          </exclusion>
           <exclusion>
             <groupId>com.fasterxml</groupId>
             <artifactId>classmate</artifactId>

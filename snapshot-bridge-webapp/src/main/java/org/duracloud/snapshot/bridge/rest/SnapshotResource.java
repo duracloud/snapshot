@@ -620,7 +620,7 @@ public class SnapshotResource {
                 log.info("cleaning up post exception...");
                 try {
                     log.debug("deleting newly created snapshot...");
-                    snapshotRepo.delete(snapshot.getId());
+                    snapshotRepo.deleteById(snapshot.getId());
                 } catch (Exception e) {
                     log.error("failed to cleanup snapshot " + snapshotId + ": " +
                               e.getMessage(), e);
@@ -778,7 +778,7 @@ public class SnapshotResource {
                 pageSize = 1000;
             }
 
-            PageRequest pageable = new PageRequest(page, pageSize);
+            PageRequest pageable = PageRequest.of(page, pageSize);
 
             List<SnapshotContentItem> items;
             if (null == prefix || prefix.equals("")) {

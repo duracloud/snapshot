@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Specify memory for Maven
-      MAVEN_OPTS: "-Xmx256M"
+      MAVEN_OPTS: "-Xmx512M"
     steps:
     # Output current build environment
     - run: echo "This is a CI build of branch ${{ github.ref }} in repository ${{ github.repository }}"

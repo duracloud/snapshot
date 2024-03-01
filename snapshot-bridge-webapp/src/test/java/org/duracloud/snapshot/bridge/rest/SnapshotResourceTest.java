@@ -25,7 +25,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpStatus;
-import org.codehaus.jettison.json.JSONException;
 import org.duracloud.client.ContentStore;
 import org.duracloud.common.constant.Constants;
 import org.duracloud.common.notification.NotificationManager;
@@ -304,7 +303,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testComplete() throws SnapshotException, JSONException {
+    public void testComplete() throws SnapshotException {
         String snapshotId = "snapshot-name";
         List<String> snapshotAlternateIds = new ArrayList<String>();
         String altId1 = "alternate-name-1";
@@ -335,7 +334,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testCompleteDuplicateAltId() throws SnapshotException, JSONException {
+    public void testCompleteDuplicateAltId() throws SnapshotException {
         String snapshotId = "snapshot-name";
         List<String> snapshotAlternateIds = new ArrayList<String>();
         String altId1 = "alternate-name-1";
@@ -359,7 +358,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testCancel() throws SnapshotException, JSONException {
+    public void testCancel() throws SnapshotException {
         String snapshotId = "snapshot-name";
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
@@ -375,7 +374,7 @@ public class SnapshotResourceTest extends SnapshotTestBase {
     }
 
     @Test
-    public void testCancelFailure() throws SnapshotException, JSONException {
+    public void testCancelFailure() throws SnapshotException {
         String snapshotId = "snapshot-name";
 
         expect(this.snapshotRepo.findByName(snapshotId)).andReturn(snapshot);
@@ -386,7 +385,6 @@ public class SnapshotResourceTest extends SnapshotTestBase {
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, response.getStatus());
         assertTrue(response.getEntity() instanceof ResponseDetails);
         assertNotNull(((ResponseDetails) response.getEntity()).getMessage());
-
     }
 
     @Test

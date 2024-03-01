@@ -47,7 +47,7 @@ public class SnapshotDatabaseConfig {
     @Bean(name = SNAPSHOT_REPO_DATA_SOURCE_BEAN, destroyMethod = "close")
     public BasicDataSource snapshotDataSource() {
         BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         dataSource.setUrl(MessageFormat.format("jdbc:mysql://{0}:{1}/{2}" +
                                                "?useLegacyDatetimeCode=false" +
                                                "&serverTimezone=GMT" +

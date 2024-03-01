@@ -186,16 +186,19 @@ public class SnapshotManagerImpl implements SnapshotManager {
     @Transactional
     public Snapshot addAlternateSnapshotIds(Snapshot snapshot, List<String> alternateIds)
         throws AlternateIdAlreadyExistsException {
-        snapshot = this.snapshotRepo.findOne(snapshot.getId());
-        for (String altId : alternateIds) {
-            Snapshot altSnapshot = this.snapshotRepo.findBySnapshotAlternateIds(altId);
-            if (altSnapshot != null && !altSnapshot.getName().equals(snapshot.getName())) {
-                throw new AlternateIdAlreadyExistsException("The alternate snapshot id ("
-                                                            + altId + ") already exists in another snapshot (" +
-                                                            altSnapshot.getName() + ")");
+        final var query = snapshotRepo.findById(snapshot.getId());
+        if (query.isPresent()) {
+            snapshot = query.get();
+            for (String altId : alternateIds) {
+                Snapshot altSnapshot = this.snapshotRepo.findBySnapshotAlternateIds(altId);
+                if (altSnapshot != null && !altSnapshot.getName().equals(snapshot.getName())) {
+                    throw new AlternateIdAlreadyExistsException("The alternate snapshot id ("
+                                                                + altId + ") already exists in another snapshot (" +
+                                                                altSnapshot.getName() + ")");
+                }
             }
+            snapshot.addSnapshotAlternateIds(alternateIds);
         }
-        snapshot.addSnapshotAlternateIds(alternateIds);
         return this.snapshotRepo.saveAndFlush(snapshot);
     }
 

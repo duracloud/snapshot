@@ -1,2 +1,1 @@
-grant all privileges on mill.* to "user"@"localhost" identified by "pass";
-flush privileges;
+ALTER DATABASE snapshot CHARACTER SET utf8 COLLATE utf8_general_ci;

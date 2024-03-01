@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -257,7 +258,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         List<String> alternateIds = Arrays.asList(new String[] {altTestId});
         String snapshotId = "test";
         expect(snapshot.getId()).andReturn(1l);
-        expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
+        expect(this.snapshotRepo.findById(isA(Long.class))).andReturn(Optional.of(snapshot));
 
         expect(snapshot.getName()).andReturn(snapshotId).times(2);
         expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId))
@@ -279,7 +280,7 @@ public class SnapshotManagerImplTest extends SnapshotTestBase {
         expect(snapshot2.getName()).andReturn("snapshot2").atLeastOnce();
 
         expect(snapshot.getId()).andReturn(1l);
-        expect(this.snapshotRepo.findOne(isA(Long.class))).andReturn(snapshot);
+        expect(this.snapshotRepo.findById(isA(Long.class))).andReturn(Optional.of(snapshot));
 
         expect(this.snapshotRepo.findBySnapshotAlternateIds(altTestId)).andReturn(snapshot2);
         replayAll();

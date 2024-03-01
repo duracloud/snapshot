@@ -31,7 +31,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         RootUserCredential root = new RootUserCredential();
         auth.inMemoryAuthentication()
             .withUser(root.getUsername())
-            .password(root.getPassword())
+            .password("{noop}" + root.getPassword()) //noop required for spring 5
             .roles("USER");
     }
 }

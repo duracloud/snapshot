@@ -489,20 +489,19 @@ public class RestoreManagerImpl implements RestoreManager {
                 try {
                     String spaceId = destination.getSpaceId();
                     boolean spaceExists = store.spaceExists(spaceId);
-                    boolean spaceEmpty = false;
-                    
-                    if(spaceExists) {
+
+                    if (spaceExists) {
                         Iterator<String> it = store.getSpaceContents(spaceId);
-                        spaceEmpty = !it.hasNext();
-                        if (spaceEmpty) { // if space is empty
+                        if (!it.hasNext()) { // if space is empty
                             // Call DuraCloud to remove space
                             log.info("Deleting expired restoration space: " + spaceId +
                                     " at host: " + destination.getHost());
                             store.deleteSpace(spaceId);
+                            spaceExists = false;
                         }
                     }
 
-                    if (!spaceExists || spaceEmpty){
+                    if (!spaceExists) {
                         // Update restore status
                         validateAndSet(restoration,
                                 RestoreStatus.RESTORATION_EXPIRED,
@@ -522,8 +521,6 @@ public class RestoreManagerImpl implements RestoreManager {
                         log.info("Space {} is not empty.  Space will be removed and restoration {} transition to " +
                                 "expired state when space is empty.", spaceId, restoration);
                     }
-
-
                 } catch (Exception e) {
                     log.error("Failed to transition restore " +
                               restoration.getRestorationId() +

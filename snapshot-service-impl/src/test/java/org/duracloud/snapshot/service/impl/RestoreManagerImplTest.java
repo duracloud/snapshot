@@ -308,6 +308,7 @@ public class RestoreManagerImplTest extends SnapshotTestBase {
 
         expect(destination.getSpaceId()).andReturn(spaceId);
         expect(destination.getHost()).andReturn(host);
+        expect(contentStore.spaceExists(spaceId)).andReturn(true);
         expect(contentStore.getSpaceContents(spaceId))
             .andReturn(Collections.<String>emptyList().iterator());
 

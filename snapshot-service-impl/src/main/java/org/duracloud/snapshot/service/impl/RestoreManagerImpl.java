@@ -488,27 +488,38 @@ public class RestoreManagerImpl implements RestoreManager {
                                              bridgeConfig.getDuracloudPassword());
                 try {
                     String spaceId = destination.getSpaceId();
-                    Iterator<String> it = store.getSpaceContents(spaceId);
-                    if (!it.hasNext()) { // if space is empty
-                        // Call DuraCloud to remove space
-                        log.info("Deleting expired restoration space: " + spaceId +
-                                 " at host: " + destination.getHost());
-                        store.deleteSpace(spaceId);
+                    boolean spaceExists = store.spaceExists(spaceId);
 
+                    if (spaceExists) {
+                        Iterator<String> it = store.getSpaceContents(spaceId);
+                        if (!it.hasNext()) { // if space is empty
+                            // Call DuraCloud to remove space
+                            log.info("Deleting expired restoration space: " + spaceId +
+                                    " at host: " + destination.getHost());
+                            store.deleteSpace(spaceId);
+                            spaceExists = false;
+                        }
+                    }
+
+                    if (!spaceExists) {
                         // Update restore status
                         validateAndSet(restoration,
-                                       RestoreStatus.RESTORATION_EXPIRED,
-                                       "Restoration expired");
+                                RestoreStatus.RESTORATION_EXPIRED,
+                                "Restoration expired");
                         restoration = save(restoration);
                         log.info("Transition of restore " +
-                                 restoration.getRestorationId() +
-                                 " to expired state completed successfully");
+                                restoration.getRestorationId() +
+                                " to expired state completed successfully");
 
                         // Add history event
                         String history =
-                            "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_EXPIRED + "'}," +
-                            "{'" + RESTORE_ID_TITLE + "':'" + restoration.getRestorationId() + "'}]";
+                                "[{'" + RESTORE_ACTION_TITLE + "':'" + RESTORE_ACTION_EXPIRED + "'}," +
+                                        "{'" + RESTORE_ID_TITLE + "':'" + restoration.getRestorationId() + "'}]";
                         snapshotManager.updateHistory(restoration.getSnapshot(), history);
+
+                    } else {
+                        log.info("Space {} is not empty.  Space will be removed and restoration {} transition to " +
+                                "expired state when space is empty.", spaceId, restoration);
                     }
                 } catch (Exception e) {
                     log.error("Failed to transition restore " +
